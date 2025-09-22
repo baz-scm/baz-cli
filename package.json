@@ -1,0 +1,41 @@
+{
+  "name": "@baz-scm/baz-cli",
+  "version": "0.1.0",
+  "description": "Baz CLI",
+  "main": "dist/index.js",
+  "bin": {
+    "baz": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --cache",
+    "format:fix": "prettier --write \"**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx}\""
+  },
+  "keywords": [
+    "cli"
+  ],
+  "author": "Baz Technologies",
+  "license": "Apache-2.0",
+  "repository": {
+    "url": "https://github.com/baz-scm/baz-cli"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.1",
+    "figlet": "^1.9.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/eslint": "^9.6.1",
+    "eslint": "^9.36.0",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

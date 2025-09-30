@@ -1,7 +1,7 @@
 {
-  "name": "@baz-scm/baz-cli",
+  "name": "baz-cli",
   "version": "0.1.0",
-  "description": "Baz CLI",
+  "description": "Baz CLI tool for managing pull requests",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -9,6 +9,9 @@
   },
   "scripts": {
     "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "watch": "tsc --watch",
     "lint": "eslint src --cache",
     "lint:fix": "eslint src --fix",
     "format:fix": "prettier --write \"**/*.{ts,tsx}\"",
@@ -23,10 +26,15 @@
     "url": "https://github.com/baz-scm/baz-cli"
   },
   "dependencies": {
-    "chalk": "^5.6.2",
-    "commander": "^14.0.1",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
     "dotenv": "^17.2.2",
-    "figlet": "^1.9.3",
+    "figlet": "^1.7.0",
+    "ink": "^5.0.0",
+    "ink-select-input": "^6.0.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.0",
     "open": "^10.2.0",
     "pino": "^9.11.0",
     "pino-pretty": "^13.1.1",
@@ -39,8 +47,11 @@
     "eslint": "^9.36.0",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2",
+    "@types/figlet": "^1.5.8",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
     "typescript-eslint": "^8.44.0"
   },
   "engines": {

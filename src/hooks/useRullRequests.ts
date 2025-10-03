@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { fetchRepositories, Repository } from "../lib/clients/baz";
+import { fetchPRs, PullRequest } from "../lib/clients/baz";
 
-export function useRepositories() {
-  const [data, setData] = useState<Repository[]>([]);
+export function usePullRequests(repoId: string) {
+  const [data, setData] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRepositories()
-      .then(setData)
+    fetchPRs(repoId)
+      .then((prs) => {
+        setData(prs.sort((a, b) => b.prNumber - a.prNumber));
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);

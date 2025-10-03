@@ -1,29 +1,29 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { Repository } from "../lib/clients/baz";
+import { PullRequest } from "../lib/clients/baz";
 
-interface RepoSelectorProps {
-  repositories: Repository[];
-  onSelect: (repo: Repository) => void;
+interface PullRequestSelectorProps {
+  pullRequests: PullRequest[];
+  onSelect: (pr: PullRequest) => void;
   onCancel?: () => void;
 }
 
 interface SelectItem {
   label: string;
-  value: Repository;
+  value: PullRequest;
 }
 
-const RepositorySelector: React.FC<RepoSelectorProps> = ({
-  repositories,
+const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
+  pullRequests,
   onSelect,
 }) => {
   const [isSelected, setIsSelected] = useState(false);
 
-  const items: SelectItem[] = repositories.map((repo) => ({
-    key: `repo-${repo.id}`,
-    label: `${repo.fullName} (${repo.description})`,
-    value: repo,
+  const items: SelectItem[] = pullRequests.map((pr) => ({
+    key: `pr-${pr.id}`,
+    label: `#${pr.prNumber} ${pr.title}`,
+    value: pr,
   }));
 
   const handleSelect = (item: SelectItem) => {
@@ -39,7 +39,7 @@ const RepositorySelector: React.FC<RepoSelectorProps> = ({
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text bold color="cyan">
-          📋 Select a Repository (Use ↑↓ arrows and Enter):
+          📋 Select a PR (Use ↑↓ arrows and Enter):
         </Text>
       </Box>
       <SelectInput
@@ -63,4 +63,4 @@ const RepositorySelector: React.FC<RepoSelectorProps> = ({
   );
 };
 
-export default RepositorySelector;
+export default PullRequestSelector;

@@ -1,9 +1,10 @@
 import { Command } from "commander";
-import { OAuthFlow, getAuthConfig } from "../auth/index.js";
+import { OAuthFlow } from "../auth/oauth-flow.js";
+import { authConfig } from "../auth/config.js";
 
 export function createAuthCommand(): Command {
   const authCommand = new Command("auth");
-  const oauthFlow = new OAuthFlow();
+  const oauthFlow = OAuthFlow.getInstance();
 
   authCommand
     .command("login")
@@ -15,7 +16,6 @@ export function createAuthCommand(): Command {
           return;
         }
 
-        const authConfig = getAuthConfig();
         await oauthFlow.authenticate(authConfig);
       } catch (error) {
         console.error(

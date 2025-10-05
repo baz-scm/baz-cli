@@ -40,18 +40,10 @@ export function createInboundAppConfig(
   };
 }
 
-export function getAuthConfig(): AuthConfig {
-  const baseUrl = env.DESCOPE_BASE_URL;
-  const projectId = env.DESCOPE_PROJECT_ID;
-  const clientId = env.DESCOPE_CLIENT_ID;
-  const redirectUri = env.DESCOPE_REDIRECT_URI;
-  const scopes = ["openid"];
-
-  return {
-    baseUrl,
-    projectId,
-    clientId,
-    redirectUri,
-    scopes,
-  };
-}
+export const authConfig: AuthConfig = {
+  baseUrl: env.DESCOPE_BASE_URL,
+  projectId: env.DESCOPE_PROJECT_ID,
+  clientId: env.DESCOPE_CLIENT_ID,
+  redirectUri: env.DESCOPE_REDIRECT_URI,
+  scopes: ["openid"],
+};

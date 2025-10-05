@@ -13,10 +13,18 @@ import open from "open";
 import { logger } from "../lib/logger.js";
 
 export class OAuthFlow {
+  private static instance: OAuthFlow;
   private tokenManager: TokenManager;
 
-  constructor() {
+  private constructor() {
     this.tokenManager = new TokenManager();
+  }
+
+  static getInstance(): OAuthFlow {
+    if (!OAuthFlow.instance) {
+      OAuthFlow.instance = new OAuthFlow();
+    }
+    return OAuthFlow.instance;
   }
 
   async authenticate(authConfig: AuthConfig): Promise<boolean> {

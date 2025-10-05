@@ -1,12 +1,12 @@
 import { createHash } from "crypto";
 
-export function sha256Hash(input: string): Buffer {
+function sha256Hash(input: string): Buffer {
   const hash = createHash("sha256");
   hash.update(input);
   return hash.digest();
 }
 
-export function base64URLEncode(data: Buffer): string {
+function base64URLEncode(data: Buffer): string {
   return data
     .toString("base64")
     .replace(/\+/g, "-")
@@ -18,7 +18,7 @@ export function generateCodeChallenge(codeVerifier: string): string {
   return base64URLEncode(sha256Hash(codeVerifier));
 }
 
-export function generateRandomString(length: number): string {
+function generateRandomString(length: number): string {
   const charset =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
   let result = "";

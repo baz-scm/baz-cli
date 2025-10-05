@@ -44,7 +44,7 @@ const DiscussionSelectorContainer: React.FC<
     );
   }
 
-  return <DiscussionSelector discussions={data} onComplete={onComplete} />;
+  return <DiscussionSelector discussions={data} onComplete={onComplete} prId={prId} />;
 };
 
 export default DiscussionSelectorContainer;

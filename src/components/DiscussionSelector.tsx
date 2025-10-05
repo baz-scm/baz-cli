@@ -6,12 +6,14 @@ import { useDiscussionActions } from "../hooks/useDiscussionActions";
 
 interface DiscussionReviewProps {
   discussions: Discussion[];
+  prId: string;
   onComplete: () => void;
 }
 
 const DiscussionSelector: React.FC<DiscussionReviewProps> = ({
   discussions,
   onComplete,
+  prId
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mode, setMode] = useState<"view" | "reply">("view");
@@ -38,8 +40,7 @@ const DiscussionSelector: React.FC<DiscussionReviewProps> = ({
 
   const handleReply = async (replyText: string) => {
     try {
-      // TODO: adjust the comments endpoint to only need the minimum of fields to reply toa discussion
-      // await replyDiscussion(currentDiscussion.id, replyText);
+      await replyDiscussion(currentDiscussion.id, replyText, prId);
       setMode("view");
       if (hasNext) {
         setCurrentIndex((prev) => prev + 1);

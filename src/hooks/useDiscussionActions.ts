@@ -5,10 +5,10 @@ export function useDiscussionActions() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const replyDiscussion = async (discussionId: string, replyText: string) => {
+  const replyDiscussion = async (discussionId: string, replyText: string, prId: string) => {
     setLoading(true);
     try {
-      await postDiscussionReply(discussionId, replyText);
+      await postDiscussionReply(discussionId, replyText, prId);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       throw err;

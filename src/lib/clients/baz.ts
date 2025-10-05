@@ -1,8 +1,8 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
-import { getAccessToken } from "../../auth/token-manager";
+import { OAuthFlow }  from "../../auth/oauth-flow";
 
-const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL : "https://baz.co";
+const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL : "http://localhost";
 const COMMENTS_URL = `${BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${BASE_URL}/api/v2/changes`;
 const REPOSITORIES_URL = `${BASE_URL}/api/v2/repositories`;
@@ -25,7 +25,7 @@ export interface RepositoriesResponse {
 }
 
 export async function fetchRepositories(): Promise<Repository[]> {
-  const token = getAccessToken();
+  const token = OAuthFlow.getInstance().getAccessToken();
 
   const repos = await axios
     .get<RepositoriesResponse>(REPOSITORIES_URL, {
@@ -55,7 +55,7 @@ export interface PullRequestsResponse {
 }
 
 export async function fetchPRs(repoId: string): Promise<PullRequest[]> {
-  const token = getAccessToken();
+  const token = OAuthFlow.getInstance().getAccessToken();
 
   const repos = await axios
     .get<PullRequestsResponse>(PULL_REQUESTS_URL, {
@@ -110,7 +110,7 @@ export interface DiscussionsResponse {
 }
 
 export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
-  const token = getAccessToken();
+  const token = OAuthFlow.getInstance().getAccessToken();
 
   const repos = await axios
     .get<DiscussionsResponse>(getDiscussionsUrl(prId), {
@@ -131,15 +131,16 @@ export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
   return repos.discussions;
 }
 
-export async function postDiscussionReply(discussionId: string, body: string) {
-  const token = getAccessToken();
+export async function postDiscussionReply(discussionId: string, body: string, prId: string) {
+  const token = OAuthFlow.getInstance().getAccessToken();
 
   await axios
     .post(
       COMMENTS_URL,
       {
         discussion_id: discussionId,
-        body_content_type: "markdown",
+        body_content_type: "html",
+        code_change_id: prId,
         body,
       },
       {
@@ -156,7 +157,7 @@ export async function postDiscussionReply(discussionId: string, body: string) {
 }
 
 export async function updateDiscussionState(discussionId: string) {
-  const token = getAccessToken();
+  const token = OAuthFlow.getInstance().getAccessToken();
 
   await axios
     .patch(

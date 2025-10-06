@@ -2,7 +2,7 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import { OAuthFlow }  from "../../auth/oauth-flow";
 
-const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL : "http://localhost";
+const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL : "https://main.baz.ninja";
 const COMMENTS_URL = `${BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${BASE_URL}/api/v2/changes`;
 const REPOSITORIES_URL = `${BASE_URL}/api/v2/repositories`;

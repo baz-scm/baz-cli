@@ -38,12 +38,13 @@ export class TokenManager {
       const tokens: StoredTokens = JSON.parse(tokensData);
 
       if (this.isTokenExpired(tokens)) {
+        logger.warn("Token expired");
         return null;
       }
 
       return tokens;
     } catch (error) {
-      logger.error(`Error getting tokens: ${String(error)}`);
+      logger.warn(`Error getting tokens: ${String(error)}`);
       return null;
     }
   }

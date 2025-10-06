@@ -47,7 +47,7 @@ const DiscussionSelector: React.FC<DiscussionReviewProps> = ({
         onComplete();
       }
     } catch (error) {
-      console.error("Failed to reply:", error);
+      console.error("Failed to reply discussion:", error);
     }
   };
 
@@ -60,7 +60,7 @@ const DiscussionSelector: React.FC<DiscussionReviewProps> = ({
         onComplete();
       }
     } catch (error) {
-      console.error("Failed to reply:", error);
+      console.error("Failed to close discussion:", error);
     }
   };
 

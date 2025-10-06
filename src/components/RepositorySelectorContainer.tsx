@@ -21,7 +21,7 @@ const RepositorySelectorContainer: React.FC<
         <Text color="blue">
           <Spinner type="dots" />
         </Text>
-        <Text color="blue"> Fetching pull requests...</Text>
+        <Text color="blue"> Fetching repositories...</Text>
       </Box>
     );
   }

@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { PullRequest } from "../lib/clients/baz";
-import { usePullRequests } from "../hooks/useRullRequests";
+import { usePullRequests } from "../hooks/usePullRequests";
 import PullRequestSelector from "./PullRequestSelector";
 
 interface PullRequestSelectorContainerProps {

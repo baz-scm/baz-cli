@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - name: install dependencies
+        run: npm ci
       - name: run lint
         run: npm run lint
       - name: run prettier

@@ -5,18 +5,14 @@ import RepositoryAutocompleteContainer from "../components/RepositoryAutocomplet
 import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer";
 import DiscussionSelectorContainer from "../components/DiscussionSelectorContainer";
 
-type FlowStep =
-  | "handleRepoSelect"
-  | "handlePRSelect"
-  | "handleDiscussionSelect"
-  | "complete";
-
-interface FlowState {
-  step: FlowStep;
-  selectedRepo?: Repository;
-  selectedPR?: PullRequest;
-  // Add more state as needed for subsequent steps
-}
+type FlowState =
+  | { step: "handleRepoSelect" }
+  | { step: "handlePRSelect"; selectedRepo: Repository }
+  | {
+      step: "handleDiscussionSelect" | "complete";
+      selectedRepo: Repository;
+      selectedPR: PullRequest;
+    };
 
 const ReviewFlow: React.FC = () => {
   const [flowState, setFlowState] = useState<FlowState>({
@@ -33,6 +29,8 @@ const ReviewFlow: React.FC = () => {
 
   // Step 2: Select Pull Request
   const handlePRSelect = (pr: PullRequest) => {
+    if (flowState.step !== "handlePRSelect") return;
+
     setFlowState({
       ...flowState,
       selectedPR: pr,
@@ -42,6 +40,8 @@ const ReviewFlow: React.FC = () => {
 
   // Step 3: Select Discussion
   const handleDiscussionSelect = () => {
+    if (flowState.step !== "handleDiscussionSelect") return;
+
     setFlowState({
       ...flowState,
       step: "complete",
@@ -61,10 +61,10 @@ const ReviewFlow: React.FC = () => {
         <Box flexDirection="column">
           <Box marginBottom={1}>
             <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo!.fullName}</Text>
+            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
           </Box>
           <PullRequestSelectorContainer
-            repoId={flowState.selectedRepo!.id}
+            repoId={flowState.selectedRepo.id}
             onSelect={handlePRSelect}
           />
         </Box>
@@ -75,16 +75,16 @@ const ReviewFlow: React.FC = () => {
         <Box flexDirection="column">
           <Box marginBottom={1}>
             <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo!.fullName}</Text>
+            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
           </Box>
           <Box marginBottom={1}>
             <Text color="green">✓ Selected pull request: </Text>
             <Text color="yellow">
-              #{flowState.selectedPR!.prNumber} {flowState.selectedPR!.title}
+              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
             </Text>
           </Box>
           <DiscussionSelectorContainer
-            prId={flowState.selectedPR!.id}
+            prId={flowState.selectedPR.id}
             onComplete={handleDiscussionSelect}
           />
         </Box>
@@ -95,12 +95,12 @@ const ReviewFlow: React.FC = () => {
         <Box flexDirection="column">
           <Box marginBottom={1}>
             <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo!.fullName}</Text>
+            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
           </Box>
           <Box marginBottom={1}>
             <Text color="green">✓ Selected PR: </Text>
             <Text color="yellow">
-              #{flowState.selectedPR!.prNumber} {flowState.selectedPR!.title}
+              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
             </Text>
           </Box>
           <Text color="green" bold>

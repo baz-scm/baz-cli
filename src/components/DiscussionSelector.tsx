@@ -13,13 +13,12 @@ interface DiscussionReviewProps {
 const DiscussionSelector: React.FC<DiscussionReviewProps> = ({
   discussions,
   onComplete,
-  prId
+  prId,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mode, setMode] = useState<"view" | "reply">("view");
 
-  const { replyDiscussion, resolveDiscussion, loading, error } =
-    useDiscussionActions();
+  const { replyDiscussion, resolveDiscussion } = useDiscussionActions();
 
   const currentDiscussion = discussions[currentIndex];
   const hasNext = currentIndex < discussions.length - 1;

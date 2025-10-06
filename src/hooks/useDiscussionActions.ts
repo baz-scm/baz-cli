@@ -5,7 +5,11 @@ export function useDiscussionActions() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const replyDiscussion = async (discussionId: string, replyText: string, prId: string) => {
+  const replyDiscussion = async (
+    discussionId: string,
+    replyText: string,
+    prId: string,
+  ) => {
     setLoading(true);
     try {
       await postDiscussionReply(discussionId, replyText, prId);

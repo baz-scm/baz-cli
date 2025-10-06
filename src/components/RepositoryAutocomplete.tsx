@@ -28,7 +28,7 @@ const RepositoryAutocomplete: React.FC<RepositoryAutocompleteProps> = ({
     setSelectedIndex(0);
   }, [searchQuery]);
 
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (isTyping) {
       // Tab key to switch to navigation mode
       if (key.tab) {

@@ -11,6 +11,10 @@ import {
 import { TokenManager } from "./token-manager.js";
 import open from "open";
 import { logger } from "../lib/logger.js";
+import axios from "axios";
+import axiosRetry from "axios-retry";
+
+axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
 
 export class OAuthFlow {
   private static instance: OAuthFlow;
@@ -195,20 +199,17 @@ export class OAuthFlow {
       code_verifier: codeVerifier,
     });
 
-    const response = await fetch(config.tokenEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: tokenParams.toString(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Token exchange failed with status: ${response.status}`);
-    }
-
-    const tokenResponse: TokenResponse = await response.json();
-    return tokenResponse;
+    return await axios
+      .post<TokenResponse>(config.tokenEndpoint, tokenParams.toString(), {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      })
+      .then((value) => value.data)
+      .catch((error: unknown) => {
+        console.error("Token exchange failed:", error);
+        throw error;
+      });
   }
 
   isAuthenticated(): boolean {

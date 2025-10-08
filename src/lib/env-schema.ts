@@ -14,6 +14,7 @@ const envSchema = z.object({
   DESCOPE_PROJECT_ID: z.string(),
   DESCOPE_CLIENT_ID: z.string(),
   DESCOPE_REDIRECT_URI: z.string().default("http://localhost:8080/callback"),
+  RUNTIME_ENV: z.enum(["CLI", "WEB"]).default("CLI"),
 });
 
 export const env = envSchema.parse(process.env);

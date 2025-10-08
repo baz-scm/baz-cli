@@ -1,6 +1,4 @@
-import axios from "axios";
-import axiosRetry from "axios-retry";
-import { OAuthFlow } from "../../auth/oauth-flow";
+import { createAxiosClient } from "./axios/axios-client";
 
 const BASE_URL = process.env.BASE_URL
   ? process.env.BASE_URL
@@ -14,8 +12,7 @@ const getDiscussionsUrl = (prId: string) =>
 const getDiscussionUrl = (discussionId: string) =>
   `${BASE_URL}/api/v1/discussions/${discussionId}`;
 
-axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
-
+const axiosClient = createAxiosClient(BASE_URL);
 export interface Repository {
   id: string;
   fullName: string;
@@ -27,13 +24,10 @@ export interface RepositoriesResponse {
 }
 
 export async function fetchRepositories(): Promise<Repository[]> {
-  const token = OAuthFlow.getInstance().getAccessToken();
-
-  const repos = await axios
+  const repos = await axiosClient
     .get<RepositoriesResponse>(REPOSITORIES_URL, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     })
     .then((value) => value.data)
@@ -57,13 +51,10 @@ export interface PullRequestsResponse {
 }
 
 export async function fetchPRs(repoId: string): Promise<PullRequest[]> {
-  const token = OAuthFlow.getInstance().getAccessToken();
-
-  const repos = await axios
+  const repos = await axiosClient
     .get<PullRequestsResponse>(PULL_REQUESTS_URL, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       // TODO: fix the extra repo ID needed here or adjust the API to allow both string and array of strings
       params: {
@@ -112,13 +103,10 @@ export interface DiscussionsResponse {
 }
 
 export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
-  const token = OAuthFlow.getInstance().getAccessToken();
-
-  const repos = await axios
+  const repos = await axiosClient
     .get<DiscussionsResponse>(getDiscussionsUrl(prId), {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       params: {
         state: "pending",
@@ -138,9 +126,7 @@ export async function postDiscussionReply(
   body: string,
   prId: string,
 ) {
-  const token = OAuthFlow.getInstance().getAccessToken();
-
-  await axios
+  await axiosClient
     .post(
       COMMENTS_URL,
       {
@@ -152,7 +138,6 @@ export async function postDiscussionReply(
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       },
     )
@@ -163,9 +148,7 @@ export async function postDiscussionReply(
 }
 
 export async function updateDiscussionState(discussionId: string) {
-  const token = OAuthFlow.getInstance().getAccessToken();
-
-  await axios
+  await axiosClient
     .patch(
       getDiscussionUrl(discussionId),
       {
@@ -174,7 +157,6 @@ export async function updateDiscussionState(discussionId: string) {
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       },
     )

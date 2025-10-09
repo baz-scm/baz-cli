@@ -74,6 +74,7 @@ const DiscussionSelector: React.FC<DiscussionReviewProps> = ({
 
       <DiscussionDisplay
         discussion={currentDiscussion}
+        prId={prId}
         mode={mode}
         onReply={handleReply}
         onCancelReply={() => setMode("view")}

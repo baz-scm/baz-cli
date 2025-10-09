@@ -219,7 +219,7 @@ export async function fetchFileDiffs(
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      console.error("Axios error while fetching discussions:", error);
+      console.error("Axios error while fetching file diffs:", error);
       throw error;
     });
 

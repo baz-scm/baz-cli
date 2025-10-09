@@ -191,8 +191,8 @@ const DiffRow: React.FC<DiffRowProps> = ({
   rightLine,
   rightColor,
 }) => {
-  const leftNum = (leftNumber ?? "").toString().padStart(5) ?? " ";
-  const rightNum = (rightNumber ?? "").toString().padStart(5) ?? " ";
+  const leftNum = (leftNumber ?? "").toString().padStart(5);
+  const rightNum = (rightNumber ?? "").toString().padStart(5);
 
   return (
     <Box>

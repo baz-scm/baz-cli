@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
 import { Discussion } from "../lib/clients/baz";
+import DiffDisplayContainer from "./DiffDisplayContainer";
 
 interface DiscussionDisplayProps {
   discussion: Discussion;
+  prId: string;
   mode: "view" | "reply";
   onReply: (text: string) => void;
   onCancelReply: () => void;
@@ -12,6 +14,7 @@ interface DiscussionDisplayProps {
 
 const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
   discussion,
+  prId,
   mode,
   onReply,
 }) => {
@@ -27,25 +30,32 @@ const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
   return (
     <Box flexDirection="column">
       {/* Commented Code */}
-      <Box marginBottom={1} flexDirection="column">
-        <Box paddingX={1} backgroundColor="gray">
-          <Text>File: {discussion.file}</Text>
-        </Box>
-        <Box
-          paddingX={1}
-          backgroundColor={discussion.side === "left" ? "#ff82ab" : "#9aff9a"}
-        >
-          <Text>{discussion.commented_code}</Text>
-        </Box>
-      </Box>
+      <DiffDisplayContainer
+        key={discussion.id}
+        prId={prId}
+        commit={discussion.commit_sha}
+        fileSelectionLines={
+          new Map([
+            [
+              discussion.file ?? "", // will fail on diff retrieval if `file` is undefined
+              {
+                start: discussion.original_start_line,
+                end: discussion.original_end_line,
+                side: discussion.side,
+              },
+            ],
+          ])
+        }
+        outdated={discussion.outdated}
+      />
 
       {/* Comments */}
       {discussion.comments.length > 0 && (
         <Box flexDirection="column" marginBottom={1}>
           <Text dimColor>{discussion.comments.length} comment(s):</Text>
-          {discussion.comments.map((comment, idx) => (
+          {discussion.comments.map((comment) => (
             <Box
-              key={idx}
+              key={comment.id}
               marginTop={1}
               paddingLeft={2}
               borderStyle="single"

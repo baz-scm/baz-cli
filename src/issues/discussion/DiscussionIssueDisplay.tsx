@@ -1,21 +1,37 @@
 import React, { useState } from "react";
-import { Box, Text } from "ink";
+import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { Discussion } from "../lib/clients/baz";
+import { Issue, IssueContext } from "../types";
+import DiffDisplayContainer from "../../components/DiffDisplayContainer";
 
-interface DiscussionDisplayProps {
-  discussion: Discussion;
-  mode: "view" | "reply";
+interface DiscussionIssueDisplayProps {
+  issue: Issue & { type: "discussion" };
+  context: IssueContext;
   onReply: (text: string) => void;
-  onCancelReply: () => void;
+  onEnterReplyMode: (callback: () => void) => void;
 }
 
-const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
-  discussion,
-  mode,
+const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
+  issue,
+  context,
   onReply,
+  onEnterReplyMode,
 }) => {
+  const [mode, setMode] = useState<"view" | "reply">("view");
   const [replyText, setReplyText] = useState("");
+  const discussion = issue.data;
+
+  // Register the callback to enter reply mode
+  React.useEffect(() => {
+    onEnterReplyMode(() => setMode("reply"));
+  }, [onEnterReplyMode]);
+
+  // Handle escape key to exit reply mode
+  useInput((input, key) => {
+    if (key.escape && mode === "reply") {
+      setMode("view");
+    }
+  });
 
   const handleSubmit = () => {
     if (replyText.trim()) {
@@ -27,25 +43,32 @@ const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
   return (
     <Box flexDirection="column">
       {/* Commented Code */}
-      <Box marginBottom={1} flexDirection="column">
-        <Box paddingX={1} backgroundColor="gray">
-          <Text>File: {discussion.file}</Text>
-        </Box>
-        <Box
-          paddingX={1}
-          backgroundColor={discussion.side === "left" ? "#ff82ab" : "#9aff9a"}
-        >
-          <Text>{discussion.commented_code}</Text>
-        </Box>
-      </Box>
+      <DiffDisplayContainer
+        key={discussion.id}
+        prId={context.prId}
+        commit={discussion.commit_sha}
+        fileSelectionLines={
+          new Map([
+            [
+              discussion.file ?? "", // will fail on diff retrieval if `file` is undefined
+              {
+                start: discussion.original_start_line,
+                end: discussion.original_end_line,
+                side: discussion.side,
+              },
+            ],
+          ])
+        }
+        outdated={discussion.outdated}
+      />
 
       {/* Comments */}
       {discussion.comments.length > 0 && (
         <Box flexDirection="column" marginBottom={1}>
           <Text dimColor>{discussion.comments.length} comment(s):</Text>
-          {discussion.comments.map((comment, idx) => (
+          {discussion.comments.map((comment) => (
             <Box
-              key={idx}
+              key={comment.id}
               marginTop={1}
               paddingLeft={2}
               borderStyle="single"
@@ -91,8 +114,17 @@ const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
           </Box>
         </Box>
       )}
+
+      {/* Help text */}
+      {mode === "view" && (
+        <Box marginTop={1}>
+          <Text dimColor italic>
+            r: reply • c: close • n: next • Ctrl+C: cancel
+          </Text>
+        </Box>
+      )}
     </Box>
   );
 };
 
-export default DiscussionDisplay;
+export default DiscussionIssueDisplay;

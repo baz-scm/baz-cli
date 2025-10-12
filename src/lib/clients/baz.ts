@@ -7,6 +7,7 @@ const COMMENTS_URL = `${BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${BASE_URL}/api/v2/changes`;
 const REPOSITORIES_URL = `${BASE_URL}/api/v2/repositories`;
 
+const getDiffUrl = (prId: string) => `${BASE_URL}/api/v2/changes/${prId}/diff`;
 const getDiscussionsUrl = (prId: string) =>
   `${BASE_URL}/api/v1/changes/${prId}/discussions`;
 const getDiscussionUrl = (discussionId: string) =>
@@ -78,6 +79,7 @@ export interface Discussion {
   id: string;
   author: string;
   author_user?: AuthorUser;
+  commit_sha: string;
   outdated: boolean;
   file?: string;
   start_line?: number;
@@ -85,6 +87,8 @@ export interface Discussion {
   comments: Comment[];
   side?: "left" | "right";
   commented_code?: string;
+  original_start_line?: number;
+  original_end_line?: number;
 }
 
 export interface AuthorUser {
@@ -164,4 +168,75 @@ export async function updateDiscussionState(discussionId: string) {
       console.error("Axios error while resolving discussion:", error);
       throw error;
     });
+}
+
+// Fetch all issues for a PR (currently only discussions, but extensible)
+export async function fetchIssues(prId: string) {
+  const discussions = await fetchDiscussions(prId);
+  // Wrap discussions as issues
+  const discussionIssues = discussions.map((discussion) => ({
+    type: "discussion" as const,
+    data: discussion,
+  }));
+
+  // Future: fetch other issue types and combine
+  // const tasks = await fetchTasks(prId);
+  // const taskIssues = tasks.map(task => ({ type: "task" as const, data: task }));
+
+  return [...discussionIssues];
+}
+export interface Line {
+  number?: number;
+  content?: string;
+  new_line_number?: number;
+  new_content?: string;
+  line_type: "Added" | "Changed" | "Deleted" | "Unchanged";
+}
+
+export interface Chunk {
+  lines: Line[];
+  after_lines: Line[];
+  before_lines: Line[];
+}
+
+export interface Diff {
+  chunks: Chunk[];
+  old_relative_path?: string;
+  file_relative_path: string;
+}
+
+export interface FileDiff {
+  prFileId: string;
+  diff: Diff;
+}
+
+export interface FileDiffsResponse {
+  fileDiffs: FileDiff[];
+}
+
+export async function fetchFileDiffs(
+  prId: string,
+  commit: string,
+  files: string[],
+): Promise<FileDiff[]> {
+  const repos = await axiosClient
+    .get<FileDiffsResponse>(getDiffUrl(prId), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      params: {
+        commit,
+        files,
+      },
+      paramsSerializer: {
+        indexes: null,
+      },
+    })
+    .then((value) => value.data)
+    .catch((error: unknown) => {
+      console.error("Axios error while fetching file diffs:", error);
+      throw error;
+    });
+
+  return repos.fileDiffs;
 }

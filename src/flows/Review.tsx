@@ -3,13 +3,13 @@ import { Box, Text } from "ink";
 import { PullRequest, Repository } from "../lib/clients/baz.js";
 import RepositoryAutocompleteContainer from "../components/RepositoryAutocompleteContainer";
 import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer";
-import DiscussionSelectorContainer from "../components/DiscussionSelectorContainer";
+import IssueBrowserContainer from "../components/IssueBrowserContainer";
 
 type FlowState =
   | { step: "handleRepoSelect" }
   | { step: "handlePRSelect"; selectedRepo: Repository }
   | {
-      step: "handleDiscussionSelect" | "complete";
+      step: "handleIssueSelect" | "complete";
       selectedRepo: Repository;
       selectedPR: PullRequest;
     };
@@ -34,13 +34,13 @@ const ReviewFlow: React.FC = () => {
     setFlowState({
       ...flowState,
       selectedPR: pr,
-      step: "handleDiscussionSelect",
+      step: "handleIssueSelect",
     });
   };
 
-  // Step 3: Select Discussion
-  const handleDiscussionSelect = () => {
-    if (flowState.step !== "handleDiscussionSelect") return;
+  // Step 3: Browse Issues
+  const handleIssueComplete = () => {
+    if (flowState.step !== "handleIssueSelect") return;
 
     setFlowState({
       ...flowState,
@@ -70,7 +70,7 @@ const ReviewFlow: React.FC = () => {
         </Box>
       );
 
-    case "handleDiscussionSelect":
+    case "handleIssueSelect":
       return (
         <Box flexDirection="column">
           <Box marginBottom={1}>
@@ -83,9 +83,9 @@ const ReviewFlow: React.FC = () => {
               #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
             </Text>
           </Box>
-          <DiscussionSelectorContainer
+          <IssueBrowserContainer
             prId={flowState.selectedPR.id}
-            onComplete={handleDiscussionSelect}
+            onComplete={handleIssueComplete}
           />
         </Box>
       );

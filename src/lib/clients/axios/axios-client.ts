@@ -3,6 +3,7 @@ import { CLITokenManager } from "./cli-token-mgr";
 import axiosRetry from "axios-retry";
 import { WebTokenManager } from "./web-token-mgr";
 import { env } from "../../env-schema";
+import chalk from "chalk";
 
 export interface TokenManager {
   getToken: () => string;
@@ -38,6 +39,11 @@ export const createAxiosClient = (baseURL: string) => {
     },
     function (error) {
       if (error?.response?.status === 401) {
+        console.log(
+          chalk.red("• Invalid Token. Please run ") +
+            chalk.cyan.italic("baz auth login") +
+            chalk.red(" to authenticate."),
+        );
         tokenMgr.resetToken();
       }
       if (error?.response?.status === 402) {

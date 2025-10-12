@@ -1,4 +1,5 @@
 import { createAxiosClient } from "./axios/axios-client";
+import { logger } from "../logger";
 
 const BASE_URL = process.env.BASE_URL
   ? process.env.BASE_URL
@@ -33,7 +34,7 @@ export async function fetchRepositories(): Promise<Repository[]> {
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      console.error("Axios error while fetching repositories:", error);
+      logger.debug({ error }, "Axios error while fetching repositories");
       throw error;
     });
 
@@ -68,7 +69,7 @@ export async function fetchPRs(repoId: string): Promise<PullRequest[]> {
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      console.error("Axios error while fetching pull requests:", error);
+      logger.debug(`Axios error while fetching pull requests: ${error}`);
       throw error;
     });
 
@@ -118,7 +119,7 @@ export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      console.error("Axios error while fetching discussions:", error);
+      logger.debug(`Axios error while fetching discussions: ${error}`);
       throw error;
     });
 
@@ -146,7 +147,7 @@ export async function postDiscussionReply(
       },
     )
     .catch((error: unknown) => {
-      console.error("Axios error while posting discussion reply:", error);
+      logger.debug(`Axios error while posting discussion reply: ${error}`);
       throw error;
     });
 }
@@ -165,7 +166,7 @@ export async function updateDiscussionState(discussionId: string) {
       },
     )
     .catch((error: unknown) => {
-      console.error("Axios error while resolving discussion:", error);
+      logger.debug(`Axios error while resolving discussion: ${error}`);
       throw error;
     });
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { Issue, IssueContext } from "../issues/types";
+import { Issue, IssueContext, IssueMode } from "../issues/types";
 import { getIssueHandler } from "../issues/registry";
 
 interface IssueBrowserProps {
@@ -15,6 +15,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   onComplete,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentMode, setCurrentMode] = useState<IssueMode>("view");
 
   const currentIssue = issues[currentIndex];
   const hasNext = currentIndex < issues.length - 1;
@@ -27,18 +28,20 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     currentIndex,
     totalIssues: issues.length,
     hasNext,
+    mode: currentMode,
     moveToNext: () => {
       if (hasNext) {
         setCurrentIndex((prev) => prev + 1);
+        setCurrentMode("view");
       } else {
         onComplete();
       }
     },
     complete: onComplete,
+    setIssueMode: setCurrentMode,
   };
 
-  useInput(async (input, key) => {
-    // Let the issue type handler handle all input
+  useInput(async (input, _key) => {
     const result = await handler.handleInput(input, currentIssue, context);
 
     if (result.handled) {

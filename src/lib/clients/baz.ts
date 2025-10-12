@@ -170,18 +170,12 @@ export async function updateDiscussionState(discussionId: string) {
     });
 }
 
-// Fetch all issues for a PR (currently only discussions, but extensible)
 export async function fetchIssues(prId: string) {
   const discussions = await fetchDiscussions(prId);
-  // Wrap discussions as issues
   const discussionIssues = discussions.map((discussion) => ({
     type: "discussion" as const,
     data: discussion,
   }));
-
-  // Future: fetch other issue types and combine
-  // const tasks = await fetchTasks(prId);
-  // const taskIssues = tasks.map(task => ({ type: "task" as const, data: task }));
 
   return [...discussionIssues];
 }

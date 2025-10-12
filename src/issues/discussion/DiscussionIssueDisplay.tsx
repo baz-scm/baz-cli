@@ -8,28 +8,20 @@ interface DiscussionIssueDisplayProps {
   issue: Issue & { type: "discussion" };
   context: IssueContext;
   onReply: (text: string) => void;
-  onEnterReplyMode: (callback: () => void) => void;
 }
 
 const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
   issue,
   context,
   onReply,
-  onEnterReplyMode,
 }) => {
-  const [mode, setMode] = useState<"view" | "reply">("view");
   const [replyText, setReplyText] = useState("");
   const discussion = issue.data;
 
-  // Register the callback to enter reply mode
-  React.useEffect(() => {
-    onEnterReplyMode(() => setMode("reply"));
-  }, [onEnterReplyMode]);
-
   // Handle escape key to exit reply mode
-  useInput((input, key) => {
-    if (key.escape && mode === "reply") {
-      setMode("view");
+  useInput((_input, key) => {
+    if (key.escape && context.mode === "reply") {
+      context.setIssueMode("view");
     }
   });
 
@@ -89,7 +81,7 @@ const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
       )}
 
       {/* Reply Input */}
-      {mode === "reply" && (
+      {context.mode === "reply" && (
         <Box
           flexDirection="column"
           marginTop={1}
@@ -116,7 +108,7 @@ const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
       )}
 
       {/* Help text */}
-      {mode === "view" && (
+      {context.mode === "view" && (
         <Box marginTop={1}>
           <Text dimColor italic>
             r: reply • c: close • n: next • Ctrl+C: cancel

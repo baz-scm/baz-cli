@@ -35,6 +35,10 @@ export class TokenManager {
 
     try {
       const tokensData = readFileSync(TOKEN_FILE, "utf8");
+      if (!tokensData) {
+        return null;
+      }
+
       const tokens: StoredTokens = JSON.parse(tokensData);
 
       if (this.isTokenExpired(tokens)) {

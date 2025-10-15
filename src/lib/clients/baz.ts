@@ -1,19 +1,18 @@
 import { createAxiosClient } from "./axios/axios-client";
+import { env } from "../env-schema";
 
-const BASE_URL = process.env.BASE_URL
-  ? process.env.BASE_URL
-  : "https://main.baz.ninja";
-const COMMENTS_URL = `${BASE_URL}/api/v1/comments`;
-const PULL_REQUESTS_URL = `${BASE_URL}/api/v2/changes`;
-const REPOSITORIES_URL = `${BASE_URL}/api/v2/repositories`;
+const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
+const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
+const REPOSITORIES_URL = `${env.BAZ_BASE_URL}/api/v2/repositories`;
 
-const getDiffUrl = (prId: string) => `${BASE_URL}/api/v2/changes/${prId}/diff`;
+const getDiffUrl = (prId: string) =>
+  `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/diff`;
 const getDiscussionsUrl = (prId: string) =>
-  `${BASE_URL}/api/v1/changes/${prId}/discussions`;
+  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/discussions`;
 const getDiscussionUrl = (discussionId: string) =>
-  `${BASE_URL}/api/v1/discussions/${discussionId}`;
+  `${env.BAZ_BASE_URL}/api/v1/discussions/${discussionId}`;
 
-const axiosClient = createAxiosClient(BASE_URL);
+const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
 export interface Repository {
   id: string;
   fullName: string;

@@ -17,6 +17,7 @@ export function createAuthCommand(): Command {
         }
 
         await oauthFlow.authenticate(authConfig);
+        process.exit(0); // otherwise it waits for 30s till it exits
       } catch (error) {
         console.error(
           "❌ Authentication failed:",

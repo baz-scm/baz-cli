@@ -31,7 +31,7 @@ export class OAuthFlow {
     return OAuthFlow.instance;
   }
 
-  async authenticate(authConfig: AuthConfig): Promise<boolean> {
+  async authenticate(authConfig: AuthConfig) {
     const config = createInboundAppConfig(authConfig);
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
@@ -61,8 +61,6 @@ export class OAuthFlow {
     this.tokenManager.saveTokens(tokens);
     console.log("✅ Authentication successful! You are now logged in.");
     logger.debug("Authentication flow completed, exiting...");
-
-    return true;
   }
 
   private buildAuthorizationUrl(

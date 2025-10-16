@@ -1,24 +1,29 @@
 import React, { useState } from "react";
-import { Box, Text } from "ink";
+import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { Discussion } from "../lib/clients/baz";
-import DiffDisplayContainer from "./DiffDisplayContainer";
+import { Issue, IssueContext } from "../types";
+import DiffDisplayContainer from "../../components/DiffDisplayContainer";
 
-interface DiscussionDisplayProps {
-  discussion: Discussion;
-  prId: string;
-  mode: "view" | "reply";
+interface DiscussionIssueDisplayProps {
+  issue: Issue & { type: "discussion" };
+  context: IssueContext;
   onReply: (text: string) => void;
-  onCancelReply: () => void;
 }
 
-const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
-  discussion,
-  prId,
-  mode,
+const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
+  issue,
+  context,
   onReply,
 }) => {
   const [replyText, setReplyText] = useState("");
+  const discussion = issue.data;
+
+  // Handle escape key to exit reply mode
+  useInput((_input, key) => {
+    if (key.escape && context.mode === "reply") {
+      context.setIssueMode("view");
+    }
+  });
 
   const handleSubmit = () => {
     if (replyText.trim()) {
@@ -32,7 +37,7 @@ const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
       {/* Commented Code */}
       <DiffDisplayContainer
         key={discussion.id}
-        prId={prId}
+        prId={context.prId}
         commit={discussion.commit_sha}
         fileSelectionLines={
           new Map([
@@ -76,7 +81,7 @@ const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
       )}
 
       {/* Reply Input */}
-      {mode === "reply" && (
+      {context.mode === "reply" && (
         <Box
           flexDirection="column"
           marginTop={1}
@@ -101,8 +106,17 @@ const DiscussionDisplay: React.FC<DiscussionDisplayProps> = ({
           </Box>
         </Box>
       )}
+
+      {/* Help text */}
+      {context.mode === "view" && (
+        <Box marginTop={1}>
+          <Text dimColor italic>
+            r: reply • c: close • n: next • Ctrl+C: cancel
+          </Text>
+        </Box>
+      )}
     </Box>
   );
 };
 
-export default DiscussionDisplay;
+export default DiscussionIssueDisplay;

@@ -1,4 +1,5 @@
 import { createAxiosClient } from "./axios/axios-client";
+import { logger } from "../logger";
 import { env } from "../env-schema";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
@@ -32,7 +33,7 @@ export async function fetchRepositories(): Promise<Repository[]> {
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      console.error("Axios error while fetching repositories:", error);
+      logger.debug({ error }, "Axios error while fetching repositories");
       throw error;
     });
 
@@ -67,7 +68,7 @@ export async function fetchPRs(repoId: string): Promise<PullRequest[]> {
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      console.error("Axios error while fetching pull requests:", error);
+      logger.debug(`Axios error while fetching pull requests: ${error}`);
       throw error;
     });
 
@@ -117,7 +118,7 @@ export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      console.error("Axios error while fetching discussions:", error);
+      logger.debug(`Axios error while fetching discussions: ${error}`);
       throw error;
     });
 
@@ -145,7 +146,7 @@ export async function postDiscussionReply(
       },
     )
     .catch((error: unknown) => {
-      console.error("Axios error while posting discussion reply:", error);
+      logger.debug(`Axios error while posting discussion reply: ${error}`);
       throw error;
     });
 }
@@ -164,11 +165,20 @@ export async function updateDiscussionState(discussionId: string) {
       },
     )
     .catch((error: unknown) => {
-      console.error("Axios error while resolving discussion:", error);
+      logger.debug(`Axios error while resolving discussion: ${error}`);
       throw error;
     });
 }
 
+export async function fetchIssues(prId: string) {
+  const discussions = await fetchDiscussions(prId);
+  const discussionIssues = discussions.map((discussion) => ({
+    type: "discussion" as const,
+    data: discussion,
+  }));
+
+  return [...discussionIssues];
+}
 export interface Line {
   number?: number;
   content?: string;

@@ -40,6 +40,10 @@
     "open": "^10.2.0",
     "pino": "^9.11.0",
     "pino-pretty": "^13.1.1",
+    "rehype-parse": "^9.0.1",
+    "rehype-remark": "^10.0.1",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
     "zod": "^4.1.11"
   },
   "devDependencies": {

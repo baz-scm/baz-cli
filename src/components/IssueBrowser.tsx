@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, useInput } from "ink";
 import { Issue, IssueContext, IssueMode } from "../issues/types";
 import { getIssueHandler } from "../issues/registry";
 
@@ -21,6 +21,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const hasNext = currentIndex < issues.length - 1;
 
   const handler = getIssueHandler(currentIssue.type);
+  const ExplainComponent = handler.displayExplainComponent;
   const DisplayComponent = handler.displayComponent;
 
   const context: IssueContext = {
@@ -59,11 +60,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
 
   return (
     <Box flexDirection="column">
-      <Box marginBottom={1}>
-        <Text color="cyan">
-          Issue {currentIndex + 1} of {issues.length} ({currentIssue.type})
-        </Text>
-      </Box>
+      <ExplainComponent issue={currentIssue} />
 
       <DisplayComponent issue={currentIssue} context={context} />
     </Box>

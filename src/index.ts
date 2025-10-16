@@ -9,11 +9,12 @@ import RepositorySelectorContainer from "./components/RepositorySelectorContaine
 import RepositoryAutocompleteContainer from "./components/RepositoryAutocompleteContainer";
 import ReviewFlow from "./flows/Review";
 import { createAuthCommand } from "./commands/auth.js";
+import { MAIN_COLOR } from "./theme/colors";
 
 const program = new Command();
 
 console.log(
-  chalk.hex("#191970")(figlet.textSync("Baz CLI", { font: "DOS Rebel" })),
+  chalk.hex(MAIN_COLOR)(figlet.textSync("Baz CLI", { font: "DOS Rebel" })),
 );
 
 program.name("Baz CLI").version("0.1.0");

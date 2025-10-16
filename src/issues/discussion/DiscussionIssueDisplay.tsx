@@ -54,32 +54,6 @@ const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
         outdated={discussion.outdated}
       />
 
-      {/* Comments */}
-      {discussion.comments.length > 0 && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Text dimColor>{discussion.comments.length} comment(s):</Text>
-          {discussion.comments.map((comment) => (
-            <Box
-              key={comment.id}
-              marginTop={1}
-              paddingLeft={2}
-              borderStyle="single"
-              borderColor="gray"
-            >
-              <Box flexDirection="column">
-                <Text color="yellow">
-                  {comment.author_user
-                    ? comment.author_user.display_name
-                    : comment.author.split("/").pop() || comment.author}
-                  :
-                </Text>
-                <Text>{comment.comment_body}</Text>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-      )}
-
       {/* Reply Input */}
       {context.mode === "reply" && (
         <Box

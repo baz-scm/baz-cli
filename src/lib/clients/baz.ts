@@ -98,6 +98,7 @@ export interface AuthorUser {
 export interface Comment {
   id: string;
   comment_body: string;
+  body_content_type: "html" | "markdown";
   author: string;
   author_user?: AuthorUser;
 }

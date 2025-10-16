@@ -42,6 +42,10 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   };
 
   useInput(async (input, _key) => {
+    if (currentMode === "reply") {
+      return;
+    }
+
     const result = await handler.handleInput(input, currentIssue, context);
 
     if (result.handled) {

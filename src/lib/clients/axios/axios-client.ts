@@ -1,8 +1,6 @@
 import axios, { CreateAxiosDefaults } from "axios";
 import { CLITokenManager } from "./cli-token-mgr";
 import axiosRetry from "axios-retry";
-import { WebTokenManager } from "./web-token-mgr";
-import { env } from "../../env-schema";
 import chalk from "chalk";
 
 export interface TokenManager {
@@ -10,22 +8,14 @@ export interface TokenManager {
   resetToken: () => void;
 }
 
-const isCLi = env.RUNTIME_ENV === "CLI";
-
 export const createAxiosClient = (baseURL: string) => {
   const opts: CreateAxiosDefaults = {
     baseURL,
   };
 
-  if (!isCLi) {
-    opts.withCredentials = true;
-  }
-
   const axiosClient = axios.create(opts);
 
-  const tokenMgr: TokenManager = isCLi
-    ? new CLITokenManager()
-    : new WebTokenManager();
+  const tokenMgr: TokenManager = new CLITokenManager();
 
   axiosClient.interceptors.request.use(function (config) {
     const token = tokenMgr.getToken();

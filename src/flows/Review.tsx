@@ -4,6 +4,7 @@ import { PullRequest, Repository } from "../lib/clients/baz.js";
 import RepositoryAutocompleteContainer from "../components/RepositoryAutocompleteContainer";
 import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer";
 import IssueBrowserContainer from "../components/IssueBrowserContainer";
+import HeaderDisplay from "../components/HeaderDisplay";
 
 type FlowState =
   | { step: "handleRepoSelect" }
@@ -14,7 +15,7 @@ type FlowState =
       selectedPR: PullRequest;
     };
 
-const ReviewFlow: React.FC = () => {
+const InternalReviewFlow: React.FC = () => {
   const [flowState, setFlowState] = useState<FlowState>({
     step: "handleRepoSelect",
   });
@@ -114,4 +115,11 @@ const ReviewFlow: React.FC = () => {
   }
 };
 
+const ReviewFlow = () => (
+  <>
+    <HeaderDisplay />
+
+    <InternalReviewFlow />
+  </>
+);
 export default ReviewFlow;

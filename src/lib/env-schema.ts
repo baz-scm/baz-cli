@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { config } from "dotenv";
 
-config();
+config({ quiet: true });
 
 const envSchema = z.object({
   NODE_ENV: z

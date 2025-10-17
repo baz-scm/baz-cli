@@ -18,7 +18,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Create Baz binary
-        run: bun build --compile --outfile baz ./src/index.ts
+        run: |
+          bun install
+          
+          # bun complains about it, but it is only imported dynamically for development
+          mkdir -p node_modules/react-devtools-core
+          echo "export default {};" > node_modules/react-devtools-core/index.js
+          
+          bun build --compile --outfile baz ./src/index.ts
       - name: Upload Baz binary
         uses: actions/upload-artifact@v4
         with:

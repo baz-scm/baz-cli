@@ -25,21 +25,17 @@ export const discussionIssueHandler: IssueTypeHandler<
           ? parseHtmlToMarkdown(comment.comment_body)
           : comment.comment_body;
 
-      const textBody = commentBody.split("\n").map((line) => {
-        if (line) {
-          return <Text>{line}</Text>;
-        } else {
-          // `<Newline>` creates a too big gap between lines
-          return <Text> </Text>;
-        }
-      });
+      const textBody = commentBody.split("\n").map((line, idx) => (
+        // `<Newline>` creates a too big gap between lines
+        <Text key={`${comment.id}-${idx}`}>{line || " "}</Text>
+      ));
 
       return (
-        <Box flexDirection="column" marginBottom={1}>
-          <Box>
+        <Box key={comment.id} flexDirection="column" marginBottom={1}>
+          <Text>
             <Text bold>{`${user}: `}</Text>
             {textBody[0]}
-          </Box>
+          </Text>
           {textBody.slice(1)}
         </Box>
       );

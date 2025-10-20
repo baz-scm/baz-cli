@@ -3,11 +3,6 @@ on:
   push:
     branches:
       - main
-  pull_request: # TODO: remove after testing
-    types:
-      - opened
-      - synchronize
-      - reopened
   workflow_dispatch:
 
 jobs:

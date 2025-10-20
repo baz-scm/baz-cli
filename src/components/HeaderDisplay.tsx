@@ -1,10 +1,11 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { MAIN_COLOR } from "../theme/colors";
 
 const HeaderDisplay: React.FC = () => (
   <Box
     key="static-header"
-    borderColor="#191970"
+    borderColor={MAIN_COLOR}
     borderStyle="round"
     flexDirection="column"
   >

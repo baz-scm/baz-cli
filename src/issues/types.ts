@@ -26,6 +26,9 @@ export interface IssueInputResult {
 }
 
 export interface IssueTypeHandler<T extends Issue = Issue> {
+  displayExplainComponent: React.ComponentType<{
+    issue: T;
+  }>;
   displayComponent: React.ComponentType<{
     issue: T;
     context: IssueContext;

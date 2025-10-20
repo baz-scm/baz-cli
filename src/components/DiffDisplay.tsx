@@ -2,13 +2,16 @@ import React from "react";
 import { Box, Text } from "ink";
 import { FileDiff } from "../lib/clients/baz";
 import { FileSelectionLines } from "../models/Diff";
+import {
+  DIFF_ADDED_LINE_COLOR,
+  DIFF_DELETED_LINE_COLOR,
+  DIFF_SELECTED_LINE_COLOR,
+  TABLE_HEADER_COLOR,
+} from "../theme/colors";
 
 const MAX_ADDED_VIEW_LINES = 3;
-const ADDED_LINE_COLOR = "#9AFF9A";
 const ADDED_LINE_PREFIX = "+";
-const DELETED_LINE_COLOR = "#FF82AB";
 const DELETED_LINE_PREFIX = "-";
-const SELECTED_LINE_COLOR = "#FFF59D";
 
 interface DiffDisplayProps {
   fileDiffs: FileDiff[];
@@ -51,9 +54,9 @@ const DiffDisplay: React.FC<DiffDisplayProps> = ({
             <Box
               key={`${file.diff.file_relative_path}-header`}
               paddingX={1}
-              backgroundColor="#D3D3D3"
+              backgroundColor={TABLE_HEADER_COLOR}
             >
-              <Text>{file.diff.file_relative_path}</Text>
+              <Text>{`☰ ${file.diff.file_relative_path}`}</Text>
               <Text bold color="red">
                 {outdated ? " outdated" : ""}
               </Text>
@@ -100,31 +103,31 @@ const DiffDisplay: React.FC<DiffDisplayProps> = ({
 
                     if (line.line_type === "Added") {
                       rightPrefix = ADDED_LINE_PREFIX;
-                      rightColor = ADDED_LINE_COLOR;
+                      rightColor = DIFF_ADDED_LINE_COLOR;
                     } else if (line.line_type === "Deleted") {
                       leftPrefix = DELETED_LINE_PREFIX;
-                      leftColor = DELETED_LINE_COLOR;
+                      leftColor = DIFF_DELETED_LINE_COLOR;
                     } else if (line.line_type === "Changed") {
                       // in this case we have old and new content
                       if (line.content != null) {
                         leftPrefix = DELETED_LINE_PREFIX;
-                        leftColor = DELETED_LINE_COLOR;
+                        leftColor = DIFF_DELETED_LINE_COLOR;
                       }
                       if (line.new_content != null) {
                         rightPrefix = ADDED_LINE_PREFIX;
-                        rightColor = ADDED_LINE_COLOR;
+                        rightColor = DIFF_ADDED_LINE_COLOR;
                       }
                     }
 
                     if (selectionSide === "left") {
                       const num = line.number ?? 0;
                       if (num >= selectionStart && num <= selectionEnd) {
-                        leftColor = SELECTED_LINE_COLOR;
+                        leftColor = DIFF_SELECTED_LINE_COLOR;
                       }
                     } else {
                       const newNum = line.new_line_number ?? 0;
                       if (newNum >= selectionStart && newNum <= selectionEnd) {
-                        rightColor = SELECTED_LINE_COLOR;
+                        rightColor = DIFF_SELECTED_LINE_COLOR;
                       }
                     }
 

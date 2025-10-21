@@ -2,7 +2,7 @@ import { InboundAppConfig, AuthConfig } from "./types.js";
 import { env } from "../lib/env-schema.js";
 import { config } from "dotenv";
 
-config();
+config({ quiet: true });
 
 export function createInboundAppConfig(
   authConfig: AuthConfig,

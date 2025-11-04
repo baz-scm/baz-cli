@@ -11,6 +11,7 @@ import {
 import { TokenManager } from "./token-manager.js";
 import open from "open";
 import { logger } from "../lib/logger.js";
+import { env } from "../lib/env-schema.js";
 import axios from "axios";
 import axiosRetry from "axios-retry";
 
@@ -32,6 +33,7 @@ export class OAuthFlow {
   }
 
   async authenticate(authConfig: AuthConfig) {
+    const redirectUri = `http://localhost:${env.OAUTH_CALLBACK_PORT}/callback`;
     const config = createInboundAppConfig(authConfig);
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
@@ -42,6 +44,7 @@ export class OAuthFlow {
       authConfig,
       state,
       codeChallenge,
+      redirectUri,
     );
 
     await open(authUrl);
@@ -55,6 +58,7 @@ export class OAuthFlow {
       codeVerifier,
       config,
       authConfig,
+      redirectUri,
     );
     logger.debug("Tokens received, saving...");
 
@@ -68,11 +72,12 @@ export class OAuthFlow {
     authConfig: AuthConfig,
     state: string,
     codeChallenge: string,
+    redirectUri: string,
   ): string {
     const params = new URLSearchParams({
       response_type: "code",
       client_id: authConfig.clientId,
-      redirect_uri: authConfig.redirectUri,
+      redirect_uri: redirectUri,
       scope: authConfig.scopes.join(" "),
       state: state,
       code_challenge: codeChallenge,
@@ -105,9 +110,9 @@ export class OAuthFlow {
         },
       );
 
-      server.listen(8020, () => {
+      server.listen(env.OAUTH_CALLBACK_PORT, () => {
         logger.debug(
-          "Waiting for OAuth callback on http://localhost:8020/callback",
+          `Waiting for OAuth callback on http://localhost:${env.OAUTH_CALLBACK_PORT}/callback`,
         );
       });
 
@@ -136,7 +141,6 @@ export class OAuthFlow {
     server: Server,
     timeoutId: NodeJS.Timeout,
   ): void {
-    console.log("IN CALLBACK");
     const errorCode = url.searchParams.get("error");
     if (errorCode) {
       const errorDesc =
@@ -189,12 +193,13 @@ export class OAuthFlow {
     codeVerifier: string,
     config: InboundAppConfig,
     authConfig: AuthConfig,
+    redirectUri: string,
   ): Promise<TokenResponse> {
     const tokenParams = new URLSearchParams({
       grant_type: "authorization_code",
       client_id: authConfig.clientId,
       code: code,
-      redirect_uri: authConfig.redirectUri,
+      redirect_uri: redirectUri,
       code_verifier: codeVerifier,
     });
 

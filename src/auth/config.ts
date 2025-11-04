@@ -44,6 +44,5 @@ export const authConfig: AuthConfig = {
   baseUrl: env.DESCOPE_BASE_URL,
   projectId: env.DESCOPE_PROJECT_ID,
   clientId: env.DESCOPE_CLIENT_ID,
-  redirectUri: env.DESCOPE_REDIRECT_URI,
   scopes: ["openid"],
 };

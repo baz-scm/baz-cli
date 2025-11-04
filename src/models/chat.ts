@@ -46,3 +46,9 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
+
+export interface MentionableUser {
+  id: string;
+  name: string;
+  login: string;
+}

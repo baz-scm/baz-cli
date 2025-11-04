@@ -1,10 +1,16 @@
 import { createAxiosClient } from "./axios/axios-client";
 import { logger } from "../logger";
 import { env } from "../env-schema";
+import {
+  CheckoutChatRequest,
+  ChatStreamMessage,
+  ChatStreamChunk,
+} from "../types/chat";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
 const REPOSITORIES_URL = `${env.BAZ_BASE_URL}/api/v2/repositories`;
+const CHAT_URL = `${env.BAZ_BASE_URL}/api/v2/checkout/chat`;
 
 const getDiffUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/diff`;
@@ -234,4 +240,57 @@ export async function fetchFileDiffs(
     });
 
   return repos.fileDiffs;
+}
+
+export async function* streamChatResponse(
+  request: CheckoutChatRequest,
+): AsyncGenerator<ChatStreamChunk, void, unknown> {
+  try {
+    const response = await axiosClient.post(CHAT_URL, request, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      responseType: "stream",
+    });
+
+    let buffer = "";
+
+    for await (const chunk of response.data) {
+      buffer += chunk.toString();
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+
+        try {
+          const message = JSON.parse(line) as ChatStreamMessage;
+
+          if (message.type === "message_start" && message.conversationId) {
+            yield { conversationId: message.conversationId };
+          } else if (message.type === "message_delta" && message.content) {
+            yield { content: message.content };
+          }
+        } catch (parseError) {
+          logger.debug({ parseError, line }, "Failed to parse NDJSON line");
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      try {
+        const message = JSON.parse(buffer) as ChatStreamMessage;
+        if (message.type === "message_start" && message.conversationId) {
+          yield { conversationId: message.conversationId };
+        } else if (message.type === "message_delta" && message.content) {
+          yield { content: message.content };
+        }
+      } catch (parseError) {
+        logger.debug({ parseError, buffer }, "Failed to parse final buffer");
+      }
+    }
+  } catch (error: unknown) {
+    logger.error({ error }, "Error streaming chat response");
+    throw error;
+  }
 }

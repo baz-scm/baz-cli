@@ -1,26 +1,32 @@
 import { Discussion } from "../lib/clients/baz";
 
-export type IssueMode = "view" | "reply";
-
 export type Issue = {
   type: "discussion";
   data: Discussion;
 };
 // Future issue types can be added here:
 // | { type: "ImplementationMisalignment"; data: ImplementationMisalignment }
+
+export interface IssueCommand {
+  command: string;
+  description: string;
+  aliases?: string[];
+}
+
 export interface IssueContext {
   prId: string;
+  repoId: string;
   currentIndex: number;
   totalIssues: number;
   hasNext: boolean;
-  mode: IssueMode;
+  conversationId?: string;
   moveToNext: () => void;
   complete: () => void;
-  setIssueMode: (mode: IssueMode) => void;
+  setConversationId: (id: string) => void;
+  onChatSubmit: (message: string) => Promise<void>;
 }
 
-export interface IssueInputResult {
-  handled: boolean;
+export interface CommandResult {
   shouldMoveNext?: boolean;
   shouldComplete?: boolean;
 }
@@ -33,9 +39,11 @@ export interface IssueTypeHandler<T extends Issue = Issue> {
     issue: T;
     context: IssueContext;
   }>;
-  handleInput: (
-    input: string,
+  getCommands: (issue: T, context: IssueContext) => IssueCommand[];
+  handleCommand: (
+    command: string,
+    args: string,
     issue: T,
     context: IssueContext,
-  ) => Promise<IssueInputResult>;
+  ) => Promise<CommandResult>;
 }

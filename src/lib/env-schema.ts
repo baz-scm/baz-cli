@@ -18,7 +18,7 @@ const envSchema = z.object({
     .default(
       "UDJaMk8zMGFMaWVKSXF2OGduTWtiSWczZjIyUzpUUEEzM2dPRjhreE51YXR4ckd3Wkw4M0FjdW9EWlo=",
     ),
-  DESCOPE_REDIRECT_URI: z.string().default("http://localhost:8080/callback"),
+  DESCOPE_REDIRECT_URI: z.string().default("http://localhost:8020/callback"),
 });
 
 export const env = envSchema.parse(process.env);

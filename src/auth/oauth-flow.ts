@@ -105,9 +105,9 @@ export class OAuthFlow {
         },
       );
 
-      server.listen(8080, () => {
+      server.listen(8020, () => {
         logger.debug(
-          "Waiting for OAuth callback on http://localhost:8080/callback",
+          "Waiting for OAuth callback on http://localhost:8020/callback",
         );
       });
 
@@ -136,6 +136,7 @@ export class OAuthFlow {
     server: Server,
     timeoutId: NodeJS.Timeout,
   ): void {
+    console.log("IN CALLBACK");
     const errorCode = url.searchParams.get("error");
     if (errorCode) {
       const errorDesc =

@@ -1,5 +1,5 @@
 import React from "react";
-import { Issue, IssueTypeHandler } from "../types";
+import { Issue, IssueTypeHandler, IssueCommand } from "../types";
 import DiscussionIssueDisplay from "./DiscussionIssueDisplay";
 import {
   postDiscussionReply,
@@ -47,63 +47,73 @@ export const discussionIssueHandler: IssueTypeHandler<
   displayComponent: (props) => {
     const { issue, context } = props;
 
-    const handleReply = async (replyText: string) => {
-      try {
-        await postDiscussionReply(issue.data.id, replyText, context.prId);
-        context.setIssueMode("view");
-        if (context.hasNext) {
-          context.moveToNext();
-        } else {
-          context.complete();
-        }
-      } catch (error) {
-        console.error("Failed to reply to discussion:", error);
-      }
-    };
-
-    return (
-      <DiscussionIssueDisplay
-        issue={issue}
-        context={context}
-        onReply={handleReply}
-      />
-    );
+    return <DiscussionIssueDisplay issue={issue} context={context} />;
   },
 
-  handleInput: async (input, issue, context) => {
-    switch (input) {
-      case "r":
-        // Enter reply mode
-        if (context.mode === "view") {
-          context.setIssueMode("reply");
-          return { handled: true };
-        }
-        return { handled: false };
+  getCommands: (_issue, context): IssueCommand[] => {
+    return [
+      {
+        command: "/reply <text>",
+        description: "Post a reply comment to this discussion",
+        aliases: ["/r"],
+      },
+      {
+        command: "/close",
+        description: "Close and resolve this discussion",
+        aliases: ["/c"],
+      },
+      {
+        command: "/next",
+        description: context.hasNext
+          ? "Move to the next issue"
+          : "Complete the review (no more issues)",
+        aliases: ["/n"],
+      },
+    ];
+  },
 
-      case "c":
-        // Close/resolve discussion
+  handleCommand: async (command, args, issue, context) => {
+    switch (command) {
+      case "reply":
+      case "r":
+        if (!args.trim()) {
+          console.error("Usage: /reply <text>");
+          return {};
+        }
         try {
-          await updateDiscussionState(issue.data.id);
+          await postDiscussionReply(issue.data.id, args, context.prId);
           return {
-            handled: true,
             shouldMoveNext: context.hasNext,
             shouldComplete: !context.hasNext,
           };
         } catch (error) {
-          console.error("Failed to resolve discussion:", error);
-          return { handled: true };
+          console.error("Failed to reply to discussion:", error);
+          return {};
         }
 
+      case "close":
+      case "c":
+        try {
+          await updateDiscussionState(issue.data.id);
+          return {
+            shouldMoveNext: context.hasNext,
+            shouldComplete: !context.hasNext,
+          };
+        } catch (error) {
+          console.error("Failed to close discussion:", error);
+          return {};
+        }
+
+      case "next":
       case "n":
-        // Next discussion
         return {
-          handled: true,
           shouldMoveNext: context.hasNext,
           shouldComplete: !context.hasNext,
         };
 
       default:
-        return { handled: false };
+        console.error(`Unknown command: /${command}`);
+        return {};
     }
   },
 };

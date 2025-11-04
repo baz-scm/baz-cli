@@ -5,7 +5,7 @@ import {
   CheckoutChatRequest,
   ChatStreamMessage,
   ChatStreamChunk,
-} from "../types/chat";
+} from "../../models/chat";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;

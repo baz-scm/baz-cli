@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
-import { ChatMessage } from "../lib/types/chat";
+import { ChatMessage } from "../models/chat";
 import { IssueCommand } from "../issues/types";
 
 interface ChatDisplayProps {

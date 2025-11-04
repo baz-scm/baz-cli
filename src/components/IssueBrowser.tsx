@@ -3,9 +3,9 @@ import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types";
 import { getIssueHandler } from "../issues/registry";
 import ChatDisplay from "./ChatDisplay";
-import { ChatMessage } from "../lib/types/chat";
+import { ChatMessage } from "../models/chat";
 import { streamChatResponse } from "../lib/clients/baz";
-import { IssueType } from "../lib/types/chat";
+import { IssueType } from "../models/chat";
 
 interface IssueBrowserProps {
   issues: Issue[];

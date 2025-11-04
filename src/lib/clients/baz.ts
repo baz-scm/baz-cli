@@ -18,6 +18,8 @@ const getDiscussionsUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/discussions`;
 const getDiscussionUrl = (discussionId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/discussions/${discussionId}`;
+const getEligibleReviewersUrl = (prId: string) =>
+  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/eligible-reviewers`;
 
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
 export interface Repository {
@@ -112,6 +114,19 @@ export interface DiscussionsResponse {
   discussions: Discussion[];
 }
 
+export interface ChangeReviewer {
+  id: string;
+  reviewer_type: string;
+  name: string;
+  login?: string;
+  avatar_url?: string;
+  group_members_count?: number;
+}
+
+export interface CodeChangeReviewersResponse {
+  reviewers: ChangeReviewer[];
+}
+
 export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
   const repos = await axiosClient
     .get<DiscussionsResponse>(getDiscussionsUrl(prId), {
@@ -129,6 +144,24 @@ export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
     });
 
   return repos.discussions;
+}
+
+export async function fetchEligibleReviewers(
+  prId: string,
+): Promise<ChangeReviewer[]> {
+  const response = await axiosClient
+    .get<CodeChangeReviewersResponse>(getEligibleReviewersUrl(prId), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((value) => value.data)
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while fetching eligible reviewers: ${error}`);
+      throw error;
+    });
+
+  return response.reviewers;
 }
 
 export async function postDiscussionReply(

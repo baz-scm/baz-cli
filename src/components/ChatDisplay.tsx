@@ -77,7 +77,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   return (
     <Box flexDirection="column">
       {messages.length > 0 && (
-        <Box flexDirection="column" marginBottom={1}>
+        <Box flexDirection="column" marginBottom={0}>
           {messages.map((message, index) => (
             <Box key={index} flexDirection="column" marginBottom={1}>
               <Text bold color={message.role === "user" ? "cyan" : "yellow"}>

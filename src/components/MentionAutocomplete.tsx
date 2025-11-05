@@ -20,7 +20,11 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
 
   const filteredReviewers: MentionableUser[] = reviewers
     .filter((reviewer): reviewer is ChangeReviewer & { login: string } => {
-      return reviewer.login !== undefined && reviewer.login !== null;
+      return (
+        reviewer.login !== undefined &&
+        reviewer.login !== null &&
+        reviewer.reviewer_type !== "group"
+      );
     })
     .filter((reviewer) => {
       const query = searchQuery.toLowerCase();

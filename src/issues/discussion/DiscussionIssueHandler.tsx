@@ -1,14 +1,14 @@
 import React from "react";
-import { Issue, IssueTypeHandler, IssueCommand } from "../types";
-import DiscussionIssueDisplay from "./DiscussionIssueDisplay";
+import { Issue, IssueTypeHandler, IssueCommand } from "../types.js";
+import DiscussionIssueDisplay from "./DiscussionIssueDisplay.js";
 import {
   postDiscussionReply,
   updateDiscussionState,
-} from "../../lib/clients/baz";
-import IssueExplanationDisplay from "../common/IssueExplanationDisplay";
-import { parseHtmlToMarkdown } from "../../lib/parser";
+} from "../../lib/clients/baz.js";
+import IssueExplanationDisplay from "../common/IssueExplanationDisplay.js";
+import { parseHtmlToMarkdown } from "../../lib/parser.js";
 import { Box, Text } from "ink";
-import { IssueType } from "../../models/chat";
+import { IssueType } from "../../models/chat.js";
 
 export const discussionIssueHandler: IssueTypeHandler<
   Issue & { type: "discussion" }

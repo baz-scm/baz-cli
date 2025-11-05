@@ -3,29 +3,53 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+    paths-ignore:
+      - '.github/**'
+
+permissions:
+  contents: read
 
 jobs:
-  upload-binary:
-    runs-on: macos-latest
+  release-please:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write # for googleapis/release-please-action to create release commit
+      issues: write # for googleapis/release-please-action to create labels
+      pull-requests: write # for googleapis/release-please-action to create release PR
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.CI_GITHUB_APP_ID }}
+          private-key: ${{ secrets.CI_GITHUB_APP_PRIVATE_KEY }}
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          target-branch: main
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      release_tag_name: ${{ steps.release.outputs.tag_name }}
+
+  release:
+    if: ${{ needs.release-please.outputs.release_created }}
+    needs: release-please
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write # for npm to create release with provenance
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Create Baz binary
-        run: |
-          bun install
-          
-          # bun complains about it, but it is only imported dynamically for development
-          mkdir -p node_modules/react-devtools-core
-          echo "export default {};" > node_modules/react-devtools-core/index.js
-          
-          bun build --compile --outfile baz ./src/index.ts
-      - name: Upload Baz binary
-        uses: actions/upload-artifact@v4
+      - uses: actions/setup-node@v6
         with:
-          name: baz
-          path: baz
-          if-no-files-found: error
-          retention-days: 30
-          overwrite: true
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+      - name: Install dependencies
+        run: npm ci
+      - name: Build project
+        run: npm build
+      - name: Publish release to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

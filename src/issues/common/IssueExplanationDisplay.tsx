@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { MAIN_COLOR } from "../../theme/colors";
+import { MAIN_COLOR } from "../../theme/colors.js";
 
 interface IssueExplanationDisplayProps {
   title: string;

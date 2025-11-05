@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
-import RepositorySelector from "./RepositorySelector";
+import RepositorySelector from "./RepositorySelector.js";
 import { useRepositories } from "../hooks/useRepositories.js";
-import { Repository } from "../lib/clients/baz";
+import { Repository } from "../lib/clients/baz.js";
 
 interface RepositorySelectorContainerProps {
   onSelect: (repo: Repository) => void;

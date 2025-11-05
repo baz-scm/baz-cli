@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchFileDiffs, FileDiff } from "../lib/clients/baz";
+import { fetchFileDiffs, FileDiff } from "../lib/clients/baz.js";
 
 export function useFileDiffs(prId: string, commit: string, files: string[]) {
   const [data, setData] = useState<FileDiff[]>([]);

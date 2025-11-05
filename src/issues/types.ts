@@ -1,5 +1,5 @@
-import { Discussion } from "../lib/clients/baz";
-import { IssueType } from "../models/chat";
+import { Discussion } from "../lib/clients/baz.js";
+import { IssueType } from "../models/chat.js";
 
 export type Issue = {
   type: "discussion";

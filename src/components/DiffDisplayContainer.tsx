@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
-import { useFileDiffs } from "../hooks/useFileDiffs";
-import DiffDisplay from "./DiffDisplay";
-import { FileSelectionLines } from "../models/Diff";
+import { useFileDiffs } from "../hooks/useFileDiffs.js";
+import DiffDisplay from "./DiffDisplay.js";
+import { FileSelectionLines } from "../models/Diff.js";
 
 interface DiffDisplayContainerProps {
   prId: string;

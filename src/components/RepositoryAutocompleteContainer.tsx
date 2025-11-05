@@ -3,7 +3,7 @@ import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import RepositoryAutocomplete from "./RepositoryAutocomplete.js";
 import { useRepositories } from "../hooks/useRepositories.js";
-import { Repository } from "../lib/clients/baz";
+import { Repository } from "../lib/clients/baz.js";
 
 interface RepositoryAutocompleteContainerProps {
   onSelect: (repo: Repository) => void;

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import { PullRequest, Repository } from "../lib/clients/baz.js";
-import RepositoryAutocompleteContainer from "../components/RepositoryAutocompleteContainer";
-import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer";
-import IssueBrowserContainer from "../components/IssueBrowserContainer";
-import HeaderDisplay from "../components/HeaderDisplay";
+import RepositoryAutocompleteContainer from "../components/RepositoryAutocompleteContainer.js";
+import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer.js";
+import IssueBrowserContainer from "../components/IssueBrowserContainer.js";
+import HeaderDisplay from "../components/HeaderDisplay.js";
 
 type FlowState =
   | { step: "handleRepoSelect" }

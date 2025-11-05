@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Box } from "ink";
-import { Issue, IssueContext } from "../issues/types";
-import { getIssueHandler } from "../issues/registry";
-import ChatDisplay from "./ChatDisplay";
-import { ChatMessage } from "../models/chat";
-import { streamChatResponse } from "../lib/clients/baz";
+import { Issue, IssueContext } from "../issues/types.js";
+import { getIssueHandler } from "../issues/registry.js";
+import ChatDisplay from "./ChatDisplay.js";
+import { ChatMessage } from "../models/chat.js";
+import { streamChatResponse } from "../lib/clients/baz.js";
 
 interface IssueBrowserProps {
   issues: Issue[];

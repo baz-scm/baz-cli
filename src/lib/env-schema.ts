@@ -9,7 +9,7 @@ const envSchema = z.object({
     .default("development"),
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug"])
-    .default("info"),
+    .default("warn"),
   BAZ_BASE_URL: z.string().default("https://main.baz.ninja"),
   DESCOPE_BASE_URL: z.string().default("https://api.descope.com"),
   DESCOPE_PROJECT_ID: z.string().default("P2Z2O30aLieJIqv8gnMkbIg3f22S"),

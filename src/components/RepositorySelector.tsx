@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { Repository } from "../lib/clients/baz";
+import { Repository } from "../lib/clients/baz.js";
 
 interface RepoSelectorProps {
   repositories: Repository[];

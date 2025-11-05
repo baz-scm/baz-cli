@@ -15,12 +15,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
       - name: install dependencies
         run: npm ci
       - name: run lint
         run: npm run lint
       - name: run prettier
         run: npm run format:check
+
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build project
+        run: npm run build
+      - name: Create package
+        id: package
+        run: |
+          filename=$(npm pack --json | jq -r '.[0].filename')
+          
+          echo "filename=$filename" >> $GITHUB_OUTPUT
+      - name: Install package
+        run: npm install -g ${{ steps.package.outputs.filename }}
+      - name: Sanity check
+        run: baz -h

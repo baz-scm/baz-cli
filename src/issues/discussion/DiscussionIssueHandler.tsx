@@ -8,6 +8,7 @@ import {
 import IssueExplanationDisplay from "../common/IssueExplanationDisplay";
 import { parseHtmlToMarkdown } from "../../lib/parser";
 import { Box, Text } from "ink";
+import { IssueType } from "../../models/chat";
 
 export const discussionIssueHandler: IssueTypeHandler<
   Issue & { type: "discussion" }
@@ -115,5 +116,9 @@ export const discussionIssueHandler: IssueTypeHandler<
         console.error(`Unknown command: /${command}`);
         return {};
     }
+  },
+
+  getApiIssueType: (_issue) => {
+    return IssueType.DISCUSSION;
   },
 };

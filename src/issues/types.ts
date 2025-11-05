@@ -1,4 +1,5 @@
 import { Discussion } from "../lib/clients/baz";
+import { IssueType } from "../models/chat";
 
 export type Issue = {
   type: "discussion";
@@ -46,4 +47,5 @@ export interface IssueTypeHandler<T extends Issue = Issue> {
     issue: T,
     context: IssueContext,
   ) => Promise<CommandResult>;
+  getApiIssueType: (issue: T) => IssueType;
 }

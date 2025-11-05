@@ -5,7 +5,6 @@ import { getIssueHandler } from "../issues/registry";
 import ChatDisplay from "./ChatDisplay";
 import { ChatMessage } from "../models/chat";
 import { streamChatResponse } from "../lib/clients/baz";
-import { IssueType } from "../models/chat";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -58,7 +57,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         repoId,
         prId,
         issue: {
-          type: IssueType.DISCUSSION,
+          type: handler.getApiIssueType(currentIssue),
           data: {
             id: currentIssue.data.id,
           },

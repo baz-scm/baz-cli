@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "ink";
-import { Issue, IssueContext } from "../types";
-import DiffDisplayContainer from "../../components/DiffDisplayContainer";
+import { Issue, IssueContext } from "../types.js";
+import DiffDisplayContainer from "../../components/DiffDisplayContainer.js";
 
 interface DiscussionIssueDisplayProps {
   issue: Issue & { type: "discussion" };

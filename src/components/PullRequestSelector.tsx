@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { PullRequest } from "../lib/clients/baz";
+import { PullRequest } from "../lib/clients/baz.js";
 
 interface PullRequestSelectorProps {
   pullRequests: PullRequest[];

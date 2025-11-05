@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchRepositories, Repository } from "../lib/clients/baz";
+import { fetchRepositories, Repository } from "../lib/clients/baz.js";
 
 export function useRepositories() {
   const [data, setData] = useState<Repository[]>([]);

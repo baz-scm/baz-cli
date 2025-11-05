@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { fetchIssues } from "../lib/clients/baz";
-import { Issue } from "../issues/types";
+import { fetchIssues } from "../lib/clients/baz.js";
+import { Issue } from "../issues/types.js";
 
 export function useIssues(prId: string) {
   const [data, setData] = useState<Issue[]>([]);

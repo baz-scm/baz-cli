@@ -1,11 +1,11 @@
-import { createAxiosClient } from "./axios/axios-client";
-import { logger } from "../logger";
-import { env } from "../env-schema";
+import { createAxiosClient } from "./axios/axios-client.js";
+import { logger } from "../logger.js";
+import { env } from "../env-schema.js";
 import {
   CheckoutChatRequest,
   ChatStreamMessage,
   ChatStreamChunk,
-} from "../../models/chat";
+} from "../../models/chat.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
@@ -63,9 +63,8 @@ export async function fetchPRs(repoId: string): Promise<PullRequest[]> {
       headers: {
         "Content-Type": "application/json",
       },
-      // TODO: fix the extra repo ID needed here or adjust the API to allow both string and array of strings
       params: {
-        repositories: ["00000000-0000-0000-0000-000000000000", repoId],
+        repositories: repoId,
         state: "open",
       },
       paramsSerializer: {

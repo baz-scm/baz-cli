@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { Repository } from "../lib/clients/baz";
+import { Repository } from "../lib/clients/baz.js";
 
 interface RepositoryAutocompleteProps {
   repositories: Repository[];

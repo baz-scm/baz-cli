@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchPRs, PullRequest } from "../lib/clients/baz";
+import { fetchPRs, PullRequest } from "../lib/clients/baz.js";
 
 export function usePullRequests(repoId: string) {
   const [data, setData] = useState<PullRequest[]>([]);

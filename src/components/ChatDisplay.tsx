@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
-import { ChatMessage } from "../models/chat";
-import { IssueCommand } from "../issues/types";
+import { ChatMessage } from "../models/chat.js";
+import { IssueCommand } from "../issues/types.js";
 
 interface ChatDisplayProps {
   messages: ChatMessage[];

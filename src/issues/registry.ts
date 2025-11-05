@@ -1,5 +1,5 @@
-import { Issue, IssueTypeHandler } from "./types";
-import { discussionIssueHandler } from "./discussion/DiscussionIssueHandler";
+import { Issue, IssueTypeHandler } from "./types.js";
+import { discussionIssueHandler } from "./discussion/DiscussionIssueHandler.js";
 
 // Registry mapping issue types to their handlers
 const issueTypeRegistry: Record<Issue["type"], IssueTypeHandler> = {

@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import { render } from "ink";
 import React from "react";
-import ReviewFlow from "./flows/Review";
+import ReviewFlow from "./flows/Review.js";
 import { createAuthCommand } from "./commands/auth.js";
 
 const program = new Command();

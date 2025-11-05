@@ -1,13 +1,13 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { FileDiff } from "../lib/clients/baz";
-import { FileSelectionLines } from "../models/Diff";
+import { FileDiff } from "../lib/clients/baz.js";
+import { FileSelectionLines } from "../models/Diff.js";
 import {
   DIFF_ADDED_LINE_COLOR,
   DIFF_DELETED_LINE_COLOR,
   DIFF_SELECTED_LINE_COLOR,
   TABLE_HEADER_COLOR,
-} from "../theme/colors";
+} from "../theme/colors.js";
 
 const MAX_ADDED_VIEW_LINES = 3;
 const ADDED_LINE_PREFIX = "+";

@@ -1,5 +1,5 @@
 import axios, { CreateAxiosDefaults } from "axios";
-import { CLITokenManager } from "./cli-token-mgr";
+import { CLITokenManager } from "./cli-token-mgr.js";
 import axiosRetry from "axios-retry";
 import chalk from "chalk";
 

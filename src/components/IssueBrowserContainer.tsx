@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
-import { useIssues } from "../hooks/useIssues";
-import IssueBrowser from "./IssueBrowser";
+import { useIssues } from "../hooks/useIssues.js";
+import IssueBrowser from "./IssueBrowser.js";
 
 interface IssueBrowserContainerProps {
   prId: string;

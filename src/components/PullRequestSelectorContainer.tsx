@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
-import { PullRequest } from "../lib/clients/baz";
-import { usePullRequests } from "../hooks/usePullRequests";
-import PullRequestSelector from "./PullRequestSelector";
+import { PullRequest } from "../lib/clients/baz.js";
+import { usePullRequests } from "../hooks/usePullRequests.js";
+import PullRequestSelector from "./PullRequestSelector.js";
 
 interface PullRequestSelectorContainerProps {
   repoId: string;

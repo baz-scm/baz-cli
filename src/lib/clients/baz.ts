@@ -266,9 +266,16 @@ export async function* streamChatResponse(
         try {
           const message = JSON.parse(line) as ChatStreamMessage;
 
-          if (message.type === "message_start" && message.conversationId) {
-            yield { conversationId: message.conversationId };
+          if (message.type === "message_start") {
+            if (message.conversationId) {
+              yield { conversationId: message.conversationId };
+            }
+            if (message.content) {
+              yield { content: message.content };
+            }
           } else if (message.type === "message_delta" && message.content) {
+            yield { content: message.content };
+          } else if (message.type === "message_end" && message.content) {
             yield { content: message.content };
           }
         } catch (parseError) {
@@ -280,9 +287,16 @@ export async function* streamChatResponse(
     if (buffer.trim()) {
       try {
         const message = JSON.parse(buffer) as ChatStreamMessage;
-        if (message.type === "message_start" && message.conversationId) {
-          yield { conversationId: message.conversationId };
+        if (message.type === "message_start") {
+          if (message.conversationId) {
+            yield { conversationId: message.conversationId };
+          }
+          if (message.content) {
+            yield { content: message.content };
+          }
         } else if (message.type === "message_delta" && message.content) {
+          yield { content: message.content };
+        } else if (message.type === "message_end" && message.content) {
           yield { content: message.content };
         }
       } catch (parseError) {

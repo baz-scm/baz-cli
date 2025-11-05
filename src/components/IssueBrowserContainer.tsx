@@ -6,12 +6,14 @@ import IssueBrowser from "./IssueBrowser";
 
 interface IssueBrowserContainerProps {
   prId: string;
+  repoId: string;
   onComplete: () => void;
   onCancel?: () => void;
 }
 
 const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
   prId,
+  repoId,
   onComplete,
 }) => {
   const { data, loading, error } = useIssues(prId);
@@ -45,7 +47,14 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
     );
   }
 
-  return <IssueBrowser issues={data} onComplete={onComplete} prId={prId} />;
+  return (
+    <IssueBrowser
+      issues={data}
+      onComplete={onComplete}
+      prId={prId}
+      repoId={repoId}
+    />
+  );
 };
 
 export default IssueBrowserContainer;

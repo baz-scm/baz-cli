@@ -86,6 +86,7 @@ const InternalReviewFlow: React.FC = () => {
           </Box>
           <IssueBrowserContainer
             prId={flowState.selectedPR.id}
+            repoId={flowState.selectedRepo.id}
             onComplete={handleIssueComplete}
           />
         </Box>

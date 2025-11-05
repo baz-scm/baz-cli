@@ -27,7 +27,7 @@ export interface AuthConfig {
   baseUrl: string;
   projectId: string;
   clientId: string;
-  redirectUri: string;
+  redirectUri?: string;
   scopes: string[];
 }
 

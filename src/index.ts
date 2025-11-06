@@ -11,7 +11,7 @@ const program = new Command();
 program.name("Baz CLI").version("0.1.0");
 
 program
-  .command("review")
+  .command("review", { isDefault: true })
   .description("Start a review")
   .action(async () => {
     render(React.createElement(ReviewFlow));

@@ -6,14 +6,14 @@ import React from "react";
 import ReviewFlow from "./flows/Review.js";
 import { createAuthCommand } from "./commands/auth.js";
 
-const VERSION = "0.1.3";
+const VERSION = "0.1.4";
 
 const program = new Command();
 
 program.name("Baz CLI").version(VERSION);
 
 program
-  .command("review")
+  .command("review", { isDefault: true })
   .description("Start a review")
   .action(async () => {
     render(React.createElement(ReviewFlow));

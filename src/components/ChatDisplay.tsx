@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
-import { ChatMessage } from "../models/chat.js";
+import { ChatMessage, MentionableUser } from "../models/chat.js";
 import { IssueCommand } from "../issues/types.js";
+import { ChangeReviewer, fetchEligibleReviewers } from "../lib/clients/baz.js";
+import MentionAutocomplete from "./MentionAutocomplete.js";
 
 interface ChatDisplayProps {
   messages: ChatMessage[];
@@ -11,6 +13,8 @@ interface ChatDisplayProps {
   onSubmit: (message: string) => void;
   availableCommands?: IssueCommand[];
   disabled?: boolean;
+  prId?: string;
+  enableMentions?: boolean;
 }
 
 const ChatDisplay: React.FC<ChatDisplayProps> = ({
@@ -19,22 +23,102 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   onSubmit,
   availableCommands = [],
   disabled = false,
+  prId,
+  enableMentions = false,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [showFullHelp, setShowFullHelp] = useState(false);
+  const [reviewers, setReviewers] = useState<ChangeReviewer[]>([]);
+  const [showMentionAutocomplete, setShowMentionAutocomplete] = useState(false);
+  const [mentionSearchQuery, setMentionSearchQuery] = useState("");
+  const [mentionStartIndex, setMentionStartIndex] = useState(-1);
+  const [inputKey, setInputKey] = useState(0);
 
-  useInput((input, key) => {
-    if (key.escape && !isLoading && !disabled) {
-      setInputValue("");
-      setShowFullHelp(false);
+  useEffect(() => {
+    if (enableMentions && prId) {
+      fetchEligibleReviewers(prId)
+        .then(setReviewers)
+        .catch((error) => {
+          console.error("Failed to fetch eligible reviewers:", error);
+        });
     }
-    if (input === "?" && !isLoading && !disabled && inputValue === "") {
-      setShowFullHelp(true);
+  }, [enableMentions, prId]);
+
+  useInput(
+    (input, key) => {
+      if (key.escape && !isLoading && !disabled) {
+        if (showMentionAutocomplete) {
+          setShowMentionAutocomplete(false);
+          setMentionSearchQuery("");
+          setMentionStartIndex(-1);
+        } else {
+          setInputValue("");
+          setShowFullHelp(false);
+        }
+      }
+      if (input === "?" && !isLoading && !disabled && inputValue === "") {
+        setShowFullHelp(true);
+      }
+    },
+    { isActive: !showMentionAutocomplete },
+  );
+
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+
+    if (!enableMentions) {
+      return;
     }
-  });
+
+    const lastAtIndex = value.lastIndexOf("@");
+    if (lastAtIndex !== -1) {
+      const textAfterAt = value.slice(lastAtIndex + 1);
+      if (!textAfterAt.includes(" ")) {
+        setShowMentionAutocomplete(true);
+        setMentionSearchQuery(textAfterAt);
+        setMentionStartIndex(lastAtIndex);
+      } else {
+        setShowMentionAutocomplete(false);
+        setMentionSearchQuery("");
+        setMentionStartIndex(-1);
+      }
+    } else {
+      setShowMentionAutocomplete(false);
+      setMentionSearchQuery("");
+      setMentionStartIndex(-1);
+    }
+  };
+
+  const handleMentionSelect = (reviewer: MentionableUser) => {
+    const lastSlashIndex = reviewer.login.lastIndexOf("/");
+    const login = reviewer.login.substring(lastSlashIndex + 1);
+
+    const beforeMention = inputValue.slice(0, mentionStartIndex);
+    const afterMention = inputValue.slice(
+      mentionStartIndex + mentionSearchQuery.length + 1,
+    );
+    const newValue = `${beforeMention}@${login} ${afterMention}`.trimEnd();
+
+    setInputValue(newValue);
+    setShowMentionAutocomplete(false);
+    setMentionSearchQuery("");
+    setMentionStartIndex(-1);
+    setInputKey((prev) => prev + 1);
+  };
+
+  const handleMentionCancel = () => {
+    setShowMentionAutocomplete(false);
+    setMentionSearchQuery("");
+    setMentionStartIndex(-1);
+  };
 
   const handleSubmit = () => {
-    if (inputValue.trim() && !isLoading && !disabled) {
+    if (
+      inputValue.trim() &&
+      !isLoading &&
+      !disabled &&
+      !showMentionAutocomplete
+    ) {
       onSubmit(inputValue);
       setInputValue("");
       setShowFullHelp(false);
@@ -110,20 +194,33 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           >
             <Box>
               <TextInput
+                key={inputKey}
                 value={inputValue}
-                onChange={setInputValue}
+                onChange={handleInputChange}
                 onSubmit={handleSubmit}
                 placeholder="How will it affect the code?"
               />
             </Box>
           </Box>
-          <Box marginTop={1}>
-            <Text dimColor>
-              {showFullHelp
-                ? allCommandHints.join("\n")
-                : defaultHints.join("\n")}
-            </Text>
-          </Box>
+          {enableMentions &&
+            showMentionAutocomplete &&
+            reviewers.length > 0 && (
+              <MentionAutocomplete
+                reviewers={reviewers}
+                searchQuery={mentionSearchQuery}
+                onSelect={handleMentionSelect}
+                onCancel={handleMentionCancel}
+              />
+            )}
+          {!showMentionAutocomplete && (
+            <Box marginTop={1}>
+              <Text dimColor>
+                {showFullHelp
+                  ? allCommandHints.join("\n")
+                  : defaultHints.join("\n")}
+              </Text>
+            </Box>
+          )}
         </Box>
       )}
     </Box>

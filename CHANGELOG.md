@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.4](https://github.com/baz-scm/baz-cli/compare/v0.1.3...v0.1.4) (2025-11-06)
+
+
+### 🐛 Bug Fixes
+
+* fix CLI version bump ([#21](https://github.com/baz-scm/baz-cli/issues/21)) ([bcffdd1](https://github.com/baz-scm/baz-cli/commit/bcffdd185e7ba09aa95ad1e1f31aad366424a018))
+
+
+### ✨ New Features
+
+* set the review command as default ([#20](https://github.com/baz-scm/baz-cli/issues/20)) ([64199c0](https://github.com/baz-scm/baz-cli/commit/64199c0643c1ceecb907a07e97f37d852676024b))
+* support mentions ([#10](https://github.com/baz-scm/baz-cli/issues/10)) ([1ab9c53](https://github.com/baz-scm/baz-cli/commit/1ab9c532648ae4c8b6f1e6cae8ce0417fcb0a311))
+
 ## [0.1.3](https://github.com/baz-scm/baz-cli/compare/v0.1.2...v0.1.3) (2025-11-06)
 
 

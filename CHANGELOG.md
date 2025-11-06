@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/baz-scm/baz-cli/compare/v0.1.2...v0.1.3) (2025-11-06)
+
+
+### 🐛 Bug Fixes
+
+* disable provenance ([#17](https://github.com/baz-scm/baz-cli/issues/17)) ([5bf57c6](https://github.com/baz-scm/baz-cli/commit/5bf57c611558a4e2682578da0d0bf5f557967146))
+
+
+### ✨ New Features
+
+* update compiler options to ES2024 ([#18](https://github.com/baz-scm/baz-cli/issues/18)) ([3a0cc97](https://github.com/baz-scm/baz-cli/commit/3a0cc9761c4628df1868061b84ddcfc2ef76f4ef))
+
 ## [0.1.2](https://github.com/baz-scm/baz-cli/compare/v0.1.1...v0.1.2) (2025-11-06)
 
 

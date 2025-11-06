@@ -161,6 +161,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           isLoading={isLoading}
           onSubmit={handleSubmit}
           availableCommands={availableCommands}
+          prId={prId}
+          enableMentions={currentIssue.type === "discussion"}
         />
       </Box>
     </Box>

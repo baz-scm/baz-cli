@@ -51,6 +51,8 @@ jobs:
       - name: Build project
         run: npm run build
       - name: Publish release to npm
-        run: npm publish --provenance --access public
+        # `provenance` can only be on public repos
+        # https://github.blog/changelog/2023-07-25-publishing-with-npm-provenance-from-private-source-repositories-is-no-longer-supported/
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

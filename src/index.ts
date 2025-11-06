@@ -6,9 +6,11 @@ import React from "react";
 import ReviewFlow from "./flows/Review.js";
 import { createAuthCommand } from "./commands/auth.js";
 
+const VERSION = "0.1.3";
+
 const program = new Command();
 
-program.name("Baz CLI").version("0.1.0");
+program.name("Baz CLI").version(VERSION);
 
 program
   .command("review")

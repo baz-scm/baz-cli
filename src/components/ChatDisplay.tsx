@@ -4,8 +4,8 @@ import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
 import { ChatMessage, MentionableUser } from "../models/chat.js";
 import { IssueCommand } from "../issues/types.js";
-import { ChangeReviewer, fetchEligibleReviewers } from "../lib/clients/baz";
-import MentionAutocomplete from "./MentionAutocomplete";
+import { ChangeReviewer, fetchEligibleReviewers } from "../lib/clients/baz.js";
+import MentionAutocomplete from "./MentionAutocomplete.js";
 
 interface ChatDisplayProps {
   messages: ChatMessage[];

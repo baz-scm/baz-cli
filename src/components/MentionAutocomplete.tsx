@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import { ChangeReviewer } from "../lib/clients/baz";
-import { MentionableUser } from "../models/chat";
+import { ChangeReviewer } from "../lib/clients/baz.js";
+import { MentionableUser } from "../models/chat.js";
 
 interface MentionAutocompleteProps {
   reviewers: ChangeReviewer[];

@@ -38,8 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
-      id-token: write # for npm to create release with provenance
+      contents: read # this permission is mandatory for checking out private repos
+      id-token: write # this permission is mandatory for trusted publishing to npmjs
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
@@ -51,8 +51,8 @@ jobs:
       - name: Build project
         run: npm run build
       - name: Publish release to npm
-        # `provenance` can only be on public repos
-        # https://github.blog/changelog/2023-07-25-publishing-with-npm-provenance-from-private-source-repositories-is-no-longer-supported/
-        run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # `provenance` can only be enabled on public repos
+          # https://github.blog/changelog/2023-07-25-publishing-with-npm-provenance-from-private-source-repositories-is-no-longer-supported/
+          NPM_CONFIG_PROVENANCE: false
+        run: npm publish --access public

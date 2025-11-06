@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/baz-scm/baz-cli/compare/v0.1.1...v0.1.2) (2025-11-06)
+
+
+### ✨ New Features
+
+* set up production credentials ([#15](https://github.com/baz-scm/baz-cli/issues/15)) ([8411aa8](https://github.com/baz-scm/baz-cli/commit/8411aa8c4f058246f1f3edba865fdbab55c215b8))
+
 ## [0.1.1](https://github.com/baz-scm/baz-cli/compare/v0.1.0...v0.1.1) (2025-11-05)
 
 

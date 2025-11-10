@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/baz-scm/baz-cli/compare/v0.1.4...v0.1.5) (2025-11-10)
+
+
+### ✨ New Features
+
+* init auth flow on 401 ([#26](https://github.com/baz-scm/baz-cli/issues/26)) ([f7cb0dd](https://github.com/baz-scm/baz-cli/commit/f7cb0ddddbcb937f711ff127b7ec7179ad6f0284))
+
 ## [0.1.4](https://github.com/baz-scm/baz-cli/compare/v0.1.3...v0.1.4) (2025-11-06)
 
 

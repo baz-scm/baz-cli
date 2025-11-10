@@ -2,11 +2,15 @@ import axios, { CreateAxiosDefaults } from "axios";
 import { CLITokenManager } from "./cli-token-mgr.js";
 import axiosRetry from "axios-retry";
 import chalk from "chalk";
+import { OAuthFlow } from "../../../auth/oauth-flow.js";
+import { authConfig } from "../../../auth/config.js";
 
 export interface TokenManager {
   getToken: () => string;
   resetToken: () => void;
 }
+
+let isAuthenticating = false;
 
 export const createAxiosClient = (baseURL: string) => {
   const opts: CreateAxiosDefaults = {
@@ -27,14 +31,41 @@ export const createAxiosClient = (baseURL: string) => {
     function (response) {
       return response;
     },
-    function (error) {
+    async function (error) {
       if (error?.response?.status === 401) {
-        console.log(
-          chalk.red("• Invalid Token. Please run ") +
-            chalk.cyan.italic("baz auth login") +
-            chalk.red(" to authenticate."),
-        );
-        tokenMgr.resetToken();
+        if (isAuthenticating) {
+          return Promise.reject(error);
+        }
+
+        isAuthenticating = true;
+
+        try {
+          console.log(
+            chalk.yellow(
+              "⚠️  Authentication required. Initiating login flow...",
+            ),
+          );
+          tokenMgr.resetToken();
+
+          const oauthFlow = OAuthFlow.getInstance();
+          await oauthFlow.authenticate(authConfig);
+
+          const token = oauthFlow.getAccessToken();
+          if (token && error.config) {
+            error.config.headers.Authorization = `Bearer ${token}`;
+            isAuthenticating = false;
+            return axiosClient.request(error.config);
+          }
+        } catch (authError) {
+          isAuthenticating = false;
+          console.error(
+            chalk.red("❌ Authentication failed:"),
+            authError instanceof Error ? authError.message : "Unknown error",
+          );
+          return Promise.reject(error);
+        }
+
+        isAuthenticating = false;
       }
       if (error?.response?.status === 402) {
         tokenMgr.resetToken();

@@ -1,0 +1,10 @@
+{
+  "project": ["**/*.{mjs,js,ts,tsx}"],
+  "include": [
+    "dependencies"
+  ],
+  "ignoreDependencies": [
+    "pino-pretty",
+    "ts-node"
+  ]
+}

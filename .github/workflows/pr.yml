@@ -25,6 +25,8 @@ jobs:
         run: npm run lint
       - name: run prettier
         run: npm run format:check
+      - name: check unused deps
+        run: npx --yes knip
 
   build-test:
     runs-on: ubuntu-latest

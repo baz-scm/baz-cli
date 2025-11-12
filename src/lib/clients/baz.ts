@@ -11,6 +11,7 @@ const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
 const REPOSITORIES_URL = `${env.BAZ_BASE_URL}/api/v2/repositories`;
 const CHAT_URL = `${env.BAZ_BASE_URL}/api/v2/checkout/chat`;
+const INTEGRATIONS_URL = `${env.BAZ_BASE_URL}/api/v2/integrations`;
 
 const getDiffUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/diff`;
@@ -22,6 +23,25 @@ const getEligibleReviewersUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/eligible-reviewers`;
 
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
+
+export type IntegrationType = "jira" | "linear" | "youtrack";
+
+export interface Integration {
+  id: string;
+  integrationType: IntegrationType;
+  status: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface IntegrationsResponse {
+  integrations: Integration[];
+}
+
+export interface JiraOAuthState {
+  state: string;
+}
+
 export interface Repository {
   id: string;
   fullName: string;
@@ -30,6 +50,34 @@ export interface Repository {
 
 export interface RepositoriesResponse {
   repositories: Repository[];
+}
+
+export async function fetchIntegrations(): Promise<Integration[]> {
+  const response = await axiosClient
+    .get<IntegrationsResponse>(INTEGRATIONS_URL, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((value) => value.data)
+    .catch((error: unknown) => {
+      logger.debug({ error }, "Axios error while fetching integrations");
+      throw error;
+    });
+
+  return response.integrations;
+}
+
+export async function fetchJiraOAuthState(): Promise<JiraOAuthState> {
+  const response = await axiosClient.get<JiraOAuthState>(
+    `${env.BAZ_BASE_URL}/api/v2/integrations/state/jira`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+  return response.data;
 }
 
 export async function fetchRepositories(): Promise<Repository[]> {

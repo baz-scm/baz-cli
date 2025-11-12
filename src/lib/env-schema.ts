@@ -17,6 +17,7 @@ const envSchema = z.object({
       "UDJpYVhzWWlScVdzNXdMUVA2amhwbFdLSXZxVzpUUEEzM0JXM0JIdFV1NDFEc29IdlhRblVnSk5EUEc=",
     ),
   OAUTH_CALLBACK_PORT: z.coerce.number().default(8020),
+  JIRA_CLIENT_ID: z.string().default("TieB1KJyktk5m32fWl6VBnPUeh5iLUPy"),
 });
 
 export const env = envSchema.parse(process.env);

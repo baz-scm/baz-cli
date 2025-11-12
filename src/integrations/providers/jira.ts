@@ -1,6 +1,6 @@
 import { IntegrationProvider } from "../types.js";
 import { env } from "../../lib/env-schema.js";
-import { fetchJiraOAuthState } from "../../lib/clients/baz.js";
+import { fetchOAuthState } from "../../lib/clients/baz.js";
 
 export const jiraProvider: IntegrationProvider = {
   type: "jira",
@@ -9,7 +9,7 @@ export const jiraProvider: IntegrationProvider = {
   integrationConfig: {
     type: "oauth",
     getOAuthUrl: async () => {
-      const { state } = await fetchJiraOAuthState();
+      const { state } = await fetchOAuthState("jira");
       const params = new URLSearchParams({
         client_id: env.JIRA_CLIENT_ID,
         state,

@@ -38,7 +38,7 @@ export interface IntegrationsResponse {
   integrations: Integration[];
 }
 
-export interface JiraOAuthState {
+export interface OAuthState {
   state: string;
 }
 
@@ -68,9 +68,11 @@ export async function fetchIntegrations(): Promise<Integration[]> {
   return response.integrations;
 }
 
-export async function fetchJiraOAuthState(): Promise<JiraOAuthState> {
-  const response = await axiosClient.get<JiraOAuthState>(
-    `${env.BAZ_BASE_URL}/api/v2/integrations/state/jira`,
+export async function fetchOAuthState(
+  integrationType: IntegrationType,
+): Promise<OAuthState> {
+  const response = await axiosClient.get<OAuthState>(
+    `${env.BAZ_BASE_URL}/api/v2/integrations/state/${integrationType}`,
     {
       headers: {
         "Content-Type": "application/json",

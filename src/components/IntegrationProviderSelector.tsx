@@ -10,6 +10,7 @@ interface IntegrationProviderSelectorProps {
 }
 
 interface SelectItem {
+  key?: string;
   label: string;
   value: IntegrationProvider;
 }

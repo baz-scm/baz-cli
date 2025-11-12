@@ -66,18 +66,23 @@ const InternalReviewFlow: React.FC = () => {
   const handlePRSelect = (pr: PullRequest) => {
     if (flowState.step !== "handlePRSelect") return;
 
-    if (hasIntegration) {
+    if (hasIntegration === false) {
+      setFlowState({
+        ...flowState,
+        selectedPR: pr,
+        step: "integrationsCheck",
+      });
+    } else {
+      if (hasIntegration === null) {
+        logger.debug(
+          "Integration check not completed, proceeding without setup",
+        );
+      }
       setFlowState({
         ...flowState,
         selectedPR: pr,
         step: "handleIssueSelect",
         skippedIntegration: false,
-      });
-    } else {
-      setFlowState({
-        ...flowState,
-        selectedPR: pr,
-        step: "integrationsCheck",
       });
     }
   };

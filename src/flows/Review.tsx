@@ -13,8 +13,12 @@ import IntegrationsCheck from "../components/IntegrationsCheck.js";
 import { logger } from "../lib/logger.js";
 
 type FlowState =
-  | { step: "handleRepoSelect" }
-  | { step: "handlePRSelect"; selectedRepo: Repository }
+  | { step: "handleRepoSelect"; selectedRepo?: Repository }
+  | {
+      step: "handlePRSelect";
+      selectedRepo: Repository;
+      selectedPR?: PullRequest;
+    }
   | {
       step: "integrationsCheck";
       selectedRepo: Repository;
@@ -108,11 +112,32 @@ const InternalReviewFlow: React.FC = () => {
     });
   };
 
+  const handleBackFromPRSelect = () => {
+    if (flowState.step !== "handlePRSelect") return;
+
+    setFlowState({
+      step: "handleRepoSelect",
+      selectedRepo: flowState.selectedRepo,
+    });
+  };
+
+  const handleBackFromIssueSelect = () => {
+    if (flowState.step !== "handleIssueSelect") return;
+
+    setFlowState({
+      ...flowState,
+      step: "handlePRSelect",
+    });
+  };
+
   switch (flowState.step) {
     case "handleRepoSelect":
       return (
         <Box flexDirection="column">
-          <RepositoryAutocompleteContainer onSelect={handleRepoSelect} />
+          <RepositoryAutocompleteContainer
+            onSelect={handleRepoSelect}
+            initialRepoId={flowState.selectedRepo?.id}
+          />
         </Box>
       );
 
@@ -126,6 +151,8 @@ const InternalReviewFlow: React.FC = () => {
           <PullRequestSelectorContainer
             repoId={flowState.selectedRepo.id}
             onSelect={handlePRSelect}
+            onBack={handleBackFromPRSelect}
+            initialPrId={flowState.selectedPR?.id}
           />
         </Box>
       );
@@ -164,6 +191,7 @@ const InternalReviewFlow: React.FC = () => {
             prId={flowState.selectedPR.id}
             repoId={flowState.selectedRepo.id}
             onComplete={handleIssueComplete}
+            onBack={handleBackFromIssueSelect}
           />
         </Box>
       );

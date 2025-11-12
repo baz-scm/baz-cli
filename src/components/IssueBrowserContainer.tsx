@@ -8,13 +8,14 @@ interface IssueBrowserContainerProps {
   prId: string;
   repoId: string;
   onComplete: () => void;
-  onCancel?: () => void;
+  onBack: () => void;
 }
 
 const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
   prId,
   repoId,
   onComplete,
+  onBack,
 }) => {
   const { data, loading, error } = useIssues(prId);
 
@@ -53,6 +54,7 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
       onComplete={onComplete}
       prId={prId}
       repoId={repoId}
+      onBack={onBack}
     />
   );
 };

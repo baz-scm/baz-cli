@@ -8,12 +8,13 @@ import PullRequestSelector from "./PullRequestSelector.js";
 interface PullRequestSelectorContainerProps {
   repoId: string;
   onSelect: (pr: PullRequest) => void;
-  onCancel?: () => void;
+  onBack: () => void;
+  initialPrId?: string;
 }
 
 const PullRequestSelectorContainer: React.FC<
   PullRequestSelectorContainerProps
-> = ({ repoId, onSelect }) => {
+> = ({ repoId, onSelect, onBack, initialPrId }) => {
   const { data, loading, error } = usePullRequests(repoId);
 
   if (loading) {
@@ -37,7 +38,14 @@ const PullRequestSelectorContainer: React.FC<
     );
   }
 
-  return <PullRequestSelector pullRequests={data} onSelect={onSelect} />;
+  return (
+    <PullRequestSelector
+      pullRequests={data}
+      onSelect={onSelect}
+      onBack={onBack}
+      initialPrId={initialPrId}
+    />
+  );
 };
 
 export default PullRequestSelectorContainer;

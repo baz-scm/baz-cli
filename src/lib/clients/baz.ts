@@ -12,6 +12,7 @@ const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
 const REPOSITORIES_URL = `${env.BAZ_BASE_URL}/api/v2/repositories`;
 const CHAT_URL = `${env.BAZ_BASE_URL}/api/v2/checkout/chat`;
 const INTEGRATIONS_URL = `${env.BAZ_BASE_URL}/api/v2/integrations`;
+const OAUTH_STATE_URL = `${env.BAZ_BASE_URL}/api/v2/integrations/state`;
 
 const getDiffUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/diff`;
@@ -72,7 +73,7 @@ export async function fetchOAuthState(
   integrationType: IntegrationType,
 ): Promise<OAuthState> {
   const response = await axiosClient.get<OAuthState>(
-    `${env.BAZ_BASE_URL}/api/v2/integrations/state/${integrationType}`,
+    `${OAUTH_STATE_URL}/${integrationType}`,
     {
       headers: {
         "Content-Type": "application/json",

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { useIssues } from "../hooks/useIssues.js";
@@ -18,6 +18,12 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
   onBack,
 }) => {
   const { data, loading, error } = useIssues(prId);
+
+  useEffect(() => {
+    if (!loading && (error || data.length === 0)) {
+      onComplete();
+    }
+  }, [loading, error, data.length, onComplete]);
 
   if (loading) {
     return (

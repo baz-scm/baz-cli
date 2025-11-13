@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Text } from "ink";
+import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { PullRequest } from "../lib/clients/baz.js";
 import { usePullRequests } from "../hooks/usePullRequests.js";
@@ -38,6 +38,10 @@ const PullRequestSelectorContainer: React.FC<
     );
   }
 
+  if (data.length === 0) {
+    return <EmptyPRState onBack={onBack} />;
+  }
+
   return (
     <PullRequestSelector
       pullRequests={data}
@@ -45,6 +49,29 @@ const PullRequestSelectorContainer: React.FC<
       onBack={onBack}
       initialPrId={initialPrId}
     />
+  );
+};
+
+const EmptyPRState: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  useInput((_input, key) => {
+    if (key.escape) {
+      onBack();
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="yellow">
+          📭 No open pull requests found in this repository
+        </Text>
+      </Box>
+      <Box>
+        <Text dimColor italic>
+          ESC to select a different repository • Ctrl+C to cancel
+        </Text>
+      </Box>
+    </Box>
   );
 };
 

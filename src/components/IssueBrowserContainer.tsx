@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Box, Text } from "ink";
+import React from "react";
+import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { useIssues } from "../hooks/useIssues.js";
 import IssueBrowser from "./IssueBrowser.js";
@@ -19,12 +19,6 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
 }) => {
   const { data, loading, error } = useIssues(prId);
 
-  useEffect(() => {
-    if (!loading && (error || data.length === 0)) {
-      onComplete();
-    }
-  }, [loading, error, data.length, onComplete]);
-
   if (loading) {
     return (
       <Box>
@@ -37,21 +31,11 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
   }
 
   if (error) {
-    return (
-      <Box flexDirection="column">
-        <Text color="red" bold>
-          ❌ Error: {error}
-        </Text>
-      </Box>
-    );
+    return <ErrorState error={error} onComplete={onComplete} onBack={onBack} />;
   }
 
   if (data.length === 0) {
-    return (
-      <Box flexDirection="column">
-        <Text color="green">✨ No issues to review!</Text>
-      </Box>
-    );
+    return <EmptyState onComplete={onComplete} onBack={onBack} />;
   }
 
   return (
@@ -62,6 +46,61 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
       repoId={repoId}
       onBack={onBack}
     />
+  );
+};
+
+const ErrorState: React.FC<{
+  error: string;
+  onComplete: () => void;
+  onBack: () => void;
+}> = ({ error, onComplete, onBack }) => {
+  useInput((_input, key) => {
+    if (key.return) {
+      onComplete();
+    } else if (key.escape) {
+      onBack();
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="red" bold>
+          ❌ Error: {error}
+        </Text>
+      </Box>
+      <Box>
+        <Text dimColor italic>
+          Enter to continue • ESC to go back • Ctrl+C to cancel
+        </Text>
+      </Box>
+    </Box>
+  );
+};
+
+const EmptyState: React.FC<{
+  onComplete: () => void;
+  onBack: () => void;
+}> = ({ onComplete, onBack }) => {
+  useInput((_input, key) => {
+    if (key.return) {
+      onComplete();
+    } else if (key.escape) {
+      onBack();
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="green">✨ No issues to review!</Text>
+      </Box>
+      <Box>
+        <Text dimColor italic>
+          Enter to continue • ESC to go back • Ctrl+C to cancel
+        </Text>
+      </Box>
+    </Box>
   );
 };
 

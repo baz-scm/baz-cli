@@ -31,11 +31,26 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
   }
 
   if (error) {
-    return <ErrorState error={error} onComplete={onComplete} onBack={onBack} />;
+    return (
+      <StateMessage
+        message={`❌ Error: ${error}`}
+        color="red"
+        bold
+        onComplete={onComplete}
+        onBack={onBack}
+      />
+    );
   }
 
   if (data.length === 0) {
-    return <EmptyState onComplete={onComplete} onBack={onBack} />;
+    return (
+      <StateMessage
+        message="✨ No issues to review!"
+        color="green"
+        onComplete={onComplete}
+        onBack={onBack}
+      />
+    );
   }
 
   return (
@@ -49,11 +64,13 @@ const IssueBrowserContainer: React.FC<IssueBrowserContainerProps> = ({
   );
 };
 
-const ErrorState: React.FC<{
-  error: string;
+const StateMessage: React.FC<{
+  message: string;
+  color: string;
+  bold?: boolean;
   onComplete: () => void;
   onBack: () => void;
-}> = ({ error, onComplete, onBack }) => {
+}> = ({ message, color, bold = false, onComplete, onBack }) => {
   useInput((_input, key) => {
     if (key.return) {
       onComplete();
@@ -65,35 +82,9 @@ const ErrorState: React.FC<{
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="red" bold>
-          ❌ Error: {error}
+        <Text color={color} bold={bold}>
+          {message}
         </Text>
-      </Box>
-      <Box>
-        <Text dimColor italic>
-          Enter to continue • ESC to go back • Ctrl+C to cancel
-        </Text>
-      </Box>
-    </Box>
-  );
-};
-
-const EmptyState: React.FC<{
-  onComplete: () => void;
-  onBack: () => void;
-}> = ({ onComplete, onBack }) => {
-  useInput((_input, key) => {
-    if (key.return) {
-      onComplete();
-    } else if (key.escape) {
-      onBack();
-    }
-  });
-
-  return (
-    <Box flexDirection="column">
-      <Box marginBottom={1}>
-        <Text color="green">✨ No issues to review!</Text>
       </Box>
       <Box>
         <Text dimColor italic>

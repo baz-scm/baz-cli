@@ -7,10 +7,12 @@ import {
 } from "../lib/clients/baz.js";
 import RepositoryAutocompleteContainer from "../components/RepositoryAutocompleteContainer.js";
 import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer.js";
-import IssueBrowserContainer from "../components/IssueBrowserContainer.js";
 import HeaderDisplay from "../components/HeaderDisplay.js";
 import IntegrationsCheck from "../components/IntegrationsCheck.js";
 import { logger } from "../lib/logger.js";
+import PullRequestReview from "../components/PullRequestReview.js";
+import { MAIN_COLOR } from "../theme/colors.js";
+import { REVIEW_COMPLETE_TEXT } from "../theme/banners.js";
 
 type FlowState =
   | { step: "handleRepoSelect" }
@@ -37,7 +39,7 @@ const InternalReviewFlow: React.FC = () => {
     const checkIntegrations = async () => {
       try {
         const integrations = await fetchIntegrations();
-        console.log(integrations);
+        logger.info(integrations);
         const hasTicketingIntegration = integrations.some(
           (integration) =>
             integration.integrationType === "jira" ||
@@ -138,7 +140,7 @@ const InternalReviewFlow: React.FC = () => {
             <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
           </Box>
           <Box marginBottom={1}>
-            <Text color="green">✓ Selected pull request: </Text>
+            <Text color="green">✓ Selected PR: </Text>
             <Text color="yellow">
               #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
             </Text>
@@ -155,14 +157,14 @@ const InternalReviewFlow: React.FC = () => {
             <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
           </Box>
           <Box marginBottom={1}>
-            <Text color="green">✓ Selected pull request: </Text>
+            <Text color="green">✓ Selected PR: </Text>
             <Text color="yellow">
               #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
             </Text>
           </Box>
-          <IssueBrowserContainer
-            prId={flowState.selectedPR.id}
+          <PullRequestReview
             repoId={flowState.selectedRepo.id}
+            prId={flowState.selectedPR.id}
             onComplete={handleIssueComplete}
           />
         </Box>
@@ -181,9 +183,10 @@ const InternalReviewFlow: React.FC = () => {
               #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
             </Text>
           </Box>
-          <Text color="green" bold>
-            ✨ Review Complete!
-          </Text>
+          <Box>
+            <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
+          </Box>
+          <Text>CR Review completed</Text>
         </Box>
       );
 

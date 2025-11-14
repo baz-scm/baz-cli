@@ -19,8 +19,8 @@ const PullRequestOverview: React.FC<PullRequestOverviewProps> = ({
   // TODO: Change when properly retrieving file status
   const filesChanged = `${pr.files_viewed.length} files changed`;
 
-  const specReview = pr.spec_reviews.pop();
   let specReviewSummary = "No requirements were identified";
+  const specReview = pr.spec_reviews.at(-1);
   if (specReview?.result && specReview.result.requirements_found > 0) {
     specReviewSummary = `${specReview.result.requirements_met}/${specReview.result.requirements_found} met requirements in this CR`;
   }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { Repository } from "../lib/clients/baz.js";
@@ -6,15 +6,25 @@ import { Repository } from "../lib/clients/baz.js";
 interface RepositoryAutocompleteProps {
   repositories: Repository[];
   onSelect: (repo: Repository) => void;
+  initialRepoId?: string;
 }
 
 const RepositoryAutocomplete: React.FC<RepositoryAutocompleteProps> = ({
   repositories,
   onSelect,
+  initialRepoId,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
+  const isFirstRender = useRef(true);
+
+  const initialIndex = initialRepoId
+    ? repositories.findIndex((repo) => repo.id === initialRepoId)
+    : 0;
+
+  const [selectedIndex, setSelectedIndex] = useState(
+    initialIndex >= 0 ? initialIndex : 0,
+  );
 
   const filteredRepos = repositories.filter((repo) => {
     const query = searchQuery.toLowerCase();
@@ -25,6 +35,10 @@ const RepositoryAutocomplete: React.FC<RepositoryAutocompleteProps> = ({
   });
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setSelectedIndex(0);
   }, [searchQuery]);
 
@@ -84,24 +98,54 @@ const RepositoryAutocomplete: React.FC<RepositoryAutocompleteProps> = ({
               {filteredRepos.length === 1 ? "repository" : "repositories"}:
             </Text>
             <Box flexDirection="column" marginTop={1}>
-              {filteredRepos.slice(0, 10).map((repo, index) => (
-                <Box key={repo.fullName}>
-                  <Text color={index === selectedIndex ? "cyan" : "white"}>
-                    {index === selectedIndex ? "❯ " : "  "}
-                    {repo.fullName}
-                    {repo.description && (
-                      <Text color="gray"> - {repo.description}</Text>
+              {(() => {
+                const maxVisible = 10;
+                const startIndex = Math.max(
+                  0,
+                  Math.min(
+                    selectedIndex - 5,
+                    filteredRepos.length - maxVisible,
+                  ),
+                );
+                const endIndex = Math.min(
+                  startIndex + maxVisible,
+                  filteredRepos.length,
+                );
+                const visibleRepos = filteredRepos.slice(startIndex, endIndex);
+
+                return (
+                  <>
+                    {startIndex > 0 && (
+                      <Text dimColor italic>
+                        ... {startIndex} more above
+                      </Text>
                     )}
-                  </Text>
-                </Box>
-              ))}
-              {filteredRepos.length > 10 && (
-                <Box marginTop={1}>
-                  <Text dimColor italic>
-                    ... and {filteredRepos.length - 10} more
-                  </Text>
-                </Box>
-              )}
+                    {visibleRepos.map((repo, index) => {
+                      const actualIndex = startIndex + index;
+                      return (
+                        <Box key={repo.fullName}>
+                          <Text
+                            color={
+                              actualIndex === selectedIndex ? "cyan" : "white"
+                            }
+                          >
+                            {actualIndex === selectedIndex ? "❯ " : "  "}
+                            {repo.fullName}
+                            {repo.description && (
+                              <Text color="gray"> - {repo.description}</Text>
+                            )}
+                          </Text>
+                        </Box>
+                      );
+                    })}
+                    {endIndex < filteredRepos.length && (
+                      <Text dimColor italic>
+                        ... {filteredRepos.length - endIndex} more below
+                      </Text>
+                    )}
+                  </>
+                );
+              })()}
             </Box>
           </>
         )}

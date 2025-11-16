@@ -10,18 +10,37 @@ import PullRequestSelectorContainer from "../components/PullRequestSelectorConta
 import IssueBrowserContainer from "../components/IssueBrowserContainer.js";
 import HeaderDisplay from "../components/HeaderDisplay.js";
 import IntegrationsCheck from "../components/IntegrationsCheck.js";
+import PostReviewPrompt, {
+  PostReviewAction,
+} from "../components/PostReviewPrompt.js";
 import { logger } from "../lib/logger.js";
 
 type FlowState =
-  | { step: "handleRepoSelect" }
-  | { step: "handlePRSelect"; selectedRepo: Repository }
+  | { step: "handleRepoSelect"; selectedRepo?: Repository }
+  | {
+      step: "handlePRSelect";
+      selectedRepo: Repository;
+      selectedPR?: PullRequest;
+    }
   | {
       step: "integrationsCheck";
       selectedRepo: Repository;
       selectedPR: PullRequest;
     }
   | {
-      step: "handleIssueSelect" | "complete";
+      step: "handleIssueSelect";
+      selectedRepo: Repository;
+      selectedPR: PullRequest;
+      skippedIntegration?: boolean;
+    }
+  | {
+      step: "reviewComplete";
+      selectedRepo: Repository;
+      selectedPR: PullRequest;
+      skippedIntegration?: boolean;
+    }
+  | {
+      step: "complete";
       selectedRepo: Repository;
       selectedPR: PullRequest;
       skippedIntegration?: boolean;
@@ -104,7 +123,50 @@ const InternalReviewFlow: React.FC = () => {
 
     setFlowState({
       ...flowState,
-      step: "complete",
+      step: "reviewComplete",
+    });
+  };
+
+  // Step 5: Post-Review Actions
+  const handlePostReviewAction = (action: PostReviewAction) => {
+    if (flowState.step !== "reviewComplete") return;
+
+    switch (action) {
+      case "reviewSameRepo":
+        setFlowState({
+          selectedRepo: flowState.selectedRepo,
+          step: "handlePRSelect",
+        });
+        break;
+      case "reviewDifferentRepo":
+        setFlowState({
+          step: "handleRepoSelect",
+        });
+        break;
+      case "exit":
+        setFlowState({
+          ...flowState,
+          step: "complete",
+        });
+        break;
+    }
+  };
+
+  const handleBackFromPRSelect = () => {
+    if (flowState.step !== "handlePRSelect") return;
+
+    setFlowState({
+      step: "handleRepoSelect",
+      selectedRepo: flowState.selectedRepo,
+    });
+  };
+
+  const handleBackFromIssueSelect = () => {
+    if (flowState.step !== "handleIssueSelect") return;
+
+    setFlowState({
+      ...flowState,
+      step: "handlePRSelect",
     });
   };
 
@@ -112,7 +174,10 @@ const InternalReviewFlow: React.FC = () => {
     case "handleRepoSelect":
       return (
         <Box flexDirection="column">
-          <RepositoryAutocompleteContainer onSelect={handleRepoSelect} />
+          <RepositoryAutocompleteContainer
+            onSelect={handleRepoSelect}
+            initialRepoId={flowState.selectedRepo?.id}
+          />
         </Box>
       );
 
@@ -126,6 +191,8 @@ const InternalReviewFlow: React.FC = () => {
           <PullRequestSelectorContainer
             repoId={flowState.selectedRepo.id}
             onSelect={handlePRSelect}
+            onBack={handleBackFromPRSelect}
+            initialPrId={flowState.selectedPR?.id}
           />
         </Box>
       );
@@ -164,7 +231,30 @@ const InternalReviewFlow: React.FC = () => {
             prId={flowState.selectedPR.id}
             repoId={flowState.selectedRepo.id}
             onComplete={handleIssueComplete}
+            onBack={handleBackFromIssueSelect}
           />
+        </Box>
+      );
+
+    case "reviewComplete":
+      return (
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="green">✓ Selected repository: </Text>
+            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
+          </Box>
+          <Box marginBottom={1}>
+            <Text color="green">✓ Selected pull request: </Text>
+            <Text color="yellow">
+              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
+            </Text>
+          </Box>
+          <Box marginBottom={1}>
+            <Text color="green" bold>
+              ✨ Review Complete!
+            </Text>
+          </Box>
+          <PostReviewPrompt onSelect={handlePostReviewAction} />
         </Box>
       );
 

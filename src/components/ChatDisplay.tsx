@@ -15,6 +15,7 @@ interface ChatDisplayProps {
   disabled?: boolean;
   prId?: string;
   enableMentions?: boolean;
+  onBack: () => void;
 }
 
 const ChatDisplay: React.FC<ChatDisplayProps> = ({
@@ -25,6 +26,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   disabled = false,
   prId,
   enableMentions = false,
+  onBack,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [showFullHelp, setShowFullHelp] = useState(false);
@@ -51,9 +53,11 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           setShowMentionAutocomplete(false);
           setMentionSearchQuery("");
           setMentionStartIndex(-1);
-        } else {
+        } else if (inputValue) {
           setInputValue("");
           setShowFullHelp(false);
+        } else {
+          onBack();
         }
       }
       if (input === "?" && !isLoading && !disabled && inputValue === "") {
@@ -139,6 +143,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     }
 
     hints.push("? for help");
+    hints.push("ESC to go back");
     hints.push("Ctrl + C to quit");
     return hints;
   };
@@ -151,7 +156,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       const shortCmd = cmd.aliases?.[0] || cmd.command.split(" ")[0];
       hints.push(`${shortCmd} - ${cmd.description}`);
     });
-    hints.push("ESC to exit");
+    hints.push("ESC to go back");
     return hints;
   };
 

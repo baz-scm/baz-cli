@@ -7,11 +7,12 @@ import { Repository } from "../lib/clients/baz.js";
 
 interface RepositoryAutocompleteContainerProps {
   onSelect: (repo: Repository) => void;
+  initialRepoId?: string;
 }
 
 const RepositoryAutocompleteContainer: React.FC<
   RepositoryAutocompleteContainerProps
-> = ({ onSelect }) => {
+> = ({ onSelect, initialRepoId }) => {
   const { data, loading, error } = useRepositories();
 
   if (loading) {
@@ -35,7 +36,13 @@ const RepositoryAutocompleteContainer: React.FC<
     );
   }
 
-  return <RepositoryAutocomplete repositories={data} onSelect={onSelect} />;
+  return (
+    <RepositoryAutocomplete
+      repositories={data}
+      onSelect={onSelect}
+      initialRepoId={initialRepoId}
+    />
+  );
 };
 
 export default RepositoryAutocompleteContainer;

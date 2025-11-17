@@ -40,7 +40,11 @@ const IntegrationPrompt: React.FC<IntegrationPromptProps> = ({ onSelect }) => {
           {" "}
           Spec Reviewer requires an integration with a ticketing system.
         </Text>
-        <Text> Read more: - https://docs.baz.co</Text>
+        <Text>
+          {" "}
+          Read more: -
+          https://docs.baz.co/agents/baz-reviewers#agent-spotlight-spec-reviewer-beta
+        </Text>
       </Box>
       <Box marginBottom={1}>
         <Text bold color="cyan">

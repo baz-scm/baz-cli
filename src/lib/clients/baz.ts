@@ -13,6 +13,7 @@ const REPOSITORIES_URL = `${env.BAZ_BASE_URL}/api/v2/repositories`;
 const CHAT_URL = `${env.BAZ_BASE_URL}/api/v2/checkout/chat`;
 const INTEGRATIONS_URL = `${env.BAZ_BASE_URL}/api/v2/integrations`;
 const OAUTH_STATE_URL = `${env.BAZ_BASE_URL}/api/v2/integrations/state`;
+const SPEC_REVIEWS_URL = `${env.BAZ_BASE_URL}/api/v2/spec-reviews`;
 
 const getDiffUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/diff`;
@@ -153,12 +154,12 @@ export interface FileViewed {
 
 export interface SpecReview {
   id: string;
-  commit_sha: string;
+  commitSha: string;
   status: "done" | "failed" | "in_progress" | "user_canceled";
   result?: SpecReviewResult;
-  comment_id: string;
-  created_at: string;
-  check_run_id: string;
+  commentId: string;
+  createdAt: string;
+  checkRunId: string;
 }
 
 export interface SpecReviewResult {
@@ -171,11 +172,27 @@ export interface SpecReviewResult {
 export interface Requirement {
   description: string;
   verdict: Verdict;
-  verdict_explanation: string;
+  verdict_explanation: string | null;
   evidence: string;
 }
 
 export type Verdict = "met" | "partially met" | "not met";
+
+export interface SpecReviewsResponse {
+  specReviews: SpecReviewAPIResponse[];
+}
+
+export interface SpecReviewAPIResponse {
+  id: string;
+  prId: string;
+  commitSha: string;
+  previewEnvUrl?: string;
+  status: "done" | "failed" | "in_progress" | "user_canceled";
+  result?: SpecReviewResult;
+  commentId: string;
+  createdAt: string;
+  checkRunId: string;
+}
 
 export async function fetchPRDetails(
   prId: string,
@@ -328,6 +345,48 @@ export async function fetchIssues(prId: string) {
   }));
 
   return [...discussionIssues];
+}
+
+export async function fetchSpecReviews(prId: string): Promise<SpecReview[]> {
+  const response = await axiosClient
+    .get<SpecReviewsResponse>(SPEC_REVIEWS_URL, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      params: {
+        prId,
+      },
+    })
+    .then((value) => value.data)
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while fetching spec reviews: ${error}`);
+      throw error;
+    });
+
+  return response.specReviews;
+}
+
+export async function triggerSpecReview(
+  prId: string,
+  repoId: string,
+): Promise<void> {
+  await axiosClient
+    .post(
+      `${SPEC_REVIEWS_URL}/run`,
+      {
+        prId,
+        repoId,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    )
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while triggering spec review: ${error}`);
+      throw error;
+    });
 }
 export interface Line {
   number?: number;

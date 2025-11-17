@@ -49,7 +49,7 @@ const ErrorPrompt: React.FC<ErrorPromptProps> = ({
       return errMsg || "An unexpected error occurred. please try again later.";
     }
 
-    return "An unexpected error occurred. please try again later.";
+    return "An unexpected error occurred. Please try again later.";
   };
 
   if (isSelected) {

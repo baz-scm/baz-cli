@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Spacer, Text } from "ink";
+import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import IssueBrowser from "./IssueBrowser.js";
 import { usePullRequest } from "../hooks/usePullRequest.js";
@@ -14,12 +14,14 @@ interface PullRequestReviewProps {
   repoId: string;
   prId: string;
   onComplete: () => void;
+  onBack: () => void;
 }
 
 const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   repoId,
   prId,
   onComplete,
+  onBack,
 }) => {
   const [state, setState] = useState<State>({ step: "prompt" });
 
@@ -42,11 +44,13 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
 
   if (error || !pr.data) {
     return (
-      <Box flexDirection="column">
-        <Text color="red" bold>
-          ❌ Error: {error}
-        </Text>
-      </Box>
+      <StateMessage
+        message={`❌ Error: ${error}`}
+        color="red"
+        bold
+        onComplete={onComplete}
+        onBack={onBack}
+      />
     );
   }
 
@@ -72,18 +76,50 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <>
           <PullRequestOverview pr={pr.data} issues={issues.data} />
-          <Spacer />
+
           <IssueBrowser
             issues={issues.data}
             prId={prId}
             repoId={repoId}
             onComplete={onComplete}
+            onBack={onBack}
           />
         </>
       );
     case "complete":
       return null;
   }
+};
+
+const StateMessage: React.FC<{
+  message: string;
+  color: string;
+  bold?: boolean;
+  onComplete: () => void;
+  onBack: () => void;
+}> = ({ message, color, bold = false, onComplete, onBack }) => {
+  useInput((_input, key) => {
+    if (key.return) {
+      onComplete();
+    } else if (key.escape) {
+      onBack();
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color={color} bold={bold}>
+          {message}
+        </Text>
+      </Box>
+      <Box>
+        <Text dimColor italic>
+          Enter to continue • ESC to go back • Ctrl+C to cancel
+        </Text>
+      </Box>
+    </Box>
+  );
 };
 
 export default PullRequestReview;

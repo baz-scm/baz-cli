@@ -58,7 +58,6 @@ const InternalReviewFlow: React.FC = () => {
     const checkIntegrations = async () => {
       try {
         const integrations = await fetchIntegrations();
-        logger.info(integrations);
         const hasTicketingIntegration = integrations.some(
           (integration) =>
             integration.integrationType === "jira" ||
@@ -240,49 +239,46 @@ const InternalReviewFlow: React.FC = () => {
 
     case "reviewComplete":
       return (
-        <Box flexDirection="column">
-          <Box marginBottom={1}>
-            <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="green">✓ Selected pull request: </Text>
-            <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
-            </Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="green" bold>
-              ✨ Review Complete!
-            </Text>
-          </Box>
-          <PostReviewPrompt onSelect={handlePostReviewAction} />
-        </Box>
+        <CompleteMessage
+          flowState={flowState}
+          onSelect={handlePostReviewAction}
+        />
       );
 
     case "complete":
-      return (
-        <Box flexDirection="column">
-          <Box marginBottom={1}>
-            <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="green">✓ Selected PR: </Text>
-            <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
-            </Text>
-          </Box>
-          <Box>
-            <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
-          </Box>
-          <Text>CR Review completed</Text>
-        </Box>
-      );
+      return <CompleteMessage flowState={flowState} />;
 
     default:
       return <Text color="red">Unknown step</Text>;
   }
+};
+
+const CompleteMessage: React.FC<{
+  flowState: Extract<
+    FlowState,
+    { step: "reviewComplete" } | { step: "complete" }
+  >;
+  onSelect?: (action: PostReviewAction) => void;
+}> = ({ flowState, onSelect }) => {
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="green">✓ Selected repository: </Text>
+        <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
+      </Box>
+      <Box marginBottom={1}>
+        <Text color="green">✓ Selected pull request: </Text>
+        <Text color="yellow">
+          #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
+        </Text>
+      </Box>
+      <Box flexDirection="column" marginBottom={1}>
+        <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
+        <Text>CR Review completed</Text>
+      </Box>
+      {onSelect && <PostReviewPrompt onSelect={onSelect} />}
+    </Box>
+  );
 };
 
 const ReviewFlow = () => (

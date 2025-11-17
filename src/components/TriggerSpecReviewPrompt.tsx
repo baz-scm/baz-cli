@@ -1,0 +1,126 @@
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import SelectInput from "ink-select-input";
+import Spinner from "ink-spinner";
+import { triggerSpecReview } from "../lib/clients/baz.js";
+import { MAIN_COLOR } from "../theme/colors.js";
+
+interface TriggerSpecReviewPromptProps {
+  prId: string;
+  repoId: string;
+  onComplete: () => void;
+  onBack: () => void;
+}
+
+type State =
+  | { step: "prompt" }
+  | { step: "triggering" }
+  | { step: "triggered" };
+
+interface SelectItem {
+  label: string;
+  value: "trigger" | "skip";
+}
+
+const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
+  prId,
+  repoId,
+  onComplete,
+  onBack,
+}) => {
+  const [state, setState] = useState<State>({ step: "prompt" });
+  const [error, setError] = useState<string | null>(null);
+
+  useInput((_input, key) => {
+    if (key.escape && state.step === "prompt") {
+      onBack();
+    }
+  });
+
+  const items: SelectItem[] = [
+    { label: "Trigger spec review", value: "trigger" },
+    { label: "Skip and continue", value: "skip" },
+  ];
+
+  const handleSelect = async (item: SelectItem) => {
+    if (item.value === "skip") {
+      onComplete();
+      return;
+    }
+
+    setState({ step: "triggering" });
+    try {
+      await triggerSpecReview(prId, repoId);
+      setState({ step: "triggered" });
+      setTimeout(() => {
+        onComplete();
+      }, 1500);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to trigger spec review",
+      );
+      setState({ step: "prompt" });
+    }
+  };
+
+  if (state.step === "triggering") {
+    return (
+      <Box>
+        <Text color={MAIN_COLOR}>
+          <Spinner type="dots" />
+        </Text>
+        <Text color={MAIN_COLOR}> Triggering spec review...</Text>
+      </Box>
+    );
+  }
+
+  if (state.step === "triggered") {
+    return (
+      <Box marginBottom={1}>
+        <Text color="green">✓ Spec review triggered successfully</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="yellow">No spec reviews found for this PR</Text>
+      </Box>
+
+      {error && (
+        <Box marginBottom={1}>
+          <Text color="red">Error: {error}</Text>
+        </Box>
+      )}
+
+      <Box marginBottom={1}>
+        <Text bold color="cyan">
+          Would you like to trigger a spec review?
+        </Text>
+      </Box>
+
+      <SelectInput
+        items={items}
+        onSelect={handleSelect}
+        indicatorComponent={({ isSelected }) => (
+          <Text color={isSelected ? "green" : "gray"}>
+            {isSelected ? "❯" : " "}
+          </Text>
+        )}
+        itemComponent={({ isSelected, label }) => (
+          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
+        )}
+      />
+
+      <Box marginTop={1}>
+        <Text dimColor italic>
+          Use ↑↓ arrows and Enter to select
+        </Text>
+      </Box>
+    </Box>
+  );
+};
+
+export default TriggerSpecReviewPrompt;
+

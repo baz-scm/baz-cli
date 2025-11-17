@@ -1,0 +1,151 @@
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
+import { Requirement } from "../lib/clients/baz.js";
+import { MAIN_COLOR } from "../theme/colors.js";
+
+interface MetRequirementBrowserProps {
+  metRequirements: Requirement[];
+  onComplete: () => void;
+  onBack: () => void;
+}
+
+type ViewState = "requirement" | "evidence";
+
+const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
+  metRequirements,
+  onComplete,
+  onBack,
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [viewState, setViewState] = useState<ViewState>("requirement");
+
+  const currentRequirement = metRequirements[currentIndex];
+  const hasNext = currentIndex < metRequirements.length - 1;
+
+  useInput((_input, key) => {
+    if (key.escape) {
+      onBack();
+    }
+  });
+
+  const handleNext = () => {
+    if (hasNext) {
+      setCurrentIndex((prev) => prev + 1);
+      setViewState("requirement");
+    } else {
+      onComplete();
+    }
+  };
+
+  const handleExplain = () => {
+    setViewState("evidence");
+  };
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color={MAIN_COLOR} bold>
+          Met requirement ({currentIndex + 1}/{metRequirements.length})
+        </Text>
+      </Box>
+
+      <Box marginBottom={1} flexDirection="column">
+        <Text bold>Description:</Text>
+        <Text>{currentRequirement.description}</Text>
+      </Box>
+
+      <Box marginBottom={1} flexDirection="column">
+        <Text bold>Verdict:</Text>
+        <Text color="green">{currentRequirement.verdict}</Text>
+        {currentRequirement.verdict_explanation && (
+          <Text dimColor>{currentRequirement.verdict_explanation}</Text>
+        )}
+      </Box>
+
+      {viewState === "requirement" ? (
+        <CommandPrompt onNext={handleNext} onExplain={handleExplain} />
+      ) : (
+        <>
+          <Box marginBottom={1} flexDirection="column">
+            <Text bold>Evidence:</Text>
+            <Text>{currentRequirement.evidence}</Text>
+          </Box>
+
+          <Box marginBottom={1}>
+            <Text dimColor italic>
+              /next to continue
+            </Text>
+          </Box>
+
+          <CommandInput onNext={handleNext} />
+        </>
+      )}
+    </Box>
+  );
+};
+
+const CommandPrompt: React.FC<{
+  onNext: () => void;
+  onExplain: () => void;
+}> = ({ onNext, onExplain }) => {
+  const [input, setInput] = useState("");
+
+  useInput((char, key) => {
+    if (key.return) {
+      if (input.trim() === "/next") {
+        onNext();
+        setInput("");
+      } else if (input.trim() === "/explain") {
+        onExplain();
+        setInput("");
+      }
+    } else if (key.backspace || key.delete) {
+      setInput((prev) => prev.slice(0, -1));
+    } else if (char) {
+      setInput((prev) => prev + char);
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text dimColor italic>
+          Available commands: /next • /explain
+        </Text>
+      </Box>
+      <Box>
+        <Text color={MAIN_COLOR}>&gt; </Text>
+        <Text>{input}</Text>
+      </Box>
+    </Box>
+  );
+};
+
+const CommandInput: React.FC<{
+  onNext: () => void;
+}> = ({ onNext }) => {
+  const [input, setInput] = useState("");
+
+  useInput((char, key) => {
+    if (key.return) {
+      if (input.trim() === "/next") {
+        onNext();
+        setInput("");
+      }
+    } else if (key.backspace || key.delete) {
+      setInput((prev) => prev.slice(0, -1));
+    } else if (char) {
+      setInput((prev) => prev + char);
+    }
+  });
+
+  return (
+    <Box>
+      <Text color={MAIN_COLOR}>&gt; </Text>
+      <Text>{input}</Text>
+    </Box>
+  );
+};
+
+export default MetRequirementBrowser;
+

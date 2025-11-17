@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Text } from "ink";
 import { MAIN_COLOR } from "../theme/colors.js";
 import { REVIEW_HEADLINE_TEXT } from "../theme/banners.js";
-import { PullRequestDetails } from "../lib/clients/baz.js";
+import { PullRequestDetails, SpecReview } from "../lib/clients/baz.js";
 import { Issue } from "../issues/types.js";
 
 const CHECKBOX_PLACEHOLDER = " □ ";
@@ -10,19 +10,23 @@ const CHECKBOX_PLACEHOLDER = " □ ";
 interface PullRequestOverviewProps {
   pr: PullRequestDetails;
   issues: Issue[];
+  specReviews: SpecReview[];
 }
 
 const PullRequestOverview: React.FC<PullRequestOverviewProps> = ({
   pr,
   issues,
+  specReviews,
 }) => {
-  // TODO: Change when properly retrieving file status
   const filesChanged = `${pr.files_viewed.length} files changed`;
 
   let specReviewSummary = "No requirements were identified";
-  const specReview = pr.spec_reviews.at(-1);
-  if (specReview?.result && specReview.result.requirements_found > 0) {
-    specReviewSummary = `${specReview.result.requirements_met}/${specReview.result.requirements_found} met requirements in this CR`;
+  const latestSpecReview = specReviews.at(-1);
+  if (
+    latestSpecReview?.result &&
+    latestSpecReview.result.requirements_found > 0
+  ) {
+    specReviewSummary = `${latestSpecReview.result.requirements_met}/${latestSpecReview.result.requirements_found} met requirements in this CR`;
   }
 
   let discussionSummary = "No unresolved comments";

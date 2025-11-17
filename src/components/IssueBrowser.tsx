@@ -11,6 +11,7 @@ interface IssueBrowserProps {
   prId: string;
   repoId: string;
   onComplete: () => void;
+  onBack: () => void;
 }
 
 const IssueBrowser: React.FC<IssueBrowserProps> = ({
@@ -18,6 +19,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   prId,
   repoId,
   onComplete,
+  onBack,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [conversationId, setConversationId] = useState<string | undefined>(
@@ -163,6 +165,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           availableCommands={availableCommands}
           prId={prId}
           enableMentions={currentIssue.type === "discussion"}
+          onBack={onBack}
         />
       </Box>
     </Box>

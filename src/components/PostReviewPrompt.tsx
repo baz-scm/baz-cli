@@ -1,43 +1,32 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { PullRequest } from "../lib/clients/baz.js";
 
-interface PullRequestSelectorProps {
-  pullRequests: PullRequest[];
-  onSelect: (pr: PullRequest) => void;
-  onBack: () => void;
-  initialPrId?: string;
+export type PostReviewAction =
+  | "reviewSameRepo"
+  | "reviewDifferentRepo"
+  | "exit";
+
+interface PostReviewPromptProps {
+  onSelect: (action: PostReviewAction) => void;
 }
 
 interface SelectItem {
   label: string;
-  value: PullRequest;
+  value: PostReviewAction;
 }
 
-const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
-  pullRequests,
-  onSelect,
-  onBack,
-  initialPrId,
-}) => {
+const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({ onSelect }) => {
   const [isSelected, setIsSelected] = useState(false);
 
-  const items: SelectItem[] = pullRequests.map((pr) => ({
-    key: `pr-${pr.id}`,
-    label: `#${pr.prNumber} ${pr.title}`,
-    value: pr,
-  }));
-
-  const initialIndex = initialPrId
-    ? pullRequests.findIndex((pr) => pr.id === initialPrId)
-    : 0;
-
-  useInput((_input, key) => {
-    if (key.escape && !isSelected) {
-      onBack();
-    }
-  });
+  const items: SelectItem[] = [
+    { label: "Review another PR in this repository", value: "reviewSameRepo" },
+    {
+      label: "Review a PR in a different repository",
+      value: "reviewDifferentRepo",
+    },
+    { label: "Exit", value: "exit" },
+  ];
 
   const handleSelect = (item: SelectItem) => {
     setIsSelected(true);
@@ -52,13 +41,12 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text bold color="cyan">
-          📋 Select a PR (Use ↑↓ arrows and Enter):
+          What would you like to do next?
         </Text>
       </Box>
       <SelectInput
         items={items}
         onSelect={handleSelect}
-        initialIndex={initialIndex >= 0 ? initialIndex : 0}
         indicatorComponent={({ isSelected }) => (
           <Text color={isSelected ? "green" : "gray"}>
             {isSelected ? "❯" : " "}
@@ -70,11 +58,11 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
       />
       <Box marginTop={1}>
         <Text dimColor italic>
-          ESC to go back • Ctrl+C to cancel
+          Use ↑↓ arrows and Enter to select
         </Text>
       </Box>
     </Box>
   );
 };
 
-export default PullRequestSelector;
+export default PostReviewPrompt;

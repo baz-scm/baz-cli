@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/baz-scm/baz-cli/compare/v0.1.5...v0.1.6) (2025-11-16)
+
+
+### ✨ New Features
+
+* CR-2630 integration setup flow ([#29](https://github.com/baz-scm/baz-cli/issues/29)) ([84da6a8](https://github.com/baz-scm/baz-cli/commit/84da6a8b5ecce9ead1f187b9b37284dca07d717c))
+* CR-2727 implement back button ([#32](https://github.com/baz-scm/baz-cli/issues/32)) ([58acea0](https://github.com/baz-scm/baz-cli/commit/58acea04792aefed0821219f1affa29c8f6dc4b1))
+
 ## [0.1.5](https://github.com/baz-scm/baz-cli/compare/v0.1.4...v0.1.5) (2025-11-10)
 
 

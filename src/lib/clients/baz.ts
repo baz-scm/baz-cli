@@ -2,9 +2,9 @@ import { createAxiosClient } from "./axios/axios-client.js";
 import { logger } from "../logger.js";
 import { env } from "../env-schema.js";
 import {
-  CheckoutChatRequest,
-  ChatStreamMessage,
   ChatStreamChunk,
+  ChatStreamMessage,
+  CheckoutChatRequest,
 } from "../../models/chat.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
@@ -22,6 +22,8 @@ const getDiscussionUrl = (discussionId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/discussions/${discussionId}`;
 const getEligibleReviewersUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/eligible-reviewers`;
+const getPullRequestUrl = (prId: string) =>
+  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}`;
 
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
 
@@ -131,6 +133,64 @@ export async function fetchPRs(repoId: string): Promise<PullRequest[]> {
     });
 
   return repos.changes;
+}
+
+// there are more fields, if needed
+export interface PullRequestDetails {
+  id: string;
+  pr_number: number;
+  title: string;
+  description?: string;
+  lines_added: number;
+  lines_deleted: number;
+  files_viewed: FileViewed[];
+  spec_reviews: SpecReview[];
+}
+
+export interface FileViewed {
+  path: string;
+}
+
+export interface SpecReview {
+  id: string;
+  commit_sha: string;
+  status: "done" | "failed" | "in_progress" | "user_canceled";
+  result?: SpecReviewResult;
+  comment_id: string;
+  created_at: string;
+  check_run_id: string;
+}
+
+export interface SpecReviewResult {
+  summary: string;
+  requirements: Requirement[];
+  requirements_met: number;
+  requirements_found: number;
+}
+
+export interface Requirement {
+  description: string;
+  verdict: Verdict;
+  verdict_explanation: string;
+  evidence: string;
+}
+
+export type Verdict = "met" | "partially met" | "not met";
+
+export async function fetchPRDetails(
+  prId: string,
+): Promise<PullRequestDetails> {
+  return await axiosClient
+    .get<PullRequestDetails>(getPullRequestUrl(prId), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((value) => value.data)
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while fetching pull requests: ${error}`);
+      throw error;
+    });
 }
 
 export interface Discussion {

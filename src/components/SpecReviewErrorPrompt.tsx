@@ -43,8 +43,10 @@ const ErrorPrompt: React.FC<ErrorPromptProps> = ({
   const getErrorMessage = (err: unknown): string => {
     if (err instanceof AxiosError) {
       const errMsg = err.response?.data?.error;
-      if (errMsg.includes("Jira") || errMsg.includes("Linear")) {
-        return "Jira or Linear integration not found. To integrate please follow the relevant link:\n For Jira - https://baz.co/settings/integrations/jira\nFor Linear - https://baz.co/settings/integrations/linear.";
+      if (errMsg) {
+        if (errMsg.includes("Jira") || errMsg.includes("Linear")) {
+          return "Jira or Linear integration not found. To integrate please follow the relevant link:\n For Jira - https://baz.co/settings/integrations/jira\nFor Linear - https://baz.co/settings/integrations/linear.";
+        }
       }
       return errMsg || "An unexpected error occurred. please try again later.";
     }

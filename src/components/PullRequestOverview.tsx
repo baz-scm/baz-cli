@@ -18,6 +18,7 @@ const PullRequestOverview: React.FC<PullRequestOverviewProps> = ({
   issues,
   specReviews,
 }) => {
+  // TODO: Change when properly retrieving file status
   const filesChanged = `${pr.files_viewed.length} files changed`;
 
   let specReviewSummary = "No requirements were identified";

@@ -154,12 +154,12 @@ export interface FileViewed {
 
 export interface SpecReview {
   id: string;
-  commit_sha: string;
+  commitSha: string;
   status: "done" | "failed" | "in_progress" | "user_canceled";
   result?: SpecReviewResult;
-  comment_id: string;
-  created_at: string;
-  check_run_id: string;
+  commentId: string;
+  createdAt: string;
+  checkRunId: string;
 }
 
 export interface SpecReviewResult {
@@ -363,15 +363,7 @@ export async function fetchSpecReviews(prId: string): Promise<SpecReview[]> {
       throw error;
     });
 
-  return response.specReviews.map((specReview) => ({
-    id: specReview.id,
-    commit_sha: specReview.commitSha,
-    status: specReview.status,
-    result: specReview.result,
-    comment_id: specReview.commentId,
-    created_at: specReview.createdAt,
-    check_run_id: specReview.checkRunId,
-  }));
+  return response.specReviews;
 }
 
 export async function triggerSpecReview(

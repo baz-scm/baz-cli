@@ -15,6 +15,10 @@ let isAuthenticating = false;
 export const createAxiosClient = (baseURL: string) => {
   const opts: CreateAxiosDefaults = {
     baseURL,
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
   };
 
   const axiosClient = axios.create(opts);

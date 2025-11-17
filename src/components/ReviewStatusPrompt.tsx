@@ -135,4 +135,3 @@ const ReviewStatusPrompt: React.FC<ReviewStatusPromptProps> = ({
 };
 
 export default ReviewStatusPrompt;
-

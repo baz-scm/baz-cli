@@ -17,4 +17,3 @@ export function useSpecReviews(prId: string) {
 
   return { data, loading, error };
 }
-

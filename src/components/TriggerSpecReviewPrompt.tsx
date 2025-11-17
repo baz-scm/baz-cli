@@ -4,6 +4,7 @@ import SelectInput from "ink-select-input";
 import Spinner from "ink-spinner";
 import { triggerSpecReview } from "../lib/clients/baz.js";
 import { MAIN_COLOR } from "../theme/colors.js";
+import ErrorPrompt from "./SpecReviewErrorPrompt.js";
 
 interface TriggerSpecReviewPromptProps {
   prId: string;
@@ -15,7 +16,8 @@ interface TriggerSpecReviewPromptProps {
 type State =
   | { step: "prompt" }
   | { step: "triggering" }
-  | { step: "triggered" };
+  | { step: "triggered" }
+  | { step: "error" };
 
 interface SelectItem {
   label: string;
@@ -29,7 +31,7 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
   onBack,
 }) => {
   const [state, setState] = useState<State>({ step: "prompt" });
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
 
   useInput((_input, key) => {
     if (key.escape && state.step === "prompt") {
@@ -42,13 +44,9 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
     { label: "Skip and continue", value: "skip" },
   ];
 
-  const handleSelect = async (item: SelectItem) => {
-    if (item.value === "skip") {
-      onComplete();
-      return;
-    }
-
+  const handleTrigger = async () => {
     setState({ step: "triggering" });
+    setError(null);
     try {
       await triggerSpecReview(prId, repoId);
       setState({ step: "triggered" });
@@ -56,11 +54,18 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
         onComplete();
       }, 1500);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to trigger spec review",
-      );
-      setState({ step: "prompt" });
+      setError(err);
+      setState({ step: "error" });
     }
+  };
+
+  const handleSelect = async (item: SelectItem) => {
+    if (item.value === "skip") {
+      onComplete();
+      return;
+    }
+
+    await handleTrigger();
   };
 
   if (state.step === "triggering") {
@@ -82,17 +87,22 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
     );
   }
 
+  if (state.step === "error" && error) {
+    return (
+      <ErrorPrompt
+        error={error}
+        context="Failed to trigger spec review"
+        onContinue={onComplete}
+        onRetry={handleTrigger}
+      />
+    );
+  }
+
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color="yellow">No spec reviews found for this PR</Text>
       </Box>
-
-      {error && (
-        <Box marginBottom={1}>
-          <Text color="red">Error: {error}</Text>
-        </Box>
-      )}
 
       <Box marginBottom={1}>
         <Text bold color="cyan">
@@ -123,4 +133,3 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
 };
 
 export default TriggerSpecReviewPrompt;
-

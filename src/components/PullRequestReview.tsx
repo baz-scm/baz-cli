@@ -192,8 +192,11 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
 
   const handleBackFromReviewStatus = () => {
     if (state.step !== "reviewStatus") return;
-    
-    if (state.hasViewedUnmetRequirements && state.unmetRequirements.length > 0) {
+
+    if (
+      state.hasViewedUnmetRequirements &&
+      state.unmetRequirements.length > 0
+    ) {
       setState({
         step: "browseUnmetRequirements",
         unmetRequirements: state.unmetRequirements,

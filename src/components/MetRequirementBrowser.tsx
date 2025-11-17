@@ -108,14 +108,14 @@ const CommandPrompt: React.FC<{
 
   return (
     <Box flexDirection="column">
-      <Box marginBottom={1}>
+      <Box borderStyle="round" borderColor="gray" paddingX={1}>
+        <Text color={MAIN_COLOR}>&gt; </Text>
+        <Text>{input}</Text>
+      </Box>
+      <Box marginTop={1}>
         <Text dimColor italic>
           Available commands: /next • /explain
         </Text>
-      </Box>
-      <Box>
-        <Text color={MAIN_COLOR}>&gt; </Text>
-        <Text>{input}</Text>
       </Box>
     </Box>
   );
@@ -140,12 +140,18 @@ const CommandInput: React.FC<{
   });
 
   return (
-    <Box>
-      <Text color={MAIN_COLOR}>&gt; </Text>
-      <Text>{input}</Text>
+    <Box flexDirection="column">
+      <Box borderStyle="round" borderColor="gray" paddingX={1}>
+        <Text color={MAIN_COLOR}>&gt; </Text>
+        <Text>{input}</Text>
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor italic>
+          /next to continue
+        </Text>
+      </Box>
     </Box>
   );
 };
 
 export default MetRequirementBrowser;
-

@@ -54,31 +54,27 @@ export const discussionIssueHandler: IssueTypeHandler<
   getCommands: (_issue, context): IssueCommand[] => {
     return [
       {
-        command: "/reply <text>",
+        command: "/comment <text>",
         description: "Post a reply comment to this discussion",
-        aliases: ["/r"],
       },
       {
-        command: "/close",
+        command: "/resolve",
         description: "Close and resolve this discussion",
-        aliases: ["/c"],
       },
       {
         command: "/next",
         description: context.hasNext
           ? "Move to the next issue"
           : "Complete the review (no more issues)",
-        aliases: ["/n"],
       },
     ];
   },
 
   handleCommand: async (command, args, issue, context) => {
     switch (command) {
-      case "reply":
-      case "r":
+      case "comment":
         if (!args.trim()) {
-          console.error("Usage: /reply <text>");
+          console.error("Usage: /comment <text>");
           return {};
         }
         try {
@@ -92,8 +88,7 @@ export const discussionIssueHandler: IssueTypeHandler<
           return {};
         }
 
-      case "close":
-      case "c":
+      case "resolve":
         try {
           await updateDiscussionState(issue.data.id);
           return {
@@ -106,7 +101,6 @@ export const discussionIssueHandler: IssueTypeHandler<
         }
 
       case "next":
-      case "n":
         return {
           shouldMoveNext: context.hasNext,
           shouldComplete: !context.hasNext,

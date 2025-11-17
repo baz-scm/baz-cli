@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useInput, useStdout } from "ink";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
 import { ChatMessage, MentionableUser } from "../models/chat.js";
@@ -28,6 +28,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   enableMentions = false,
   onBack,
 }) => {
+  const { stdout } = useStdout();
   const [inputValue, setInputValue] = useState("");
   const [showFullHelp, setShowFullHelp] = useState(false);
   const [reviewers, setReviewers] = useState<ChangeReviewer[]>([]);
@@ -35,6 +36,24 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   const [mentionSearchQuery, setMentionSearchQuery] = useState("");
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
   const [inputKey, setInputKey] = useState(0);
+  const [terminalWidth, setTerminalWidth] = useState(stdout?.columns || 80);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (stdout?.columns) {
+        setTerminalWidth(stdout.columns);
+        setInputKey((prev) => prev + 1);
+      }
+    };
+
+    if (stdout) {
+      stdout.on("resize", handleResize);
+
+      return () => {
+        stdout.off("resize", handleResize);
+      };
+    }
+  }, [stdout]);
 
   useEffect(() => {
     if (enableMentions && prId) {
@@ -53,22 +72,30 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           setShowMentionAutocomplete(false);
           setMentionSearchQuery("");
           setMentionStartIndex(-1);
-        } else if (inputValue) {
-          setInputValue("");
-          setShowFullHelp(false);
         } else {
           onBack();
         }
       }
       if (input === "?" && !isLoading && !disabled && inputValue === "") {
-        setShowFullHelp(true);
+        setShowFullHelp((prev) => !prev);
       }
     },
     { isActive: !showMentionAutocomplete },
   );
 
   const handleInputChange = (value: string) => {
+    if (inputValue === "" && value.startsWith("?")) {
+      setInputKey((prev) => prev + 1);
+      return;
+    }
+
     setInputValue(value);
+
+    if (value.startsWith("/") && !value.includes(" ")) {
+      setShowFullHelp(true);
+    } else if (showFullHelp && !value.startsWith("/")) {
+      setShowFullHelp(false);
+    }
 
     if (!enableMentions) {
       return;
@@ -134,11 +161,10 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
 
     if (availableCommands.length > 0) {
       const nextCmd = availableCommands.find(
-        (cmd) => cmd.command.includes("next") || cmd.aliases?.includes("/n"),
+        (cmd) => cmd.command.includes("next") || cmd.aliases?.includes("/next"),
       );
       if (nextCmd) {
-        const shortCmd = nextCmd.aliases?.[0] || nextCmd.command.split(" ")[0];
-        hints.push(`${shortCmd} for next issue`);
+        hints.push(`${nextCmd.command} for next issue`);
       }
     }
 
@@ -152,10 +178,29 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     if (availableCommands.length === 0) return [];
 
     const hints: string[] = [];
-    availableCommands.forEach((cmd) => {
-      const shortCmd = cmd.aliases?.[0] || cmd.command.split(" ")[0];
-      hints.push(`${shortCmd} - ${cmd.description}`);
+    let commandsToShow = availableCommands;
+
+    if (
+      inputValue.startsWith("/") &&
+      inputValue.length > 1 &&
+      !inputValue.includes(" ")
+    ) {
+      const searchTerm = inputValue.slice(1).toLowerCase();
+      commandsToShow = availableCommands.filter((cmd) => {
+        const commandName = cmd.command.split(" ")[0].slice(1).toLowerCase();
+        return commandName.startsWith(searchTerm);
+      });
+    }
+
+    commandsToShow.forEach((cmd) => {
+      hints.push(`${cmd.command} - ${cmd.description}`);
     });
+
+    if (commandsToShow.length === 0 && inputValue.startsWith("/")) {
+      hints.push("No matching commands");
+    }
+
+    hints.push("? to hide help");
     hints.push("ESC to go back");
     return hints;
   };
@@ -192,20 +237,19 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       {!disabled && !isLoading && (
         <Box flexDirection="column">
           <Box
-            flexDirection="column"
             borderStyle="round"
             borderColor="cyan"
             paddingX={1}
+            width={terminalWidth}
+            flexShrink={1}
           >
-            <Box>
-              <TextInput
-                key={inputKey}
-                value={inputValue}
-                onChange={handleInputChange}
-                onSubmit={handleSubmit}
-                placeholder="How will it affect the code?"
-              />
-            </Box>
+            <TextInput
+              key={inputKey}
+              value={inputValue}
+              onChange={handleInputChange}
+              onSubmit={handleSubmit}
+              placeholder="How will it affect the code?"
+            />
           </Box>
           {enableMentions &&
             showMentionAutocomplete &&

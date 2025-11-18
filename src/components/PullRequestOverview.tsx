@@ -47,9 +47,9 @@ const FilesSummary: React.FC<{
     ? `${pr.files_deleted} files deleted`
     : undefined;
 
-  const filesSummary = [filesChanged, filesAdded, filesDeleted]
-    .filter(Boolean)
-    .join(" / ");
+  const filesSummary =
+    [filesChanged, filesAdded, filesDeleted].filter(Boolean).join(" / ") ||
+    "No files changed";
 
   return (
     <Text>

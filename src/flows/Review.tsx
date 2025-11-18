@@ -276,7 +276,9 @@ const CompleteMessage: React.FC<{
         <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
         <Text>CR Review completed</Text>
       </Box>
-      {onSelect && <PostReviewPrompt onSelect={onSelect} />}
+      {onSelect && (
+        <PostReviewPrompt onSelect={onSelect} prId={flowState.selectedPR.id} />
+      )}
     </Box>
   );
 };

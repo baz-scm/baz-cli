@@ -14,6 +14,7 @@ const CHAT_URL = `${env.BAZ_BASE_URL}/api/v2/checkout/chat`;
 const INTEGRATIONS_URL = `${env.BAZ_BASE_URL}/api/v2/integrations`;
 const OAUTH_STATE_URL = `${env.BAZ_BASE_URL}/api/v2/integrations/state`;
 const SPEC_REVIEWS_URL = `${env.BAZ_BASE_URL}/api/v2/spec-reviews`;
+const USER_URL = `${env.BAZ_BASE_URL}/api/v1/auth/user`;
 
 const getDiffUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/diff`;
@@ -26,6 +27,12 @@ const getEligibleReviewersUrl = (prId: string) =>
 const getPullRequestUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}`;
 
+const getApprovalUrl = (prId: string) =>
+  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/approve`;
+
+const getMergeUrl = (prId: string) =>
+  `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/merge`;
+
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
 
 export type IntegrationType = "jira" | "linear" | "youtrack";
@@ -36,6 +43,10 @@ export interface Integration {
   status: string;
   updatedAt: string;
   updatedBy: string;
+}
+
+export interface User {
+  login: string | undefined;
 }
 
 export interface IntegrationsResponse {
@@ -56,6 +67,14 @@ export interface RepositoriesResponse {
   repositories: Repository[];
 }
 
+export async function fetchUser() {
+  const response = await axiosClient.get(USER_URL, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return response.data;
+}
 export async function fetchIntegrations(): Promise<Integration[]> {
   const response = await axiosClient
     .get<IntegrationsResponse>(INTEGRATIONS_URL, {
@@ -146,6 +165,13 @@ export interface PullRequestDetails {
   lines_deleted: number;
   files_viewed: FileViewed[];
   spec_reviews: SpecReview[];
+  author_name: string;
+  reviews: CodeChangeReview[];
+}
+
+export interface CodeChangeReview {
+  review_state: string;
+  assignee: string;
 }
 
 export interface FileViewed {
@@ -255,6 +281,10 @@ export interface CodeChangeReviewersResponse {
   reviewers: ChangeReviewer[];
 }
 
+export interface MergeStatus {
+  is_mergeable: boolean;
+}
+
 export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
   const repos = await axiosClient
     .get<DiscussionsResponse>(getDiscussionsUrl(prId), {
@@ -333,6 +363,54 @@ export async function updateDiscussionState(discussionId: string) {
     )
     .catch((error: unknown) => {
       logger.debug(`Axios error while resolving discussion: ${error}`);
+      throw error;
+    });
+}
+
+export async function approvePR(prId: string) {
+  await axiosClient
+    .post(
+      getApprovalUrl(prId),
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    )
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while approving pr: ${error}`);
+      throw error;
+    });
+}
+
+export async function mergePR(prId: string) {
+  await axiosClient
+    .post(
+      getMergeUrl(prId),
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    )
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while merging pr: ${error}`);
+      throw error;
+    });
+}
+
+export async function fetchMergeStatus(prId: string): Promise<MergeStatus> {
+  return await axiosClient
+    .get(`${env.BAZ_BASE_URL}/api/v1/changes/${prId}/merge-status`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((value) => value.data)
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while fetching merge status: ${error}`);
       throw error;
     });
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.7](https://github.com/baz-scm/baz-cli/compare/v0.1.6...v0.1.7) (2025-11-18)
+
+
+### ✨ New Features
+
+* CR-2631 Cli input adjusments ([#35](https://github.com/baz-scm/baz-cli/issues/35)) ([b950a74](https://github.com/baz-scm/baz-cli/commit/b950a74ad63e5469782cd177456392ef7dceceed))
+* CR-2631 Spec review flow ([#36](https://github.com/baz-scm/baz-cli/issues/36)) ([09967e1](https://github.com/baz-scm/baz-cli/commit/09967e1928bb8d811e8de40caff8e4538e0d6f14))
+* CR-2716 add CR overview and completed ([#33](https://github.com/baz-scm/baz-cli/issues/33)) ([c9cd892](https://github.com/baz-scm/baz-cli/commit/c9cd8922a396625c447fe9f7737227f772086256))
+* CR-2762 Add approve and merge options ([#37](https://github.com/baz-scm/baz-cli/issues/37)) ([a0c53ad](https://github.com/baz-scm/baz-cli/commit/a0c53ad5c81512ea2c5b4be2519b7c79894693b4))
+
 ## [0.1.6](https://github.com/baz-scm/baz-cli/compare/v0.1.5...v0.1.6) (2025-11-16)
 
 

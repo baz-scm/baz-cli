@@ -18,9 +18,63 @@ const PullRequestOverview: React.FC<PullRequestOverviewProps> = ({
   issues,
   specReviews,
 }) => {
-  // TODO: Change when properly retrieving file status
-  const filesChanged = `${pr.files_viewed.length} files changed`;
+  return (
+    <>
+      <Box key="pr-overview-headline">
+        <Text color={MAIN_COLOR}>{REVIEW_HEADLINE_TEXT}</Text>
+      </Box>
+      <Box key="pr-overview-details" flexDirection="column" marginBottom={1}>
+        <Text>CR Overview</Text>
+        <FilesSummary pr={pr} />
+        <LinesSummary pr={pr} />
+        <SpecReviewSummary specReviews={specReviews} />
+        <DiscussionsSummary issues={issues} />
+      </Box>
+    </>
+  );
+};
 
+const FilesSummary: React.FC<{
+  pr: PullRequestDetails;
+}> = ({ pr }) => {
+  const filesChanged = pr.files_changed
+    ? `${pr.files_changed} files changed`
+    : undefined;
+  const filesAdded = pr.files_added
+    ? `${pr.files_added} files added`
+    : undefined;
+  const filesDeleted = pr.files_deleted
+    ? `${pr.files_deleted} files deleted`
+    : undefined;
+
+  const filesSummary = [filesChanged, filesAdded, filesDeleted]
+    .filter(Boolean)
+    .join(" / ");
+
+  return (
+    <Text>
+      {CHECKBOX_PLACEHOLDER}
+      {filesSummary}
+    </Text>
+  );
+};
+
+const LinesSummary: React.FC<{
+  pr: PullRequestDetails;
+}> = ({ pr }) => {
+  return (
+    <Text>
+      <Text>{CHECKBOX_PLACEHOLDER}</Text>
+      <Text color="green">+{pr.lines_added} lines added</Text>
+      <Text> / </Text>
+      <Text color="red">-{pr.lines_deleted} lines removed</Text>
+    </Text>
+  );
+};
+
+const SpecReviewSummary: React.FC<{
+  specReviews: SpecReview[];
+}> = ({ specReviews }) => {
   let specReviewSummary = "No requirements were identified";
   const latestSpecReview = specReviews.at(-1);
   if (
@@ -30,41 +84,30 @@ const PullRequestOverview: React.FC<PullRequestOverviewProps> = ({
     specReviewSummary = `${latestSpecReview.result.requirements_met}/${latestSpecReview.result.requirements_found} met requirements in this CR`;
   }
 
-  let discussionSummary = "No unresolved comments";
+  return (
+    <Text>
+      {CHECKBOX_PLACEHOLDER}
+      {specReviewSummary}
+    </Text>
+  );
+};
+
+const DiscussionsSummary: React.FC<{
+  issues: Issue[];
+}> = ({ issues }) => {
+  let discussionsSummary = "No unresolved comments";
   const openDiscussions = issues.filter(
     (issue) => issue.type === "discussion",
   ).length;
   if (openDiscussions > 0) {
-    discussionSummary = `${openDiscussions} unresolved comments`;
+    discussionsSummary = `${openDiscussions} unresolved comments`;
   }
 
   return (
-    <>
-      <Box key="pr-overview-headline">
-        <Text color={MAIN_COLOR}>{REVIEW_HEADLINE_TEXT}</Text>
-      </Box>
-      <Box key="pr-overview-details" flexDirection="column" marginBottom={1}>
-        <Text>CR Overview</Text>
-        <Text>
-          {CHECKBOX_PLACEHOLDER}
-          {filesChanged}
-        </Text>
-        <Text>
-          <Text>{CHECKBOX_PLACEHOLDER}</Text>
-          <Text color="green">+{pr.lines_added} lines added</Text>
-          <Text> / </Text>
-          <Text color="red">-{pr.lines_deleted} lines removed</Text>
-        </Text>
-        <Text>
-          {CHECKBOX_PLACEHOLDER}
-          {specReviewSummary}
-        </Text>
-        <Text>
-          {CHECKBOX_PLACEHOLDER}
-          {discussionSummary}
-        </Text>
-      </Box>
-    </>
+    <Text>
+      {CHECKBOX_PLACEHOLDER}
+      {discussionsSummary}
+    </Text>
   );
 };
 

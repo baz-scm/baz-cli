@@ -163,6 +163,9 @@ export interface PullRequestDetails {
   description?: string;
   lines_added: number;
   lines_deleted: number;
+  files_changed: number;
+  files_added: number;
+  files_deleted: number;
   files_viewed: FileViewed[];
   spec_reviews: SpecReview[];
   author_name: string;

@@ -6,15 +6,14 @@ import { usePullRequests } from "../hooks/usePullRequests.js";
 import PullRequestSelector from "./PullRequestSelector.js";
 
 interface PullRequestSelectorContainerProps {
-  repoId?: string;
   onSelect: (pr: PullRequest) => void;
   initialPrId?: string;
 }
 
 const PullRequestSelectorContainer: React.FC<
   PullRequestSelectorContainerProps
-> = ({ repoId, onSelect, initialPrId }) => {
-  const { data, loading, error } = usePullRequests(repoId);
+> = ({onSelect, initialPrId }) => {
+  const { data, loading, error } = usePullRequests();
 
   if (loading) {
     return (

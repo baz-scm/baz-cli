@@ -115,3 +115,6 @@ fabric.properties
 
 dist/
 node_modules/
+
+# Tooling caches
+.eslintcache

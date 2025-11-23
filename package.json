@@ -18,7 +18,8 @@
     "lint": "eslint src --cache",
     "lint:fix": "eslint src --fix",
     "format:fix": "prettier --write \"**/*.{ts,tsx}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx}\"",
+    "cicd": "npm run lint:fix && npm run format:fix && npm run build"
   },
   "keywords": [
     "cli"

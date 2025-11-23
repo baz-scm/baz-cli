@@ -12,7 +12,7 @@ interface PullRequestSelectorContainerProps {
 
 const PullRequestSelectorContainer: React.FC<
   PullRequestSelectorContainerProps
-> = ({onSelect, initialPrId }) => {
+> = ({ onSelect, initialPrId }) => {
   const { data, loading, error } = usePullRequests();
 
   if (loading) {

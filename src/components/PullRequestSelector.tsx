@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { PullRequest } from "../lib/clients/baz.js";
 
 interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
   onSelect: (pr: PullRequest) => void;
-  onBack: () => void;
   initialPrId?: string;
 }
 
@@ -18,26 +17,19 @@ interface SelectItem {
 const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   pullRequests,
   onSelect,
-  onBack,
   initialPrId,
 }) => {
   const [isSelected, setIsSelected] = useState(false);
 
   const items: SelectItem[] = pullRequests.map((pr) => ({
     key: `pr-${pr.id}`,
-    label: `#${pr.prNumber} ${pr.title}`,
+    label: `#${pr.prNumber} ${pr.title} [${pr.repositoryName}]`,
     value: pr,
   }));
 
   const initialIndex = initialPrId
     ? pullRequests.findIndex((pr) => pr.id === initialPrId)
     : 0;
-
-  useInput((_input, key) => {
-    if (key.escape && !isSelected) {
-      onBack();
-    }
-  });
 
   const handleSelect = (item: SelectItem) => {
     setIsSelected(true);
@@ -68,11 +60,6 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
           <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
         )}
       />
-      <Box marginTop={1}>
-        <Text dimColor italic>
-          ESC to go back • Ctrl+C to cancel
-        </Text>
-      </Box>
     </Box>
   );
 };

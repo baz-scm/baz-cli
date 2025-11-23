@@ -6,9 +6,9 @@ import { usePullRequests } from "../hooks/usePullRequests.js";
 import PullRequestSelector from "./PullRequestSelector.js";
 
 interface PullRequestSelectorContainerProps {
-  repoId: string;
+  repoId?: string;
   onSelect: (pr: PullRequest) => void;
-  onBack: () => void;
+  onBack?: () => void;
   initialPrId?: string;
 }
 
@@ -52,9 +52,9 @@ const PullRequestSelectorContainer: React.FC<
   );
 };
 
-const EmptyPRState: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const EmptyPRState: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   useInput((_input, key) => {
-    if (key.escape) {
+    if (key.escape && onBack) {
       onBack();
     }
   });
@@ -63,12 +63,12 @@ const EmptyPRState: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color="yellow">
-          📭 No open pull requests found in this repository
+          📭 No open pull requests found
         </Text>
       </Box>
       <Box>
         <Text dimColor italic>
-          ESC to select a different repository • Ctrl+C to cancel
+          {onBack ? "ESC to go back • " : ""}Ctrl+C to cancel
         </Text>
       </Box>
     </Box>

@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
 import {
   PullRequest,
-  Repository,
   fetchIntegrations,
 } from "../lib/clients/baz.js";
-import RepositoryAutocompleteContainer from "../components/RepositoryAutocompleteContainer.js";
 import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer.js";
 import HeaderDisplay from "../components/HeaderDisplay.js";
 import IntegrationsCheck from "../components/IntegrationsCheck.js";
@@ -18,39 +16,33 @@ import { MAIN_COLOR } from "../theme/colors.js";
 import { REVIEW_COMPLETE_TEXT } from "../theme/banners.js";
 
 type FlowState =
-  | { step: "handleRepoSelect"; selectedRepo?: Repository }
   | {
       step: "handlePRSelect";
-      selectedRepo: Repository;
       selectedPR?: PullRequest;
     }
   | {
       step: "integrationsCheck";
-      selectedRepo: Repository;
       selectedPR: PullRequest;
     }
   | {
       step: "handleIssueSelect";
-      selectedRepo: Repository;
       selectedPR: PullRequest;
       skippedIntegration?: boolean;
     }
   | {
       step: "reviewComplete";
-      selectedRepo: Repository;
       selectedPR: PullRequest;
       skippedIntegration?: boolean;
     }
   | {
       step: "complete";
-      selectedRepo: Repository;
       selectedPR: PullRequest;
       skippedIntegration?: boolean;
     };
 
 const InternalReviewFlow: React.FC = () => {
   const [flowState, setFlowState] = useState<FlowState>({
-    step: "handleRepoSelect",
+    step: "handlePRSelect",
   });
   const [hasIntegration, setHasIntegration] = useState<boolean | null>(null);
 
@@ -74,21 +66,12 @@ const InternalReviewFlow: React.FC = () => {
     checkIntegrations();
   }, []);
 
-  // Step 1: Select Repository
-  const handleRepoSelect = (repo: Repository) => {
-    setFlowState({
-      selectedRepo: repo,
-      step: "handlePRSelect",
-    });
-  };
-
-  // Step 2: Select Pull Request
+  // Step 1: Select Pull Request
   const handlePRSelect = (pr: PullRequest) => {
     if (flowState.step !== "handlePRSelect") return;
 
     if (hasIntegration === false) {
       setFlowState({
-        ...flowState,
         selectedPR: pr,
         step: "integrationsCheck",
       });
@@ -99,7 +82,6 @@ const InternalReviewFlow: React.FC = () => {
         );
       }
       setFlowState({
-        ...flowState,
         selectedPR: pr,
         step: "handleIssueSelect",
         skippedIntegration: false,
@@ -107,92 +89,62 @@ const InternalReviewFlow: React.FC = () => {
     }
   };
 
-  // Step 3: Integration Check
+  // Step 2: Integration Check
   const handleIntegrationsCheckComplete = (skipped: boolean) => {
     if (flowState.step !== "integrationsCheck") return;
 
     setFlowState({
-      ...flowState,
+      selectedPR: flowState.selectedPR,
       step: "handleIssueSelect",
       skippedIntegration: skipped,
     });
   };
 
-  // Step 4: Browse Issues
+  // Step 3: Browse Issues
   const handleIssueComplete = () => {
     if (flowState.step !== "handleIssueSelect") return;
 
     setFlowState({
-      ...flowState,
+      selectedPR: flowState.selectedPR,
       step: "reviewComplete",
     });
   };
 
-  // Step 5: Post-Review Actions
+  // Step 4: Post-Review Actions
   const handlePostReviewAction = (action: PostReviewAction) => {
     if (flowState.step !== "reviewComplete") return;
 
     switch (action) {
       case "reviewSameRepo":
-        setFlowState({
-          selectedRepo: flowState.selectedRepo,
-          step: "handlePRSelect",
-        });
-        break;
       case "reviewDifferentRepo":
         setFlowState({
-          step: "handleRepoSelect",
+          step: "handlePRSelect",
         });
         break;
       case "exit":
         setFlowState({
-          ...flowState,
+          selectedPR: flowState.selectedPR,
           step: "complete",
         });
         break;
     }
   };
 
-  const handleBackFromPRSelect = () => {
-    if (flowState.step !== "handlePRSelect") return;
-
-    setFlowState({
-      step: "handleRepoSelect",
-      selectedRepo: flowState.selectedRepo,
-    });
-  };
-
   const handleBackFromIssueSelect = () => {
     if (flowState.step !== "handleIssueSelect") return;
 
     setFlowState({
-      ...flowState,
       step: "handlePRSelect",
+      selectedPR: flowState.selectedPR,
     });
   };
 
   switch (flowState.step) {
-    case "handleRepoSelect":
-      return (
-        <Box flexDirection="column">
-          <RepositoryAutocompleteContainer
-            onSelect={handleRepoSelect}
-            initialRepoId={flowState.selectedRepo?.id}
-          />
-        </Box>
-      );
-
     case "handlePRSelect":
       return (
         <Box flexDirection="column">
-          <Box marginBottom={1}>
-            <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
-          </Box>
           <PullRequestSelectorContainer
-            repoId={flowState.selectedRepo.id}
             onSelect={handlePRSelect}
-            onBack={handleBackFromPRSelect}
             initialPrId={flowState.selectedPR?.id}
           />
         </Box>
@@ -202,13 +154,9 @@ const InternalReviewFlow: React.FC = () => {
       return (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
-          </Box>
-          <Box marginBottom={1}>
             <Text color="green">✓ Selected PR: </Text>
             <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
+              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [{flowState.selectedPR.repositoryName}]
             </Text>
           </Box>
           <IntegrationsCheck onComplete={handleIntegrationsCheckComplete} />
@@ -219,17 +167,13 @@ const InternalReviewFlow: React.FC = () => {
       return (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text color="green">✓ Selected repository: </Text>
-            <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
-          </Box>
-          <Box marginBottom={1}>
             <Text color="green">✓ Selected PR: </Text>
             <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
+              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [{flowState.selectedPR.repositoryName}]
             </Text>
           </Box>
           <PullRequestReview
-            repoId={flowState.selectedRepo.id}
+            repoId={flowState.selectedPR.repoId}
             prId={flowState.selectedPR.id}
             onComplete={handleIssueComplete}
             onBack={handleBackFromIssueSelect}
@@ -263,13 +207,9 @@ const CompleteMessage: React.FC<{
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="green">✓ Selected repository: </Text>
-        <Text color="yellow">{flowState.selectedRepo.fullName}</Text>
-      </Box>
-      <Box marginBottom={1}>
         <Text color="green">✓ Selected pull request: </Text>
         <Text color="yellow">
-          #{flowState.selectedPR.prNumber} {flowState.selectedPR.title}
+          #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [{flowState.selectedPR.repositoryName}]
         </Text>
       </Box>
       <Box flexDirection="column" marginBottom={1}>

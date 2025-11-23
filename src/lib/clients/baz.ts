@@ -125,21 +125,22 @@ export interface PullRequest {
   id: string;
   prNumber: number;
   title: string;
-  description?: string;
+  description: string;
+  repoId: string;
+  repositoryName: string;
 }
 
 export interface PullRequestsResponse {
   changes: PullRequest[];
 }
 
-export async function fetchPRs(repoId: string): Promise<PullRequest[]> {
+export async function fetchPRs(): Promise<PullRequest[]> {
   const repos = await axiosClient
     .get<PullRequestsResponse>(PULL_REQUESTS_URL, {
       headers: {
         "Content-Type": "application/json",
       },
       params: {
-        repositories: repoId,
         state: "open",
       },
       paramsSerializer: {

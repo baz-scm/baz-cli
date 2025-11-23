@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchPRs, PullRequest } from "../lib/clients/baz.js";
 
-export function usePullRequests(repoId: string) {
+export function usePullRequests(repoId?: string) {
   const [data, setData] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export function usePullRequests(repoId: string) {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [repoId]);
 
   return { data, loading, error };
 }

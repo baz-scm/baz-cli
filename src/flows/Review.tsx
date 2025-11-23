@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
-import {
-  PullRequest,
-  fetchIntegrations,
-} from "../lib/clients/baz.js";
+import { PullRequest, fetchIntegrations } from "../lib/clients/baz.js";
 import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer.js";
 import HeaderDisplay from "../components/HeaderDisplay.js";
 import IntegrationsCheck from "../components/IntegrationsCheck.js";
@@ -156,7 +153,8 @@ const InternalReviewFlow: React.FC = () => {
           <Box marginBottom={1}>
             <Text color="green">✓ Selected PR: </Text>
             <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [{flowState.selectedPR.repositoryName}]
+              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [
+              {flowState.selectedPR.repositoryName}]
             </Text>
           </Box>
           <IntegrationsCheck onComplete={handleIntegrationsCheckComplete} />
@@ -169,7 +167,8 @@ const InternalReviewFlow: React.FC = () => {
           <Box marginBottom={1}>
             <Text color="green">✓ Selected PR: </Text>
             <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [{flowState.selectedPR.repositoryName}]
+              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [
+              {flowState.selectedPR.repositoryName}]
             </Text>
           </Box>
           <PullRequestReview
@@ -209,7 +208,8 @@ const CompleteMessage: React.FC<{
       <Box marginBottom={1}>
         <Text color="green">✓ Selected pull request: </Text>
         <Text color="yellow">
-          #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [{flowState.selectedPR.repositoryName}]
+          #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [
+          {flowState.selectedPR.repositoryName}]
         </Text>
       </Box>
       <Box flexDirection="column" marginBottom={1}>

@@ -60,9 +60,7 @@ const EmptyPRState: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="yellow">
-          📭 No open pull requests found
-        </Text>
+        <Text color="yellow">📭 No open pull requests found</Text>
       </Box>
       <Box>
         <Text dimColor italic>

@@ -2,6 +2,14 @@
 
 Baz CLI is an interactive command-line tool that streamlines pull request reviews across your repositories. It guides you through authentication, repository selection, PR triage, and post-review actions in a keyboard-driven workflow.
 
+## Quick start
+
+1. Install globally: `npm install -g @baz-scm/cli`
+2. Authenticate once: `baz auth login`
+3. Run a review: `baz review` (or simply `baz`)
+
+If you prefer local, project-scoped usage, install with `npm install @baz-scm/cli` and invoke commands via `npx baz`.
+
 ## Requirements
 - Node.js 22 or later (see `"engines"` in `package.json`)
 - Access to Baz and your source control provider
@@ -12,13 +20,14 @@ Install the published package globally to make `baz` available on your PATH:
 
 ```bash
 npm install -g @baz-scm/cli
+baz --version
 ```
 
 If you prefer a local install inside a project:
 
 ```bash
 npm install @baz-scm/cli
-npx baz --help
+npx baz --version
 ```
 
 ## Configuration
@@ -37,7 +46,7 @@ DESCOPE_CLIENT_ID=<your_client_id>
 OAUTH_CALLBACK_PORT=8020
 ```
 
-The CLI also respects `LOG_LEVEL` (`fatal`, `error`, `warn`, `info`, `debug`) and `NODE_ENV` for tuning output.
+The CLI also respects `LOG_LEVEL` (`fatal`, `error`, `warn`, `info`, `debug`) and `NODE_ENV` for tuning output. Environment variables are read at runtime, so you can adjust them without rebuilding the CLI.
 
 ## Authentication
 Authenticate once before running reviews:

@@ -12,6 +12,18 @@ import PullRequestReview from "../components/PullRequestReview.js";
 import { MAIN_COLOR } from "../theme/colors.js";
 import { REVIEW_COMPLETE_TEXT } from "../theme/banners.js";
 
+const SelectedPRHeader: React.FC<{ pullRequest: PullRequest }> = ({
+  pullRequest,
+}) => (
+  <Box marginBottom={1}>
+    <Text color="green">✓ Selected PR: </Text>
+    <Text color="yellow">
+      #{pullRequest.prNumber} {pullRequest.title} [{pullRequest.repositoryName}
+      ]
+    </Text>
+  </Box>
+);
+
 type FlowState =
   | {
       step: "handlePRSelect";
@@ -113,7 +125,6 @@ const InternalReviewFlow: React.FC = () => {
 
     switch (action) {
       case "reviewSameRepo":
-      case "reviewDifferentRepo":
         setFlowState({
           step: "handlePRSelect",
         });
@@ -150,13 +161,7 @@ const InternalReviewFlow: React.FC = () => {
     case "integrationsCheck":
       return (
         <Box flexDirection="column">
-          <Box marginBottom={1}>
-            <Text color="green">✓ Selected PR: </Text>
-            <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [
-              {flowState.selectedPR.repositoryName}]
-            </Text>
-          </Box>
+          <SelectedPRHeader pullRequest={flowState.selectedPR} />
           <IntegrationsCheck onComplete={handleIntegrationsCheckComplete} />
         </Box>
       );
@@ -164,13 +169,7 @@ const InternalReviewFlow: React.FC = () => {
     case "handleIssueSelect":
       return (
         <Box flexDirection="column">
-          <Box marginBottom={1}>
-            <Text color="green">✓ Selected PR: </Text>
-            <Text color="yellow">
-              #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [
-              {flowState.selectedPR.repositoryName}]
-            </Text>
-          </Box>
+          <SelectedPRHeader pullRequest={flowState.selectedPR} />
           <PullRequestReview
             repoId={flowState.selectedPR.repoId}
             prId={flowState.selectedPR.id}
@@ -205,13 +204,7 @@ const CompleteMessage: React.FC<{
 }> = ({ flowState, onSelect }) => {
   return (
     <Box flexDirection="column">
-      <Box marginBottom={1}>
-        <Text color="green">✓ Selected pull request: </Text>
-        <Text color="yellow">
-          #{flowState.selectedPR.prNumber} {flowState.selectedPR.title} [
-          {flowState.selectedPR.repositoryName}]
-        </Text>
-      </Box>
+      <SelectedPRHeader pullRequest={flowState.selectedPR} />
       <Box flexDirection="column" marginBottom={1}>
         <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
         <Text>CR Review completed</Text>

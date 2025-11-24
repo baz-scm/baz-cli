@@ -61,11 +61,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     ...(canMerge
       ? [{ label: "Merge this PR", value: "merge" as PostReviewAction }]
       : []),
-    { label: "Review another PR in this repository", value: "reviewSameRepo" },
-    {
-      label: "Review a PR in a different repository",
-      value: "reviewDifferentRepo",
-    },
+    { label: "Review another PR", value: "reviewSameRepo" },
     { label: "Exit", value: "exit" },
   ];
 

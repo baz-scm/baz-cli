@@ -89,10 +89,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                 const maxVisible = 10;
                 const startIndex = Math.max(
                   0,
-                  Math.min(
-                    selectedIndex - 5,
-                    filteredPRs.length - maxVisible,
-                  ),
+                  Math.min(selectedIndex - 5, filteredPRs.length - maxVisible),
                 );
                 const endIndex = Math.min(
                   startIndex + maxVisible,
@@ -116,8 +113,8 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                               actualIndex === selectedIndex ? "cyan" : "white"
                             }
                           >
-                            {actualIndex === selectedIndex ? "❯ " : "  "}
-                            #{pr.prNumber} {pr.title}
+                            {actualIndex === selectedIndex ? "❯ " : "  "}#
+                            {pr.prNumber} {pr.title}
                             <Text color="gray"> [{pr.repositoryName}]</Text>
                           </Text>
                         </Box>

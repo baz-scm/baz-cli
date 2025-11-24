@@ -18,8 +18,7 @@ const SelectedPRHeader: React.FC<{ pullRequest: PullRequest }> = ({
   <Box marginBottom={1}>
     <Text color="green">✓ Selected PR: </Text>
     <Text color="yellow">
-      #{pullRequest.prNumber} {pullRequest.title} [{pullRequest.repositoryName}
-      ]
+      #{pullRequest.prNumber} {pullRequest.title} [{pullRequest.repositoryName}]
     </Text>
   </Box>
 );

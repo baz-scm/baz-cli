@@ -6,16 +6,14 @@ import { usePullRequests } from "../hooks/usePullRequests.js";
 import PullRequestSelector from "./PullRequestSelector.js";
 
 interface PullRequestSelectorContainerProps {
-  repoId: string;
   onSelect: (pr: PullRequest) => void;
-  onBack: () => void;
   initialPrId?: string;
 }
 
 const PullRequestSelectorContainer: React.FC<
   PullRequestSelectorContainerProps
-> = ({ repoId, onSelect, onBack, initialPrId }) => {
-  const { data, loading, error } = usePullRequests(repoId);
+> = ({ onSelect, initialPrId }) => {
+  const { data, loading, error } = usePullRequests();
 
   if (loading) {
     return (
@@ -39,22 +37,21 @@ const PullRequestSelectorContainer: React.FC<
   }
 
   if (data.length === 0) {
-    return <EmptyPRState onBack={onBack} />;
+    return <EmptyPRState />;
   }
 
   return (
     <PullRequestSelector
       pullRequests={data}
       onSelect={onSelect}
-      onBack={onBack}
       initialPrId={initialPrId}
     />
   );
 };
 
-const EmptyPRState: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const EmptyPRState: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   useInput((_input, key) => {
-    if (key.escape) {
+    if (key.escape && onBack) {
       onBack();
     }
   });
@@ -62,13 +59,11 @@ const EmptyPRState: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="yellow">
-          📭 No open pull requests found in this repository
-        </Text>
+        <Text color="yellow">📭 No open pull requests found</Text>
       </Box>
       <Box>
         <Text dimColor italic>
-          ESC to select a different repository • Ctrl+C to cancel
+          {onBack ? "ESC to go back • " : ""}Ctrl+C to cancel
         </Text>
       </Box>
     </Box>

@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.8](https://github.com/baz-scm/baz-cli/compare/v0.1.7...v0.1.8) (2025-11-24)
+
+
+### 🐛 Bug Fixes
+
+* CR-2716 fix file changes summary ([#38](https://github.com/baz-scm/baz-cli/issues/38)) ([8d12d58](https://github.com/baz-scm/baz-cli/commit/8d12d582ba20a2c485c16f6d96c4ab57af2f03fe))
+
+
+### ✨ New Features
+
+* Skip repo selection step ([#41](https://github.com/baz-scm/baz-cli/issues/41)) ([ad8fca9](https://github.com/baz-scm/baz-cli/commit/ad8fca978bb7d0f481484afebafe90c788c3dc32))
+
+
+### 📚 Documentation
+
+* expand README for installation and usage ([#40](https://github.com/baz-scm/baz-cli/issues/40)) ([948be54](https://github.com/baz-scm/baz-cli/commit/948be547be74501f16c434632576b86928c1bac9))
+
 ## [0.1.7](https://github.com/baz-scm/baz-cli/compare/v0.1.6...v0.1.7) (2025-11-18)
 
 

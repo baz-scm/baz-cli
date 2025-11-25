@@ -6,7 +6,7 @@ import React from "react";
 import ReviewFlow from "./flows/Review.js";
 import { createAuthCommand } from "./commands/auth.js";
 
-const VERSION = "0.1.7"; // x-release-please-version
+const VERSION = "0.1.8"; // x-release-please-version
 
 const program = new Command();
 

@@ -53,7 +53,7 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
 
       <Box marginBottom={1} flexDirection="column">
         <Text bold>Description:</Text>
-        <Text>{currentRequirement.description}</Text>
+        <Text>{currentRequirement.title}</Text>
       </Box>
 
       <Box marginBottom={1} flexDirection="column">

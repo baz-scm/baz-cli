@@ -170,7 +170,6 @@ const InternalReviewFlow: React.FC = () => {
         <Box flexDirection="column">
           <SelectedPRHeader pullRequest={flowState.selectedPR} />
           <PullRequestReview
-            repoId={flowState.selectedPR.repoId}
             prId={flowState.selectedPR.id}
             onComplete={handleIssueComplete}
             onBack={handleBackFromIssueSelect}

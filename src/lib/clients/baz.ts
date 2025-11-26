@@ -171,6 +171,7 @@ export interface PullRequestDetails {
   spec_reviews: SpecReview[];
   author_name: string;
   reviews: CodeChangeReview[];
+  repository_id: string;
 }
 
 export interface CodeChangeReview {
@@ -185,7 +186,7 @@ export interface FileViewed {
 export interface SpecReview {
   id: string;
   commitSha: string;
-  status: "done" | "failed" | "in_progress" | "user_canceled";
+  status: "success" | "failed" | "in_progress" | "user_canceled";
   result?: SpecReviewResult;
   commentId: string;
   createdAt: string;
@@ -200,7 +201,7 @@ export interface SpecReviewResult {
 }
 
 export interface Requirement {
-  description: string;
+  title: string;
   verdict: Verdict;
   verdict_explanation: string | null;
   evidence: string;
@@ -217,7 +218,7 @@ export interface SpecReviewAPIResponse {
   prId: string;
   commitSha: string;
   previewEnvUrl?: string;
-  status: "done" | "failed" | "in_progress" | "user_canceled";
+  status: "success" | "failed" | "in_progress" | "user_canceled";
   result?: SpecReviewResult;
   commentId: string;
   createdAt: string;

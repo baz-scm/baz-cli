@@ -50,7 +50,7 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
       </Box>
 
       <Box marginBottom={1} flexDirection="column">
-        <Text bold>Description:</Text>
+        <Text bold>Requirement:</Text>
         <Text>{currentRequirement.title}</Text>
       </Box>
 

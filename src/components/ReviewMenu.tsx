@@ -107,7 +107,7 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   }
 
   items.push({
-    label: "Narrate PR",
+    label: "Narrate change request",
     value: "narratePR",
     completed: completedSteps.narratePR,
   });

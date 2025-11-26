@@ -158,7 +158,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color={MAIN_COLOR} bold>
-          Narrate PR
+          Narrate change request
         </Text>
       </Box>
       <Box marginBottom={1}>

@@ -8,7 +8,7 @@ interface PullRequestOverviewSelectProps {
   pr: PullRequestDetails;
   issues: Issue[];
   specReviews: SpecReview[];
-  onSelect: () => void;
+  onContinue: () => void;
   onBack: () => void;
 }
 
@@ -16,12 +16,12 @@ const PullRequestOverviewSelect: React.FC<PullRequestOverviewSelectProps> = ({
   pr,
   issues,
   specReviews,
-  onSelect,
+  onContinue,
   onBack,
 }) => {
   useInput((_input, key) => {
     if (key.return) {
-      onSelect();
+      onContinue();
     } else if (key.escape) {
       onBack();
     }

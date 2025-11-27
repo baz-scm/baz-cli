@@ -6,45 +6,43 @@ import { usePullRequest } from "../hooks/usePullRequest.js";
 import PullRequestOverviewSelect from "./PullRequestOverviewSelect.js";
 import { useIssues } from "../hooks/useIssues.js";
 import { useSpecReviews } from "../hooks/useSpecReviews.js";
-import PullRequestOverview from "./PullRequestOverview.js";
 import SpecReviewBrowser from "./SpecReviewBrowser.js";
-import ReviewStatusPrompt, {
-  ReviewStatusAction,
-} from "./ReviewStatusPrompt.js";
+import ReviewMenu, { ReviewMenuAction, CompletedSteps } from "./ReviewMenu.js";
 import TriggerSpecReviewPrompt from "./TriggerSpecReviewPrompt.js";
 import MetRequirementBrowser from "./MetRequirementBrowser.js";
+import NarratePR from "./NarratePR.js";
 import { MAIN_COLOR } from "../theme/colors.js";
 import { Requirement } from "../lib/clients/baz.js";
 
+interface MenuStateData {
+  unmetRequirements: Requirement[];
+  metRequirements: Requirement[];
+  completedSteps: CompletedSteps;
+}
+
 type State =
-  | { step: "prompt" }
+  | { step: "prOverview" }
   | { step: "specReviewInProgress" }
   | { step: "triggerSpecReview" }
-  | { step: "browseUnmetRequirements"; unmetRequirements: Requirement[] }
-  | {
-      step: "reviewStatus";
-      unmetRequirements: Requirement[];
-      metRequirements: Requirement[];
-      hasViewedUnmetRequirements: boolean;
-    }
-  | { step: "browseMetRequirements"; metRequirements: Requirement[] }
-  | { step: "showIssues" }
+  | ({ step: "menu" } & MenuStateData)
+  | ({ step: "browseUnmetRequirements" } & MenuStateData)
+  | ({ step: "browseMetRequirements" } & MenuStateData)
+  | ({ step: "showIssues" } & MenuStateData)
+  | ({ step: "narratePR" } & MenuStateData)
   | { step: "complete" };
 
 interface PullRequestReviewProps {
-  repoId: string;
   prId: string;
   onComplete: () => void;
   onBack: () => void;
 }
 
 const PullRequestReview: React.FC<PullRequestReviewProps> = ({
-  repoId,
   prId,
   onComplete,
   onBack,
 }) => {
-  const [state, setState] = useState<State>({ step: "prompt" });
+  const [state, setState] = useState<State>({ step: "prOverview" });
 
   const pr = usePullRequest(prId);
   const issues = useIssues(prId);
@@ -59,7 +57,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <Text color={MAIN_COLOR}>
           <Spinner type="dots" />
         </Text>
-        <Text color={MAIN_COLOR}> Fetching pull request details...</Text>
+        <Text color={MAIN_COLOR}> Fetching details...</Text>
       </Box>
     );
   }
@@ -67,7 +65,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   if (error || !pr.data) {
     return (
       <StateMessage
-        message={`❌ Error: ${error}`}
+        message={`Error: ${error}`}
         color="red"
         bold
         onComplete={onComplete}
@@ -76,7 +74,40 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     );
   }
 
-  const handlePromptSelect = () => {
+  const repoId = pr.data.repository_id;
+
+  // Get requirements from latest spec review
+  const getRequirementsData = (): {
+    unmetRequirements: Requirement[];
+    metRequirements: Requirement[];
+  } => {
+    const latestSpecReview = specReviews.data.at(-1);
+    const result = latestSpecReview?.result;
+
+    if (!result) {
+      return { unmetRequirements: [], metRequirements: [] };
+    }
+
+    return {
+      unmetRequirements: result.requirements.filter(
+        (req) => req.verdict !== "met",
+      ),
+      metRequirements: result.requirements.filter(
+        (req) => req.verdict === "met",
+      ),
+    };
+  };
+
+  // Initial state for completed steps
+  const initialCompletedSteps: CompletedSteps = {
+    unmetRequirements: false,
+    metRequirements: false,
+    comments: false,
+    narratePR: false,
+  };
+
+  // Handle prompt selection - check spec review status and go to menu
+  const handlePrOverviewContinue = () => {
     const latestSpecReview = specReviews.data.at(-1);
 
     if (!latestSpecReview) {
@@ -89,7 +120,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return;
     }
 
-    if (latestSpecReview.status !== "done") {
+    if (latestSpecReview.status !== "success") {
       setState({ step: "triggerSpecReview" });
       return;
     }
@@ -100,71 +131,66 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return;
     }
 
-    const unmetRequirements = result.requirements.filter(
-      (req) => req.verdict !== "met",
-    );
-    const metRequirements = result.requirements.filter(
-      (req) => req.verdict === "met",
-    );
-
-    if (unmetRequirements.length > 0) {
-      setState({
-        step: "browseUnmetRequirements",
-        unmetRequirements,
-      });
-    } else {
-      setState({
-        step: "reviewStatus",
-        unmetRequirements: [],
-        metRequirements,
-        hasViewedUnmetRequirements: false,
-      });
-    }
-  };
-
-  const handleTriggerSpecReviewComplete = () => {
-    if (issues.data.length > 0) {
-      setState({ step: "showIssues" });
-    } else {
-      setState({ step: "complete" });
-      onComplete();
-    }
-  };
-
-  const handleUnmetRequirementsComplete = () => {
-    if (state.step !== "browseUnmetRequirements") return;
-
-    const latestSpecReview = specReviews.data.at(-1);
-    const metRequirements =
-      latestSpecReview?.result?.requirements.filter(
-        (req) => req.verdict === "met",
-      ) || [];
-
+    // Go directly to menu after spec review check
+    const { unmetRequirements, metRequirements } = getRequirementsData();
     setState({
-      step: "reviewStatus",
-      unmetRequirements: state.unmetRequirements,
+      step: "menu",
+      unmetRequirements,
       metRequirements,
-      hasViewedUnmetRequirements: true,
+      completedSteps: initialCompletedSteps,
     });
   };
 
-  const handleReviewStatusAction = (action: ReviewStatusAction) => {
-    if (state.step !== "reviewStatus") return;
+  // Handle trigger spec review complete - go to menu
+  const handleTriggerSpecReviewComplete = () => {
+    const { unmetRequirements, metRequirements } = getRequirementsData();
+    setState({
+      step: "menu",
+      unmetRequirements,
+      metRequirements,
+      completedSteps: initialCompletedSteps,
+    });
+  };
+
+  // Handle spec review in progress - go to menu
+  const handleSpecReviewInProgressContinue = () => {
+    const { unmetRequirements, metRequirements } = getRequirementsData();
+    setState({
+      step: "menu",
+      unmetRequirements,
+      metRequirements,
+      completedSteps: initialCompletedSteps,
+    });
+  };
+
+  // Handle menu action selection
+  const handleMenuAction = (action: ReviewMenuAction) => {
+    if (state.step !== "menu") return;
 
     switch (action) {
+      case "viewUnmetRequirements":
+        setState({
+          ...state,
+          step: "browseUnmetRequirements",
+        });
+        break;
       case "viewMetRequirements":
         setState({
+          ...state,
           step: "browseMetRequirements",
-          metRequirements: state.metRequirements,
         });
         break;
       case "viewComments":
-        if (issues.data.length > 0) {
-          setState({ step: "showIssues" });
-        } else {
-          setState({ step: "complete" });
-          onComplete();
-        }
+        setState({
+          ...state,
+          step: "showIssues",
+        });
+        break;
+      case "narratePR":
+        setState({
+          ...state,
+          step: "narratePR",
+        });
         break;
       case "finish":
         setState({ step: "complete" });
@@ -173,73 +199,129 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     }
   };
 
-  const handleMetRequirementsComplete = () => {
-    if (issues.data.length > 0) {
-      setState({ step: "showIssues" });
-    } else {
-      setState({ step: "complete" });
-      onComplete();
-    }
-  };
-
-  const handleBackFromTriggerSpecReview = () => {
-    setState({ step: "prompt" });
-  };
-
-  const handleBackFromUnmetRequirements = () => {
-    setState({ step: "prompt" });
-  };
-
-  const handleBackFromReviewStatus = () => {
-    if (state.step !== "reviewStatus") return;
-
-    if (
-      state.hasViewedUnmetRequirements &&
-      state.unmetRequirements.length > 0
-    ) {
-      setState({
-        step: "browseUnmetRequirements",
-        unmetRequirements: state.unmetRequirements,
-      });
-    } else {
-      setState({ step: "prompt" });
-    }
-  };
-
-  const handleBackFromMetRequirements = () => {
-    if (state.step !== "browseMetRequirements") return;
-
-    const latestSpecReview = specReviews.data.at(-1);
-    const unmetRequirements =
-      latestSpecReview?.result?.requirements.filter(
-        (req) => req.verdict !== "met",
-      ) || [];
+  // Handle completion of browsing unmet requirements
+  const handleUnmetRequirementsComplete = () => {
+    if (state.step !== "browseUnmetRequirements") return;
 
     setState({
-      step: "reviewStatus",
-      unmetRequirements,
+      step: "menu",
+      unmetRequirements: state.unmetRequirements,
       metRequirements: state.metRequirements,
-      hasViewedUnmetRequirements: true,
+      completedSteps: {
+        ...state.completedSteps,
+        unmetRequirements: true,
+      },
     });
   };
 
+  // Handle back from unmet requirements - go to menu without marking complete
+  const handleBackFromUnmetRequirements = () => {
+    if (state.step !== "browseUnmetRequirements") return;
+
+    setState({
+      step: "menu",
+      unmetRequirements: state.unmetRequirements,
+      metRequirements: state.metRequirements,
+      completedSteps: state.completedSteps,
+    });
+  };
+
+  // Handle completion of browsing met requirements
+  const handleMetRequirementsComplete = () => {
+    if (state.step !== "browseMetRequirements") return;
+
+    setState({
+      step: "menu",
+      unmetRequirements: state.unmetRequirements,
+      metRequirements: state.metRequirements,
+      completedSteps: {
+        ...state.completedSteps,
+        metRequirements: true,
+      },
+    });
+  };
+
+  // Handle back from met requirements - go to menu without marking complete
+  const handleBackFromMetRequirements = () => {
+    if (state.step !== "browseMetRequirements") return;
+
+    setState({
+      step: "menu",
+      unmetRequirements: state.unmetRequirements,
+      metRequirements: state.metRequirements,
+      completedSteps: state.completedSteps,
+    });
+  };
+
+  // Handle completion of browsing issues/comments
+  const handleIssuesComplete = () => {
+    if (state.step !== "showIssues") return;
+
+    setState({
+      step: "menu",
+      unmetRequirements: state.unmetRequirements,
+      metRequirements: state.metRequirements,
+      completedSteps: {
+        ...state.completedSteps,
+        comments: true,
+      },
+    });
+  };
+
+  // Handle back from issues - go to menu without marking complete
+  const handleBackFromIssues = () => {
+    if (state.step !== "showIssues") return;
+
+    setState({
+      step: "menu",
+      unmetRequirements: state.unmetRequirements,
+      metRequirements: state.metRequirements,
+      completedSteps: state.completedSteps,
+    });
+  };
+
+  // Handle back from narrate PR - go to menu and mark as complete (user interacted)
+  const handleBackFromNarratePR = () => {
+    if (state.step !== "narratePR") return;
+
+    setState({
+      step: "menu",
+      unmetRequirements: state.unmetRequirements,
+      metRequirements: state.metRequirements,
+      completedSteps: {
+        ...state.completedSteps,
+        narratePR: true,
+      },
+    });
+  };
+
+  // Handle back from menu - go to prompt
+  const handleBackFromMenu = () => {
+    setState({ step: "prOverview" });
+  };
+
+  // Handle back from trigger spec review
+  const handleBackFromTriggerSpecReview = () => {
+    setState({ step: "prOverview" });
+  };
+
   switch (state.step) {
-    case "prompt":
+    case "prOverview":
       return (
         <PullRequestOverviewSelect
           pr={pr.data}
           issues={issues.data}
           specReviews={specReviews.data}
-          onSelect={handlePromptSelect}
+          onContinue={handlePrOverviewContinue}
           onBack={onBack}
         />
       );
     case "specReviewInProgress":
       return (
         <StateMessage
-          message="Spec review is currently in progress. Continuing to next step..."
+          message="Spec review is currently in progress. Continuing to review menu..."
           color="yellow"
-          onComplete={handleTriggerSpecReviewComplete}
+          onComplete={handleSpecReviewInProgressContinue}
           onBack={onBack}
         />
       );
@@ -252,23 +334,23 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
           onBack={handleBackFromTriggerSpecReview}
         />
       );
+    case "menu":
+      return (
+        <ReviewMenu
+          unmetRequirementsCount={state.unmetRequirements.length}
+          metRequirementsCount={state.metRequirements.length}
+          unresolvedCommentsCount={issues.data.length}
+          completedSteps={state.completedSteps}
+          onSelect={handleMenuAction}
+          onBack={handleBackFromMenu}
+        />
+      );
     case "browseUnmetRequirements":
       return (
         <SpecReviewBrowser
           unmetRequirements={state.unmetRequirements}
           onComplete={handleUnmetRequirementsComplete}
           onBack={handleBackFromUnmetRequirements}
-        />
-      );
-    case "reviewStatus":
-      return (
-        <ReviewStatusPrompt
-          unmetRequirementsCount={state.unmetRequirements.length}
-          metRequirementsCount={state.metRequirements.length}
-          unresolvedCommentsCount={issues.data.length}
-          hasViewedUnmetRequirements={state.hasViewedUnmetRequirements}
-          onSelect={handleReviewStatusAction}
-          onBack={handleBackFromReviewStatus}
         />
       );
     case "browseMetRequirements":
@@ -281,21 +363,21 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       );
     case "showIssues":
       return (
-        <>
-          <PullRequestOverview
-            pr={pr.data}
-            issues={issues.data}
-            specReviews={specReviews.data}
-          />
-
-          <IssueBrowser
-            issues={issues.data}
-            prId={prId}
-            repoId={repoId}
-            onComplete={onComplete}
-            onBack={onBack}
-          />
-        </>
+        <IssueBrowser
+          issues={issues.data}
+          prId={prId}
+          repoId={repoId}
+          onComplete={handleIssuesComplete}
+          onBack={handleBackFromIssues}
+        />
+      );
+    case "narratePR":
+      return (
+        <NarratePR
+          prId={prId}
+          repoId={repoId}
+          onBack={handleBackFromNarratePR}
+        />
       );
     case "complete":
       return null;
@@ -326,7 +408,7 @@ const StateMessage: React.FC<{
       </Box>
       <Box>
         <Text dimColor italic>
-          Enter to continue • ESC to go back • Ctrl+C to cancel
+          Enter to continue - ESC to go back - Ctrl+C to cancel
         </Text>
       </Box>
     </Box>

@@ -11,6 +11,7 @@ interface ChatDisplayProps {
   messages: ChatMessage[];
   isLoading: boolean;
   onSubmit: (message: string) => void;
+  placeholder?: string;
   availableCommands?: IssueCommand[];
   disabled?: boolean;
   prId?: string;
@@ -22,6 +23,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   messages,
   isLoading,
   onSubmit,
+  placeholder = "How will it affect the code?",
   availableCommands = [],
   disabled = false,
   prId,
@@ -168,7 +170,10 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       }
     }
 
-    hints.push("? for help");
+    if (availableCommands.length > 0) {
+      hints.push("? for help");
+    }
+
     hints.push("ESC to go back");
     hints.push("Ctrl + C to quit");
     return hints;
@@ -248,7 +253,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
               value={inputValue}
               onChange={handleInputChange}
               onSubmit={handleSubmit}
-              placeholder="How will it affect the code?"
+              placeholder={placeholder}
             />
           </Box>
           {enableMentions &&

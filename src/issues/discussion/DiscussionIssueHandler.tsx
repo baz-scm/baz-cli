@@ -9,6 +9,7 @@ import IssueExplanationDisplay from "../common/IssueExplanationDisplay.js";
 import { parseHtmlToMarkdown } from "../../lib/parser.js";
 import { Box, Text } from "ink";
 import { IssueType } from "../../models/chat.js";
+import {renderMarkdown} from "../../lib/markdown.js";
 
 export const discussionIssueHandler: IssueTypeHandler<
   Issue & { type: "discussion" }
@@ -22,9 +23,9 @@ export const discussionIssueHandler: IssueTypeHandler<
           ? comment.author_user.display_name
           : comment.author.split("/").pop() || comment.author;
       const commentBody =
-        comment.body_content_type === "html"
+        renderMarkdown(comment.body_content_type === "html"
           ? parseHtmlToMarkdown(comment.comment_body)
-          : comment.comment_body;
+          : comment.comment_body);
 
       const textBody = commentBody.split("\n").map((line, idx) => (
         // `<Newline>` creates a too big gap between lines

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Requirement } from "../lib/clients/baz.js";
 import { MAIN_COLOR } from "../theme/colors.js";
+import {renderMarkdown} from "../lib/markdown.js";
 
 interface SpecReviewBrowserProps {
   unmetRequirements: Requirement[];
@@ -60,7 +61,7 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
         <Text bold>Verdict:</Text>
         <Text color="red">{currentRequirement.verdict}</Text>
         {currentRequirement.verdict_explanation && (
-          <Text dimColor>{currentRequirement.verdict_explanation}</Text>
+          <Text>{renderMarkdown(currentRequirement.verdict_explanation)}</Text>
         )}
       </Box>
 

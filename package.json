@@ -39,7 +39,7 @@
     "ink-select-input": "^6.0.0",
     "ink-spinner": "^5.0.0",
     "ink-text-input": "^6.0.0",
-    "marked": "^15.0.12",
+    "marked": "^11.2.0",
     "marked-terminal": "^7.3.0",
     "open": "^10.2.0",
     "pino": "^9.11.0",

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/baz-scm/baz-cli/compare/v0.1.8...v0.2.0) (2025-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* CR-2814 menu and narrate pr flow ([#42](https://github.com/baz-scm/baz-cli/issues/42))
+
+### ✨ New Features
+
+* CR-2814 menu and narrate pr flow ([#42](https://github.com/baz-scm/baz-cli/issues/42)) ([9dfc0f3](https://github.com/baz-scm/baz-cli/commit/9dfc0f37704e830856d76e3cf5d1a7d4dccbf975))
+
 ## [0.1.8](https://github.com/baz-scm/baz-cli/compare/v0.1.7...v0.1.8) (2025-11-24)
 
 

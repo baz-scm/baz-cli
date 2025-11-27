@@ -10,11 +10,13 @@ export function renderMarkdown(markdown: string): string {
     chalk.level = 3;
 
     // markedTerminal types don't fully align with marked@11 but runtime works
-    marked.use(markedTerminal({
-      showSectionPrefix: false,
-      reflowText: true,
-      width: 80,
-    }) as unknown as MarkedExtension);
+    marked.use(
+      markedTerminal({
+        showSectionPrefix: false,
+        reflowText: true,
+        width: 80,
+      }) as unknown as MarkedExtension,
+    );
     configured = true;
   }
 

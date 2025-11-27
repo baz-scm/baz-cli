@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Requirement } from "../lib/clients/baz.js";
 import { MAIN_COLOR } from "../theme/colors.js";
-import {renderMarkdown} from "../lib/markdown.js";
+import { renderMarkdown } from "../lib/markdown.js";
 
 interface SpecReviewBrowserProps {
   unmetRequirements: Requirement[];

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/baz-scm/baz-cli/compare/v0.2.0...v0.2.1) (2025-11-27)
+
+
+### ✨ New Features
+
+* Add markdown rendering ([#44](https://github.com/baz-scm/baz-cli/issues/44)) ([6d787c4](https://github.com/baz-scm/baz-cli/commit/6d787c47077839697d24a0a3538dd9d9ea6ae849))
+
 ## [0.2.0](https://github.com/baz-scm/baz-cli/compare/v0.1.8...v0.2.0) (2025-11-27)
 
 

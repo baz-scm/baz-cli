@@ -6,7 +6,7 @@ marked.setOptions({
   renderer: new TerminalRenderer({
     showSectionPrefix: false,
     reflowText: true,
-    width: 80,
+    width: process.stdout.columns || 80,
   }),
 });
 

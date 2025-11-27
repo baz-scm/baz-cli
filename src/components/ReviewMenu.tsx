@@ -80,7 +80,13 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   }
 
   // Build menu items - only show options with data, plus always show Narrate PR
-  const items: SelectItem[] = [];
+  const items: SelectItem[] = [
+    {
+      label: "Narrate change request",
+      value: "narratePR",
+      completed: completedSteps.narratePR,
+    },
+  ];
 
   if (unmetRequirementsCount > 0) {
     items.push({
@@ -105,12 +111,6 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
       completed: completedSteps.comments,
     });
   }
-
-  items.push({
-    label: "Narrate change request",
-    value: "narratePR",
-    completed: completedSteps.narratePR,
-  });
 
   items.push({
     label: "Finish review",

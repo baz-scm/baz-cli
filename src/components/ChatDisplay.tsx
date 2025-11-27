@@ -6,6 +6,7 @@ import { ChatMessage, MentionableUser } from "../models/chat.js";
 import { IssueCommand } from "../issues/types.js";
 import { ChangeReviewer, fetchEligibleReviewers } from "../lib/clients/baz.js";
 import MentionAutocomplete from "./MentionAutocomplete.js";
+import { renderMarkdown } from "../lib/markdown.js";
 
 interface ChatDisplayProps {
   messages: ChatMessage[];
@@ -223,7 +224,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 {message.role === "user" ? "You:" : "Baz:"}
               </Text>
               <Box paddingLeft={2}>
-                <Text>{message.content}</Text>
+                <Text>{renderMarkdown(message.content)}</Text>
               </Box>
             </Box>
           ))}

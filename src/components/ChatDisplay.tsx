@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Box, Text, useInput, useStdout } from "ink";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
@@ -214,6 +214,11 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   const defaultHints = getDefaultHints();
   const allCommandHints = getAllCommandHints();
 
+  const renderedMessages = useMemo(() =>
+    messages.map((message) => renderMarkdown(message.content)),
+    [messages]
+  );
+
   return (
     <Box flexDirection="column">
       {messages.length > 0 && (
@@ -224,7 +229,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 {message.role === "user" ? "You:" : "Baz:"}
               </Text>
               <Box paddingLeft={2}>
-                <Text>{renderMarkdown(message.content)}</Text>
+                <Text>{renderedMessages[index]}</Text>
               </Box>
             </Box>
           ))}

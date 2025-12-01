@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/baz-scm/baz-cli/compare/v0.2.1...v0.2.2) (2025-12-01)
+
+
+### 🐛 Bug Fixes
+
+* Use useMemo to speed up chat display and avoid lags ([#46](https://github.com/baz-scm/baz-cli/issues/46)) ([44443ea](https://github.com/baz-scm/baz-cli/commit/44443ea2d6419449abd95fe1e29520c648f4846f))
+
 ## [0.2.1](https://github.com/baz-scm/baz-cli/compare/v0.2.0...v0.2.1) (2025-11-27)
 
 

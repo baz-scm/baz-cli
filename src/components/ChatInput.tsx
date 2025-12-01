@@ -1,6 +1,6 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, memo, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
-import TextInput from "ink-text-input";
+import AdvancedTextInput from "./AdvancedTextInput.js";
 import { MentionableUser } from "../models/chat.js";
 import { IssueCommand } from "../issues/types.js";
 import { ChangeReviewer, fetchEligibleReviewers } from "../lib/clients/baz.js";
@@ -184,8 +184,8 @@ const ChatInput = memo<ChatInputProps>(
       return hints;
     };
 
-    const defaultHints = getDefaultHints();
-    const allCommandHints = getAllCommandHints();
+    const defaultHints = useMemo(() => getDefaultHints(), [availableCommands]);
+    const allCommandHints = useMemo(() => getAllCommandHints(), [availableCommands, inputValue]);
 
     return (
       <Box flexDirection="column">
@@ -196,7 +196,7 @@ const ChatInput = memo<ChatInputProps>(
           width={terminalWidth}
           flexShrink={1}
         >
-          <TextInput
+          <AdvancedTextInput
             key={inputKey}
             value={inputValue}
             onChange={handleInputChange}
@@ -222,6 +222,29 @@ const ChatInput = memo<ChatInputProps>(
           </Box>
         )}
       </Box>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Deep compare availableCommands array
+    if (prevProps.availableCommands.length !== nextProps.availableCommands.length) {
+      return false;
+    }
+
+    for (let i = 0; i < prevProps.availableCommands.length; i++) {
+      if (
+        prevProps.availableCommands[i].command !== nextProps.availableCommands[i].command ||
+        prevProps.availableCommands[i].description !== nextProps.availableCommands[i].description
+      ) {
+        return false;
+      }
+    }
+
+    // Compare other props
+    return (
+      prevProps.placeholder === nextProps.placeholder &&
+      prevProps.enableMentions === nextProps.enableMentions &&
+      prevProps.prId === nextProps.prId &&
+      prevProps.terminalWidth === nextProps.terminalWidth
     );
   },
 );

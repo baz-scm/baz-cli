@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
@@ -31,11 +31,11 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const currentIssue = issues[currentIndex];
   const hasNext = currentIndex < issues.length - 1;
 
-  const handler = getIssueHandler(currentIssue.type);
+  const handler = useMemo(() => getIssueHandler(currentIssue.type), [currentIssue.type]);
   const ExplainComponent = handler.displayExplainComponent;
   const DisplayComponent = handler.displayComponent;
 
-  const handleChatSubmit = async (message: string) => {
+  const handleChatSubmit = useCallback(async (message: string) => {
     const userMessage: ChatMessage = {
       role: "user",
       content: message,
@@ -101,24 +101,58 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         return updated;
       });
     }
-  };
+  }, [repoId, prId, handler, currentIssue.type, currentIssue.data.id, conversationId]);
 
-  const handleSubmit = async (message: string) => {
+  const moveToNext = useCallback(() => {
+    if (hasNext) {
+      setCurrentIndex((prev) => prev + 1);
+      setConversationId(undefined);
+      setChatMessages([]);
+    } else {
+      onComplete();
+    }
+  }, [hasNext, onComplete]);
+
+  // Use refs to break circular dependencies
+  const contextRef = useRef<IssueContext | null>(null);
+  const handleSubmitRef = useRef<((message: string) => Promise<void>) | null>(null);
+
+  const context: IssueContext = useMemo(() => ({
+    prId,
+    repoId,
+    currentIndex,
+    totalIssues: issues.length,
+    hasNext,
+    conversationId,
+    moveToNext,
+    complete: onComplete,
+    setConversationId,
+    onChatSubmit: handleChatSubmit,
+  }), [prId, repoId, currentIndex, issues.length, hasNext, conversationId, moveToNext, onComplete, handleChatSubmit]);
+
+  useEffect(() => {
+    contextRef.current = context;
+  }, [context]);
+
+  const handleSubmit = useCallback(async (message: string) => {
     if (message.startsWith("/")) {
       const spaceIndex = message.indexOf(" ");
       const command =
-        spaceIndex === -1 ? message.slice(1) : message.slice(1, spaceIndex);
+          spaceIndex === -1 ? message.slice(1) : message.slice(1, spaceIndex);
       const args = spaceIndex === -1 ? "" : message.slice(spaceIndex + 1);
 
+      // Use current values from ref
+      if (!contextRef.current) return;
+
       const result = await handler.handleCommand(
-        command,
-        args,
-        currentIssue,
-        context,
+          command,
+          args,
+          issues[currentIndex],
+          contextRef.current,
       );
 
       if (result.shouldMoveNext) {
-        context.moveToNext();
+        moveToNext();
       } else if (result.shouldComplete) {
         onComplete();
       }
@@ -126,30 +160,23 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     }
 
     await handleChatSubmit(message);
-  };
+  }, [handler, issues, currentIndex, moveToNext, onComplete, handleChatSubmit]);
 
-  const context: IssueContext = {
-    prId,
-    repoId,
-    currentIndex,
-    totalIssues: issues.length,
-    hasNext,
-    conversationId,
-    moveToNext: () => {
-      if (hasNext) {
-        setCurrentIndex((prev) => prev + 1);
-        setConversationId(undefined);
-        setChatMessages([]);
-      } else {
-        onComplete();
-      }
-    },
-    complete: onComplete,
-    setConversationId,
-    onChatSubmit: handleChatSubmit,
-  };
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
 
-  const availableCommands = handler.getCommands(currentIssue, context);
+  // Stable callback that never changes reference
+  const stableHandleSubmit = useCallback(async (message: string) => {
+    if (handleSubmitRef.current) {
+      return handleSubmitRef.current(message);
+    }
+  }, []);
+
+  const availableCommands = useMemo(
+    () => handler.getCommands(issues[currentIndex], contextRef.current || context),
+    [handler, issues, currentIndex]
+  );
 
   return (
     <Box flexDirection="column">
@@ -161,7 +188,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         <ChatDisplay
           messages={chatMessages}
           isLoading={isLoading}
-          onSubmit={handleSubmit}
+          onSubmit={stableHandleSubmit}
           availableCommands={availableCommands}
           prId={prId}
           enableMentions={currentIssue.type === "discussion"}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Text } from "ink";
 import ChatDisplay from "./ChatDisplay.js";
 import { ChatMessage, IssueType } from "../models/chat.js";
@@ -86,7 +86,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
     sendInitialMessage();
   }, [prId, repoId]);
 
-  const handleChatSubmit = async (message: string) => {
+  const handleChatSubmit = useCallback(async (message: string) => {
     const userMessage: ChatMessage = {
       role: "user",
       content: message,
@@ -152,7 +152,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
         return updated;
       });
     }
-  };
+  }, [repoId, prId, conversationId]);
 
   return (
     <Box flexDirection="column">

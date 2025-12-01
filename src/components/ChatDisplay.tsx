@@ -29,10 +29,19 @@ const MemoizedMessage = memo<{ message: ChatMessage }>(
     prevProps.message.role === nextProps.message.role,
 );
 
+const LoadingIndicator = memo(() => (
+  <Box marginBottom={1}>
+    <Text color="magenta">
+      <Spinner type="dots" />
+    </Text>
+    <Text color="magenta"> Thinking...</Text>
+  </Box>
+));
+
 interface ChatDisplayProps {
   messages: ChatMessage[];
   isLoading: boolean;
-  onSubmit: (message: string) => void;
+  onSubmit: (message: string) => void | Promise<void>;
   placeholder?: string;
   availableCommands?: IssueCommand[];
   disabled?: boolean;
@@ -82,14 +91,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
           </Box>
         )}
 
-        {isLoading && (
-          <Box marginBottom={1}>
-            <Text color="magenta">
-              <Spinner type="dots" />
-            </Text>
-            <Text color="magenta"> Thinking...</Text>
-          </Box>
-        )}
+        {isLoading && <LoadingIndicator />}
 
         {!disabled && !isLoading && (
           <ChatInput
@@ -122,15 +124,30 @@ const ChatDisplay = memo<ChatDisplayProps>(
       }
     }
 
+    // Deep compare availableCommands array
+    const prevCommands = prevProps.availableCommands || [];
+    const nextCommands = nextProps.availableCommands || [];
+
+    if (prevCommands.length !== nextCommands.length) {
+      return false;
+    }
+
+    for (let i = 0; i < prevCommands.length; i++) {
+      if (
+        prevCommands[i].command !== nextCommands[i].command ||
+        prevCommands[i].description !== nextCommands[i].description
+      ) {
+        return false;
+      }
+    }
+
     // Check other props
     return (
       prevProps.isLoading === nextProps.isLoading &&
       prevProps.disabled === nextProps.disabled &&
       prevProps.placeholder === nextProps.placeholder &&
       prevProps.prId === nextProps.prId &&
-      prevProps.enableMentions === nextProps.enableMentions &&
-      prevProps.availableCommands?.length ===
-        nextProps.availableCommands?.length
+      prevProps.enableMentions === nextProps.enableMentions
       // Intentionally skip onSubmit and onBack as they change on every render
       // but don't affect the visual output when input isn't shown
     );

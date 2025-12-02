@@ -82,17 +82,16 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     metRequirements: Requirement[];
   } => {
     const latestSpecReview = specReviews.data.at(-1);
-    const result = latestSpecReview?.result;
 
-    if (!result) {
+    if (!latestSpecReview) {
       return { unmetRequirements: [], metRequirements: [] };
     }
 
     return {
-      unmetRequirements: result.requirements.filter(
+      unmetRequirements: latestSpecReview.requirements.filter(
         (req) => req.verdict !== "met",
       ),
-      metRequirements: result.requirements.filter(
+      metRequirements: latestSpecReview.requirements.filter(
         (req) => req.verdict === "met",
       ),
     };
@@ -125,8 +124,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return;
     }
 
-    const result = latestSpecReview.result;
-    if (!result) {
+    if (!latestSpecReview) {
       setState({ step: "triggerSpecReview" });
       return;
     }

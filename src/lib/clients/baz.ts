@@ -187,7 +187,9 @@ export interface SpecReview {
   id: string;
   commitSha: string;
   status: "success" | "failed" | "in_progress" | "user_canceled";
-  result?: SpecReviewResult;
+  requirementsFound: number;
+  requirementsMet: number;
+  requirements: Requirement[];
   commentId: string;
   createdAt: string;
   checkRunId: string;
@@ -210,19 +212,7 @@ export interface Requirement {
 export type Verdict = "met" | "partially met" | "not met";
 
 export interface SpecReviewsResponse {
-  specReviews: SpecReviewAPIResponse[];
-}
-
-export interface SpecReviewAPIResponse {
-  id: string;
-  prId: string;
-  commitSha: string;
-  previewEnvUrl?: string;
-  status: "success" | "failed" | "in_progress" | "user_canceled";
-  result?: SpecReviewResult;
-  commentId: string;
-  createdAt: string;
-  checkRunId: string;
+  specReviews: SpecReview[];
 }
 
 export async function fetchPRDetails(

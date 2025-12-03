@@ -6,6 +6,7 @@ import {
   ChatStreamMessage,
   CheckoutChatRequest,
 } from "../../models/chat.js";
+import * as githubClient from "./github-client.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
@@ -34,6 +35,11 @@ const getMergeUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/merge`;
 
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
+
+// Helper function to check if BYOK mode is enabled
+function isBYOKMode(): boolean {
+  return !!env.GITHUB_PAT;
+}
 
 export type IntegrationType = "jira" | "linear" | "youtrack";
 
@@ -106,6 +112,11 @@ export async function fetchOAuthState(
 }
 
 export async function fetchRepositories(): Promise<Repository[]> {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.fetchRepositoriesFromGitHub();
+  }
+
   const repos = await axiosClient
     .get<RepositoriesResponse>(REPOSITORIES_URL, {
       headers: {
@@ -135,6 +146,11 @@ export interface PullRequestsResponse {
 }
 
 export async function fetchPRs(): Promise<PullRequest[]> {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.fetchPRsFromGitHub();
+  }
+
   const repos = await axiosClient
     .get<PullRequestsResponse>(PULL_REQUESTS_URL, {
       headers: {
@@ -228,6 +244,11 @@ export interface SpecReviewAPIResponse {
 export async function fetchPRDetails(
   prId: string,
 ): Promise<PullRequestDetails> {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.fetchPRDetailsFromGitHub(prId);
+  }
+
   return await axiosClient
     .get<PullRequestDetails>(getPullRequestUrl(prId), {
       headers: {
@@ -291,6 +312,11 @@ export interface MergeStatus {
 }
 
 export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.fetchDiscussionsFromGitHub(prId);
+  }
+
   const repos = await axiosClient
     .get<DiscussionsResponse>(getDiscussionsUrl(prId), {
       headers: {
@@ -312,6 +338,11 @@ export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
 export async function fetchEligibleReviewers(
   prId: string,
 ): Promise<ChangeReviewer[]> {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.fetchEligibleReviewersFromGitHub(prId);
+  }
+
   const response = await axiosClient
     .get<CodeChangeReviewersResponse>(getEligibleReviewersUrl(prId), {
       headers: {
@@ -332,6 +363,11 @@ export async function postDiscussionReply(
   body: string,
   prId: string,
 ) {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.postDiscussionReplyToGitHub(discussionId, body, prId);
+  }
+
   await axiosClient
     .post(
       COMMENTS_URL,
@@ -353,7 +389,15 @@ export async function postDiscussionReply(
     });
 }
 
-export async function updateDiscussionState(discussionId: string) {
+export async function updateDiscussionState(discussionId: string, prId?: string) {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    if (!prId) {
+      throw new Error("prId is required for BYOK mode");
+    }
+    return githubClient.updateDiscussionStateOnGitHub(discussionId, prId);
+  }
+
   await axiosClient
     .patch(
       getDiscussionUrl(discussionId),
@@ -373,6 +417,11 @@ export async function updateDiscussionState(discussionId: string) {
 }
 
 export async function approvePR(prId: string) {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.approvePROnGitHub(prId);
+  }
+
   await axiosClient
     .post(
       getApprovalUrl(prId),
@@ -390,6 +439,11 @@ export async function approvePR(prId: string) {
 }
 
 export async function mergePR(prId: string) {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.mergePROnGitHub(prId);
+  }
+
   await axiosClient
     .post(
       getMergeUrl(prId),
@@ -407,6 +461,11 @@ export async function mergePR(prId: string) {
 }
 
 export async function fetchMergeStatus(prId: string): Promise<MergeStatus> {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.fetchMergeStatusFromGitHub(prId);
+  }
+
   return await axiosClient
     .get(`${env.BAZ_BASE_URL}/api/v1/changes/${prId}/merge-status`, {
       headers: {
@@ -453,6 +512,13 @@ export async function triggerSpecReview(
   prId: string,
   repoId: string,
 ): Promise<void> {
+  // Spec reviews require Baz integration and are not available in BYOK mode
+  if (isBYOKMode()) {
+    throw new Error(
+      "Spec reviews are not available in BYOK mode. This feature requires Baz integration."
+    );
+  }
+
   await axiosClient
     .post(
       `${SPEC_REVIEWS_URL}/run`,
@@ -505,6 +571,11 @@ export async function fetchFileDiffs(
   commit: string,
   files: string[],
 ): Promise<FileDiff[]> {
+  // Use GitHub API directly if BYOK mode is enabled
+  if (isBYOKMode()) {
+    return githubClient.fetchFileDiffsFromGitHub(prId, commit, files);
+  }
+
   const repos = await axiosClient
     .get<FileDiffsResponse>(getDiffUrl(prId), {
       headers: {
@@ -531,10 +602,18 @@ export async function* streamChatResponse(
   request: CheckoutChatRequest,
 ): AsyncGenerator<ChatStreamChunk, void, unknown> {
   try {
+    // Prepare headers
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // Add ANTHROPIC_API_KEY header if in BYOK mode
+    if (env.ANTHROPIC_API_KEY) {
+      headers["X-Anthropic-Api-Key"] = env.ANTHROPIC_API_KEY;
+    }
+
     const response = await axiosClient.post(CHAT_URL, request, {
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       responseType: "stream",
     });
 

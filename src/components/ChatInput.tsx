@@ -202,6 +202,7 @@ const ChatInput = memo<ChatInputProps>(
             onChange={handleInputChange}
             onSubmit={handleSubmit}
             placeholder={placeholder}
+            isActive={!showMentionAutocomplete}
           />
         </Box>
         {enableMentions && showMentionAutocomplete && reviewers.length > 0 && (
@@ -231,11 +232,35 @@ const ChatInput = memo<ChatInputProps>(
     }
 
     for (let i = 0; i < prevProps.availableCommands.length; i++) {
+      const prevCmd = prevProps.availableCommands[i];
+      const nextCmd = nextProps.availableCommands[i];
+
       if (
-        prevProps.availableCommands[i].command !== nextProps.availableCommands[i].command ||
-        prevProps.availableCommands[i].description !== nextProps.availableCommands[i].description
+        prevCmd.command !== nextCmd.command ||
+        prevCmd.description !== nextCmd.description
       ) {
         return false;
+      }
+
+      // Compare aliases arrays
+      const prevAliases = prevCmd.aliases;
+      const nextAliases = nextCmd.aliases;
+
+      // Check if one is undefined and the other isn't
+      if ((prevAliases === undefined) !== (nextAliases === undefined)) {
+        return false;
+      }
+
+      // If both are defined, compare their contents
+      if (prevAliases && nextAliases) {
+        if (prevAliases.length !== nextAliases.length) {
+          return false;
+        }
+        for (let j = 0; j < prevAliases.length; j++) {
+          if (prevAliases[j] !== nextAliases[j]) {
+            return false;
+          }
+        }
       }
     }
 

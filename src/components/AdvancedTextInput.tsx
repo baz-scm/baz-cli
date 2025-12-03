@@ -6,6 +6,7 @@ interface AdvancedTextInputProps {
   placeholder?: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  isActive?: boolean;
 }
 
 const AdvancedTextInput: React.FC<AdvancedTextInputProps> = ({
@@ -13,6 +14,7 @@ const AdvancedTextInput: React.FC<AdvancedTextInputProps> = ({
   placeholder = "",
   onChange,
   onSubmit,
+  isActive = true,
 }) => {
   const [cursorPosition, setCursorPosition] = useState(value.length);
 
@@ -57,16 +59,6 @@ const AdvancedTextInput: React.FC<AdvancedTextInputProps> = ({
       return;
     }
 
-    // Handle backspace
-    if (key.backspace || key.delete) {
-      if (cursorPosition > 0) {
-        const newValue = value.slice(0, cursorPosition - 1) + value.slice(cursorPosition);
-        onChange(newValue);
-        setCursorPosition(cursorPosition - 1);
-      }
-      return;
-    }
-
     // Ctrl+Backspace or Alt+Backspace (delete word left) - works on both Mac and Windows
     if (key.backspace && (key.ctrl || key.meta)) {
       const wordStart = findWordBoundaryLeft(value, cursorPosition);
@@ -81,6 +73,25 @@ const AdvancedTextInput: React.FC<AdvancedTextInputProps> = ({
       const wordEnd = findWordBoundaryRight(value, cursorPosition);
       const newValue = value.slice(0, cursorPosition) + value.slice(wordEnd);
       onChange(newValue);
+      return;
+    }
+
+    // Handle backspace (delete character before cursor)
+    if (key.backspace) {
+      if (cursorPosition > 0) {
+        const newValue = value.slice(0, cursorPosition - 1) + value.slice(cursorPosition);
+        onChange(newValue);
+        setCursorPosition(cursorPosition - 1);
+      }
+      return;
+    }
+
+    // Handle delete (delete character at cursor)
+    if (key.delete) {
+      if (cursorPosition < value.length) {
+        const newValue = value.slice(0, cursorPosition) + value.slice(cursorPosition + 1);
+        onChange(newValue);
+      }
       return;
     }
 
@@ -154,7 +165,7 @@ const AdvancedTextInput: React.FC<AdvancedTextInputProps> = ({
       onChange(newValue);
       setCursorPosition(cursorPosition + input.length);
     }
-  });
+  }, { isActive });
 
   const isPlaceholder = !value && placeholder;
 

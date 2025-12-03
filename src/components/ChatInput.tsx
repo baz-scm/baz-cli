@@ -232,7 +232,12 @@ const ChatInput = memo<ChatInputProps>(
       prevProps.prId === nextProps.prId &&
       prevProps.terminalWidth === nextProps.terminalWidth &&
       prevProps.availableCommands?.length ===
-        nextProps.availableCommands?.length
+        nextProps.availableCommands?.length &&
+      prevProps.availableCommands?.every(
+        (cmd, i) =>
+          cmd.command === nextProps.availableCommands?.[i]?.command &&
+          cmd.description === nextProps.availableCommands?.[i]?.description,
+      )
     );
   },
 );

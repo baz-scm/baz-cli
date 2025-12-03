@@ -78,10 +78,10 @@ const SpecReviewSummary: React.FC<{
   let specReviewSummary = "No requirements were identified";
   const latestSpecReview = specReviews.at(-1);
   if (
-    latestSpecReview?.result &&
-    latestSpecReview.result.requirements_found > 0
+    latestSpecReview?.requirementsFound &&
+    latestSpecReview.requirementsFound > 0
   ) {
-    specReviewSummary = `${latestSpecReview.result.requirements_met}/${latestSpecReview.result.requirements_found} met requirements in this CR`;
+    specReviewSummary = `${latestSpecReview.requirementsMet}/${latestSpecReview.requirementsFound} met requirements in this CR`;
   }
 
   return (

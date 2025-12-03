@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, memo, useMemo, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { MentionableUser } from "../models/chat.js";
@@ -35,6 +35,10 @@ const ChatInput = memo<ChatInputProps>(
     const [mentionStartIndex, setMentionStartIndex] = useState(-1);
     const [inputKey, setInputKey] = useState(0);
 
+    // Use ref to track input value for useInput callback to avoid stale closures
+    const inputValueRef = useRef(inputValue);
+    inputValueRef.current = inputValue;
+
     useEffect(() => {
       if (enableMentions && prId) {
         fetchEligibleReviewers(prId)
@@ -45,8 +49,9 @@ const ChatInput = memo<ChatInputProps>(
       }
     }, [enableMentions, prId]);
 
+    // Only handle escape key in useInput - let TextInput handle all other input
     useInput(
-      (input, key) => {
+      (_input, key) => {
         if (key.escape) {
           if (showMentionAutocomplete) {
             setShowMentionAutocomplete(false);
@@ -56,15 +61,14 @@ const ChatInput = memo<ChatInputProps>(
             onBack();
           }
         }
-        if (input === "?" && inputValue === "") {
-          setShowFullHelp((prev) => !prev);
-        }
       },
       { isActive: !showMentionAutocomplete },
     );
 
     const handleInputChange = (value: string) => {
-      if (inputValue === "" && value.startsWith("?")) {
+      // Handle "?" for help toggle when input is empty
+      if (inputValueRef.current === "" && value === "?") {
+        setShowFullHelp((prev) => !prev);
         setInputKey((prev) => prev + 1);
         return;
       }
@@ -131,7 +135,7 @@ const ChatInput = memo<ChatInputProps>(
       }
     };
 
-    const getDefaultHints = () => {
+    const defaultHints = useMemo(() => {
       const hints: string[] = [];
 
       if (availableCommands.length > 0) {
@@ -151,9 +155,9 @@ const ChatInput = memo<ChatInputProps>(
       hints.push("ESC to go back");
       hints.push("Ctrl + C to quit");
       return hints;
-    };
+    }, [availableCommands]);
 
-    const getAllCommandHints = () => {
+    const allCommandHints = useMemo(() => {
       if (availableCommands.length === 0) return [];
 
       const hints: string[] = [];
@@ -182,10 +186,7 @@ const ChatInput = memo<ChatInputProps>(
       hints.push("? to hide help");
       hints.push("ESC to go back");
       return hints;
-    };
-
-    const defaultHints = getDefaultHints();
-    const allCommandHints = getAllCommandHints();
+    }, [availableCommands, inputValue]);
 
     return (
       <Box flexDirection="column">
@@ -222,6 +223,21 @@ const ChatInput = memo<ChatInputProps>(
           </Box>
         )}
       </Box>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.placeholder === nextProps.placeholder &&
+      prevProps.enableMentions === nextProps.enableMentions &&
+      prevProps.prId === nextProps.prId &&
+      prevProps.terminalWidth === nextProps.terminalWidth &&
+      prevProps.availableCommands?.length ===
+        nextProps.availableCommands?.length &&
+      prevProps.availableCommands?.every(
+        (cmd, i) =>
+          cmd.command === nextProps.availableCommands?.[i]?.command &&
+          cmd.description === nextProps.availableCommands?.[i]?.description,
+      )
     );
   },
 );

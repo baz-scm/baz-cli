@@ -185,7 +185,10 @@ const ChatInput = memo<ChatInputProps>(
     };
 
     const defaultHints = useMemo(() => getDefaultHints(), [availableCommands]);
-    const allCommandHints = useMemo(() => getAllCommandHints(), [availableCommands, inputValue]);
+    const allCommandHints = useMemo(
+      () => getAllCommandHints(),
+      [availableCommands, inputValue],
+    );
 
     return (
       <Box flexDirection="column">
@@ -226,8 +229,9 @@ const ChatInput = memo<ChatInputProps>(
     );
   },
   (prevProps, nextProps) => {
-    // Deep compare availableCommands array
-    if (prevProps.availableCommands.length !== nextProps.availableCommands.length) {
+    if (
+      prevProps.availableCommands.length !== nextProps.availableCommands.length
+    ) {
       return false;
     }
 
@@ -242,16 +246,13 @@ const ChatInput = memo<ChatInputProps>(
         return false;
       }
 
-      // Compare aliases arrays
       const prevAliases = prevCmd.aliases;
       const nextAliases = nextCmd.aliases;
 
-      // Check if one is undefined and the other isn't
       if ((prevAliases === undefined) !== (nextAliases === undefined)) {
         return false;
       }
 
-      // If both are defined, compare their contents
       if (prevAliases && nextAliases) {
         if (prevAliases.length !== nextAliases.length) {
           return false;
@@ -264,7 +265,6 @@ const ChatInput = memo<ChatInputProps>(
       }
     }
 
-    // Compare other props
     return (
       prevProps.placeholder === nextProps.placeholder &&
       prevProps.enableMentions === nextProps.enableMentions &&

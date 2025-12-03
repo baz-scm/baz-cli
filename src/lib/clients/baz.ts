@@ -517,6 +517,61 @@ export async function fetchFileDiffs(
   return repos.fileDiffs;
 }
 
+function* processStreamMessage(
+  message: ChatStreamMessage,
+): Generator<ChatStreamChunk, void, unknown> {
+  switch (message.type) {
+    case "message_start":
+      if (message.conversationId) {
+        yield { conversationId: message.conversationId };
+      }
+      if (message.content) {
+        yield { content: message.content };
+      }
+      break;
+    case "message_delta":
+      if (message.content) {
+        yield { content: message.content };
+      }
+      break;
+    case "message_end":
+      if (message.content) {
+        yield { content: message.content };
+      }
+      break;
+    case "tool_call":
+      yield {
+        conversationId: message.conversationId,
+        toolCall: {
+          toolName: message.toolName,
+          toolArgs: message.toolArgs,
+          toolCallId: message.toolCallId,
+        },
+      };
+      break;
+    case "tool_call_message":
+      yield {
+        conversationId: message.conversationId,
+        toolCall: {
+          toolName: message.toolName,
+          toolArgs: message.toolArgs,
+          toolCallId: "",
+          message: message.content,
+        },
+      };
+      break;
+    case "tool_result":
+      yield {
+        conversationId: message.conversationId,
+        toolResult: {
+          toolCallId: message.toolCallId,
+          content: message.content,
+        },
+      };
+      break;
+  }
+}
+
 export async function* streamChatResponse(
   request: CheckoutChatRequest,
 ): AsyncGenerator<ChatStreamChunk, void, unknown> {
@@ -540,19 +595,7 @@ export async function* streamChatResponse(
 
         try {
           const message = JSON.parse(line) as ChatStreamMessage;
-
-          if (message.type === "message_start") {
-            if (message.conversationId) {
-              yield { conversationId: message.conversationId };
-            }
-            if (message.content) {
-              yield { content: message.content };
-            }
-          } else if (message.type === "message_delta" && message.content) {
-            yield { content: message.content };
-          } else if (message.type === "message_end" && message.content) {
-            yield { content: message.content };
-          }
+          yield* processStreamMessage(message);
         } catch (parseError) {
           logger.debug({ parseError, line }, "Failed to parse NDJSON line");
         }
@@ -562,18 +605,7 @@ export async function* streamChatResponse(
     if (buffer.trim()) {
       try {
         const message = JSON.parse(buffer) as ChatStreamMessage;
-        if (message.type === "message_start") {
-          if (message.conversationId) {
-            yield { conversationId: message.conversationId };
-          }
-          if (message.content) {
-            yield { content: message.content };
-          }
-        } else if (message.type === "message_delta" && message.content) {
-          yield { content: message.content };
-        } else if (message.type === "message_end" && message.content) {
-          yield { content: message.content };
-        }
+        yield* processStreamMessage(message);
       } catch (parseError) {
         logger.debug({ parseError, buffer }, "Failed to parse final buffer");
       }

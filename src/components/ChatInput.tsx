@@ -13,6 +13,8 @@ interface ChatInputProps {
   enableMentions: boolean;
   prId?: string;
   onBack: () => void;
+  toolsExist: boolean;
+  onToggleToolCallExpansion: () => void;
   terminalWidth: number;
 }
 
@@ -24,6 +26,8 @@ const ChatInput = memo<ChatInputProps>(
     enableMentions,
     prId,
     onBack,
+    toolsExist,
+    onToggleToolCallExpansion,
     terminalWidth,
   }) => {
     const [inputValue, setInputValue] = useState("");
@@ -39,6 +43,9 @@ const ChatInput = memo<ChatInputProps>(
     const inputValueRef = useRef(inputValue);
     inputValueRef.current = inputValue;
 
+    // Track when a Ctrl shortcut was pressed to skip the character in TextInput
+    const skipNextInputRef = useRef(false);
+
     useEffect(() => {
       if (enableMentions && prId) {
         fetchEligibleReviewers(prId)
@@ -51,7 +58,7 @@ const ChatInput = memo<ChatInputProps>(
 
     // Only handle escape key in useInput - let TextInput handle all other input
     useInput(
-      (_input, key) => {
+      (input, key) => {
         if (key.escape) {
           if (showMentionAutocomplete) {
             setShowMentionAutocomplete(false);
@@ -60,12 +67,22 @@ const ChatInput = memo<ChatInputProps>(
           } else {
             onBack();
           }
+        } else if (toolsExist && key.ctrl && input.toLowerCase() === "o") {
+          skipNextInputRef.current = true; // Skip the "o" that TextInput will add
+          onToggleToolCallExpansion();
         }
       },
       { isActive: !showMentionAutocomplete },
     );
 
     const handleInputChange = (value: string) => {
+      // Skip input if it was a Ctrl shortcut (TextInput only sees the letter, not the Ctrl)
+      if (skipNextInputRef.current) {
+        skipNextInputRef.current = false;
+        setInputKey((prev) => prev + 1); // Reset TextInput to remove the extra character
+        return;
+      }
+
       // Handle "?" for help toggle when input is empty
       if (inputValueRef.current === "" && value === "?") {
         setShowFullHelp((prev) => !prev);

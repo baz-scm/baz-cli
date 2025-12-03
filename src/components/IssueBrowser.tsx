@@ -171,6 +171,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     if (handleSubmitRef.current) {
       return handleSubmitRef.current(message);
     }
+    return Promise.resolve();
   }, []);
 
   const availableCommands = useMemo(

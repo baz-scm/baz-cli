@@ -19,8 +19,6 @@ const envSchema = z.object({
   OAUTH_CALLBACK_PORT: z.coerce.number().default(8020),
   JIRA_CLIENT_ID: z.string().default("j7VQs4gJ8yV4e6Pa4buiYqZ0UcvRRnJv"),
   LINEAR_CLIENT_ID: z.string().default("a20b70eadc1cce2121089f70402351d6"),
-  GITHUB_PAT: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

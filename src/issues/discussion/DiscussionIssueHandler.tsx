@@ -92,7 +92,7 @@ export const discussionIssueHandler: IssueTypeHandler<
 
       case "resolve":
         try {
-          await updateDiscussionState(issue.data.id, context.prId);
+          await updateDiscussionState(issue.data.id);
           return {
             shouldMoveNext: context.hasNext,
             shouldComplete: !context.hasNext,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Text, useInput } from "ink";
 
 interface AdvancedTextInputProps {
@@ -17,6 +17,10 @@ const AdvancedTextInput: React.FC<AdvancedTextInputProps> = ({
   isActive = true,
 }) => {
   const [cursorPosition, setCursorPosition] = useState(value.length);
+
+  useEffect(() => {
+    setCursorPosition((prev) => Math.min(prev, value.length));
+  }, [value]);
 
   const findWordBoundaryLeft = (text: string, pos: number): number => {
     if (pos === 0) return 0;

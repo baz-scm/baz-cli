@@ -175,7 +175,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
 
   const availableCommands = useMemo(
     () => handler.getCommands(issues[currentIndex], contextRef.current || context),
-    [handler, issues, currentIndex]
+    [handler, issues, currentIndex, context]
   );
 
   return (

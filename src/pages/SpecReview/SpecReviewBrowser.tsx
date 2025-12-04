@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { Box, Text, useInput } from "ink";
+import React, { useState } from "react";
+import { Box, Text } from "ink";
 import { Requirement, streamChatResponse } from "../../lib/clients/baz.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { renderMarkdown } from "../../lib/markdown.js";

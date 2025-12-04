@@ -1,7 +1,20 @@
-# Baz CLI
+<div align="center">
+   <img align="center" width="128px" src="https://avatars.githubusercontent.com/u/140384842?s=200&v=4" />
+   <h1 align="center"><b>Baz CLI</b></h1>
+   <p align="center">
+      CLI interface for AI code review: Automated logic, security, performance and design reviews (and more).
+      <br />
+      <a href="https://github.com/baz-scm/"><strong>Baz on GitHub »</strong></a>
+      <br />
+      <br />
+      <b>Install via NPM</b>
+      <br />
+      <code>npm install @baz-scm/cli</code>
+      <br />
+   </p>
+</div>
 
-Baz CLI is an interactive command-line tool that streamlines pull request reviews across your repositories. It guides you through authentication, repository selection, PR triage, and post-review actions in a keyboard-driven workflow.
-
+---
 ## Quick start
 
 1. Install globally: `npm install -g @baz-scm/cli`

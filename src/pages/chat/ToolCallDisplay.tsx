@@ -1,9 +1,9 @@
 import React, { memo, useMemo, useState, useEffect } from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
-import { ChatToolCall } from "../models/chat.js";
-import { renderMarkdown } from "../lib/markdown.js";
-import { MAIN_COLOR } from "../theme/colors.js";
+import { ChatToolCall } from "../../models/chat.js";
+import { renderMarkdown } from "../../lib/markdown.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
 
 const MIN_LOADER_TIME_MS = 3000;
 

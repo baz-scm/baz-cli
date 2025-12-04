@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Text } from "ink";
-import ChatDisplay from "./ChatDisplay.js";
+import ChatDisplay from "../chat/ChatDisplay.js";
 import { ChatMessage, IssueType } from "../../models/chat.js";
 import { processStream } from "../../lib/chat-stream.js";
 import { MAIN_COLOR } from "../../theme/colors.js";

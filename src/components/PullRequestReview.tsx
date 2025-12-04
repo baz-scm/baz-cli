@@ -7,7 +7,10 @@ import PullRequestOverviewSelect from "../pages/PROverview/PullRequestOverviewSe
 import { useIssues } from "../hooks/useIssues.js";
 import { useSpecReviews } from "../hooks/useSpecReviews.js";
 import SpecReviewBrowser from "../pages/SpecReview/SpecReviewBrowser.js";
-import ReviewMenu, { ReviewMenuAction, CompletedSteps } from "../flows/Review/ReviewMenu.js";
+import ReviewMenu, {
+  ReviewMenuAction,
+  CompletedSteps,
+} from "../flows/Review/ReviewMenu.js";
 import TriggerSpecReviewPrompt from "../pages/SpecReview/TriggerSpecReviewPrompt.js";
 import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js";
 import NarratePR from "../pages/PRWalkthrough/NarratePR.js";

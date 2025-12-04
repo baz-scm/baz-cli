@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import { PullRequestDetails, SpecReview } from "../lib/clients/baz.js";
-import { Issue } from "../issues/types.js";
+import { PullRequestDetails, SpecReview } from "../../lib/clients/baz.js";
+import { Issue } from "../../issues/types.js";
 import PullRequestOverview from "./PullRequestOverview.js";
 
 interface PullRequestOverviewSelectProps {

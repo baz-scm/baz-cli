@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { usePullRequest } from "../hooks/usePullRequest.js";
-import { useFetchUser } from "../hooks/useFetchUser.js";
-import { approvePR, mergePR } from "../lib/clients/baz.js";
-import { useFetchMergeStatus } from "../hooks/useFetchMergeStatus.js";
-import LoadingSpinner from "./LoadingSpinner.js";
+import { usePullRequest } from "../../hooks/usePullRequest.js";
+import { useFetchUser } from "../../hooks/useFetchUser.js";
+import { approvePR, mergePR } from "../../lib/clients/baz.js";
+import { useFetchMergeStatus } from "../../hooks/useFetchMergeStatus.js";
+import LoadingSpinner from "../../components/LoadingSpinner.js";
 
 export type PostReviewAction =
   | "approve"

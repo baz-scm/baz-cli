@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, memo } from "react";
 import { Box, Text, useStdout } from "ink";
 import Spinner from "ink-spinner";
-import { ChatMessage } from "../models/chat.js";
-import { IssueCommand } from "../issues/types.js";
-import { renderMarkdown } from "../lib/markdown.js";
+import { ChatMessage } from "../../models/chat.js";
+import { IssueCommand } from "../../issues/types.js";
+import { renderMarkdown } from "../../lib/markdown.js";
 import ChatInput from "./ChatInput.js";
 
 const MemoizedMessage = memo<{ message: ChatMessage }>(

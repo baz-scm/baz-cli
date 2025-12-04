@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
-import IssueBrowser from "./IssueBrowser.js";
+import IssueBrowser from "../pages/IssueBrowser.js";
 import { usePullRequest } from "../hooks/usePullRequest.js";
-import PullRequestOverviewSelect from "./PullRequestOverviewSelect.js";
+import PullRequestOverviewSelect from "../pages/PROverview/PullRequestOverviewSelect.js";
 import { useIssues } from "../hooks/useIssues.js";
 import { useSpecReviews } from "../hooks/useSpecReviews.js";
-import SpecReviewBrowser from "./SpecReviewBrowser.js";
-import ReviewMenu, { ReviewMenuAction, CompletedSteps } from "./ReviewMenu.js";
-import TriggerSpecReviewPrompt from "./TriggerSpecReviewPrompt.js";
-import MetRequirementBrowser from "./MetRequirementBrowser.js";
-import NarratePR from "./NarratePR.js";
+import SpecReviewBrowser from "../pages/SpecReview/SpecReviewBrowser.js";
+import ReviewMenu, { ReviewMenuAction, CompletedSteps } from "../flows/Review/ReviewMenu.js";
+import TriggerSpecReviewPrompt from "../pages/SpecReview/TriggerSpecReviewPrompt.js";
+import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js";
+import NarratePR from "../pages/PRWalkthrough/NarratePR.js";
 import { MAIN_COLOR } from "../theme/colors.js";
 import { Requirement } from "../lib/clients/baz.js";
 

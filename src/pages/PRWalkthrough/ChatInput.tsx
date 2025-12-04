@@ -1,10 +1,10 @@
 import React, { useState, useEffect, memo, useMemo, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { MentionableUser } from "../models/chat.js";
-import { IssueCommand } from "../issues/types.js";
-import { ChangeReviewer, fetchEligibleReviewers } from "../lib/clients/baz.js";
-import MentionAutocomplete from "./MentionAutocomplete.js";
+import { MentionableUser } from "../../models/chat.js";
+import { IssueCommand } from "../../issues/types.js";
+import { ChangeReviewer, fetchEligibleReviewers } from "../../lib/clients/baz.js";
+import MentionAutocomplete from "../../components/MentionAutocomplete.js";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;

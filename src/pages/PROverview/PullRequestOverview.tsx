@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { MAIN_COLOR } from "../theme/colors.js";
-import { REVIEW_HEADLINE_TEXT } from "../theme/banners.js";
-import { PullRequestDetails, SpecReview } from "../lib/clients/baz.js";
-import { Issue } from "../issues/types.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
+import { REVIEW_HEADLINE_TEXT } from "../../theme/banners.js";
+import { PullRequestDetails, SpecReview } from "../../lib/clients/baz.js";
+import { Issue } from "../../issues/types.js";
 
 const CHECKBOX_PLACEHOLDER = " □ ";
 

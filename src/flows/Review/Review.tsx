@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
-import { PullRequest, fetchIntegrations } from "../lib/clients/baz.js";
-import PullRequestSelectorContainer from "../components/PullRequestSelectorContainer.js";
-import HeaderDisplay from "../components/HeaderDisplay.js";
-import IntegrationsCheck from "../components/IntegrationsCheck.js";
+import { PullRequest, fetchIntegrations } from "../../lib/clients/baz.js";
+import PullRequestSelectorContainer from "../../pages/PRSelector/PullRequestSelectorContainer.js";
+import HeaderDisplay from "../../components/HeaderDisplay.js";
+import IntegrationsCheck from "../Integration/IntegrationsCheck.js";
 import PostReviewPrompt, {
   PostReviewAction,
-} from "../components/PostReviewPrompt.js";
-import { logger } from "../lib/logger.js";
-import PullRequestReview from "../components/PullRequestReview.js";
-import { MAIN_COLOR } from "../theme/colors.js";
-import { REVIEW_COMPLETE_TEXT } from "../theme/banners.js";
+} from "./PostReviewPrompt.js";
+import { logger } from "../../lib/logger.js";
+import PullRequestReview from "../../components/PullRequestReview.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
+import { REVIEW_COMPLETE_TEXT } from "../../theme/banners.js";
 
 const SelectedPRHeader: React.FC<{ pullRequest: PullRequest }> = ({
   pullRequest,

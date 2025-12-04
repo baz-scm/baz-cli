@@ -122,15 +122,34 @@ const ChatDisplay = memo<ChatDisplayProps>(
       }
     }
 
+    // Check if availableCommands changed (example, "next" commands changes on last item)
+    if (
+      prevProps.availableCommands?.length !==
+      nextProps.availableCommands?.length
+    ) {
+      return false; // Re-render if command count changed
+    }
+
+    if (prevProps.availableCommands && nextProps.availableCommands) {
+      for (let i = 0; i < prevProps.availableCommands.length; i++) {
+        const prevCmd = prevProps.availableCommands[i];
+        const nextCmd = nextProps.availableCommands[i];
+        if (
+          prevCmd.command !== nextCmd.command ||
+          prevCmd.description !== nextCmd.description
+        ) {
+          return false; // Re-render if command content changed
+        }
+      }
+    }
+
     // Check other props
     return (
       prevProps.isLoading === nextProps.isLoading &&
       prevProps.disabled === nextProps.disabled &&
       prevProps.placeholder === nextProps.placeholder &&
       prevProps.prId === nextProps.prId &&
-      prevProps.enableMentions === nextProps.enableMentions &&
-      prevProps.availableCommands?.length ===
-        nextProps.availableCommands?.length
+      prevProps.enableMentions === nextProps.enableMentions
       // Intentionally skip onSubmit and onBack as they change on every render
       // but don't affect the visual output when input isn't shown
     );

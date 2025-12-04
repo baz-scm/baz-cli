@@ -347,6 +347,8 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <SpecReviewBrowser
           unmetRequirements={state.unmetRequirements}
+          prId={prId}
+          repoId={repoId}
           onComplete={handleUnmetRequirementsComplete}
           onBack={handleBackFromUnmetRequirements}
         />
@@ -355,6 +357,8 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <MetRequirementBrowser
           metRequirements={state.metRequirements}
+          prId={prId}
+          repoId={repoId}
           onComplete={handleMetRequirementsComplete}
           onBack={handleBackFromMetRequirements}
         />

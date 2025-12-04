@@ -1,10 +1,15 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
-import { Requirement } from "../lib/clients/baz.js";
+import { Box, Text } from "ink";
+import { Requirement, streamChatResponse } from "../lib/clients/baz.js";
 import { MAIN_COLOR } from "../theme/colors.js";
+import ChatDisplay from "./ChatDisplay.js";
+import { ChatMessage, IssueType } from "../models/chat.js";
+import { IssueCommand } from "../issues/types.js";
 
 interface MetRequirementBrowserProps {
   metRequirements: Requirement[];
+  prId: string;
+  repoId: string;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -13,33 +18,146 @@ type ViewState = "requirement" | "evidence";
 
 const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
   metRequirements,
+  prId,
+  repoId,
   onComplete,
   onBack,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [viewState, setViewState] = useState<ViewState>("requirement");
+  const [conversationId, setConversationId] = useState<string | undefined>(
+    undefined,
+  );
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const currentRequirement = metRequirements[currentIndex];
-  const hasNext = currentIndex < metRequirements.length - 1;
 
-  useInput((_input, key) => {
-    if (key.escape) {
-      onBack();
+  // Guard against invalid state after completion
+  if (!currentRequirement) {
+    return null;
+  }
+
+  const handleChatSubmit = async (message: string) => {
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: message,
+    };
+
+    setChatMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    const assistantMessage: ChatMessage = {
+      role: "assistant",
+      content: "",
+    };
+
+    setChatMessages((prev) => [...prev, assistantMessage]);
+
+    try {
+      let accumulatedResponse = "";
+      let firstChunk = true;
+
+      for await (const chunk of streamChatResponse({
+        repoId,
+        prId,
+        issue: {
+          type: IssueType.PULL_REQUEST,
+          data: {
+            id: prId,
+          },
+        },
+        freeText: message,
+        conversationId,
+      })) {
+        if (chunk.conversationId) {
+          setConversationId(chunk.conversationId);
+        }
+
+        if (chunk.content) {
+          if (firstChunk) {
+            setIsLoading(false);
+            firstChunk = false;
+          }
+
+          accumulatedResponse += chunk.content;
+
+          setChatMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              role: "assistant",
+              content: accumulatedResponse,
+            };
+            return updated;
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to get chat response:", error);
+      setIsLoading(false);
+      setChatMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+        };
+        return updated;
+      });
     }
-  });
+  };
 
   const handleNext = () => {
-    if (hasNext) {
-      setCurrentIndex((prev) => prev + 1);
-      setViewState("requirement");
-    } else {
-      onComplete();
-    }
+    setCurrentIndex((prev) => {
+      const nextIndex = prev + 1;
+      if (nextIndex < metRequirements.length) {
+        // Move to next requirement
+        setViewState("requirement");
+        setConversationId(undefined);
+        setChatMessages([]);
+        return nextIndex;
+      } else {
+        // No more requirements, complete the review
+        onComplete();
+        return prev;
+      }
+    });
   };
 
   const handleExplain = () => {
     setViewState("evidence");
   };
+
+  const handleSubmit = async (message: string) => {
+    if (message.startsWith("/")) {
+      const spaceIndex = message.indexOf(" ");
+      const command =
+        spaceIndex === -1 ? message.slice(1) : message.slice(1, spaceIndex);
+
+      if (command === "next") {
+        handleNext();
+        return;
+      } else if (command === "explain") {
+        handleExplain();
+        return;
+      }
+    }
+
+    await handleChatSubmit(message);
+  };
+
+  const availableCommands: IssueCommand[] = [
+    {
+      command: "next",
+      description:
+        currentIndex + 1 < metRequirements.length
+          ? "Move to next requirement"
+          : "Complete requirement review",
+    },
+    {
+      command: "explain",
+      description: "Show evidence for this requirement",
+    },
+  ];
 
   return (
     <Box flexDirection="column">
@@ -54,6 +172,13 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
         <Text>{currentRequirement.title}</Text>
       </Box>
 
+      {currentRequirement.description && (
+        <Box marginBottom={1} flexDirection="column">
+          <Text bold>Description:</Text>
+          <Text>{currentRequirement.description}</Text>
+        </Box>
+      )}
+
       <Box marginBottom={1} flexDirection="column">
         <Text bold>Verdict:</Text>
         <Text color="green">{currentRequirement.verdict}</Text>
@@ -62,93 +187,24 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
         )}
       </Box>
 
-      {viewState === "requirement" ? (
-        <CommandPrompt onNext={handleNext} onExplain={handleExplain} />
-      ) : (
-        <>
-          <Box marginBottom={1} flexDirection="column">
-            <Text bold>Evidence:</Text>
-            <Text>{currentRequirement.evidence}</Text>
-          </Box>
-
-          <Box marginBottom={1}>
-            <Text dimColor italic>
-              /next to continue
-            </Text>
-          </Box>
-
-          <CommandInput onNext={handleNext} />
-        </>
+      {viewState === "evidence" && (
+        <Box marginBottom={1} flexDirection="column">
+          <Text bold>Evidence:</Text>
+          <Text>{currentRequirement.evidence}</Text>
+        </Box>
       )}
-    </Box>
-  );
-};
 
-const CommandPrompt: React.FC<{
-  onNext: () => void;
-  onExplain: () => void;
-}> = ({ onNext, onExplain }) => {
-  const [input, setInput] = useState("");
-
-  useInput((char, key) => {
-    if (key.return) {
-      if (input.trim() === "/next") {
-        onNext();
-        setInput("");
-      } else if (input.trim() === "/explain") {
-        onExplain();
-        setInput("");
-      }
-    } else if (key.backspace || key.delete) {
-      setInput((prev) => prev.slice(0, -1));
-    } else if (char) {
-      setInput((prev) => prev + char);
-    }
-  });
-
-  return (
-    <Box flexDirection="column">
-      <Box borderStyle="round" borderColor="gray" paddingX={1}>
-        <Text color={MAIN_COLOR}>&gt; </Text>
-        <Text>{input}</Text>
-      </Box>
       <Box marginTop={1}>
-        <Text dimColor italic>
-          Available commands: /next • /explain
-        </Text>
-      </Box>
-    </Box>
-  );
-};
-
-const CommandInput: React.FC<{
-  onNext: () => void;
-}> = ({ onNext }) => {
-  const [input, setInput] = useState("");
-
-  useInput((char, key) => {
-    if (key.return) {
-      if (input.trim() === "/next") {
-        onNext();
-        setInput("");
-      }
-    } else if (key.backspace || key.delete) {
-      setInput((prev) => prev.slice(0, -1));
-    } else if (char) {
-      setInput((prev) => prev + char);
-    }
-  });
-
-  return (
-    <Box flexDirection="column">
-      <Box borderStyle="round" borderColor="gray" paddingX={1}>
-        <Text color={MAIN_COLOR}>&gt; </Text>
-        <Text>{input}</Text>
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor italic>
-          /next to continue
-        </Text>
+        <ChatDisplay
+          messages={chatMessages}
+          isLoading={isLoading}
+          onSubmit={handleSubmit}
+          availableCommands={availableCommands}
+          prId={prId}
+          enableMentions={false}
+          onBack={onBack}
+          placeholder="Ask about this requirement..."
+        />
       </Box>
     </Box>
   );

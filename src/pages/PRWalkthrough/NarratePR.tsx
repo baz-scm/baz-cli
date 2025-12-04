@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Text } from "ink";
 import ChatDisplay from "./ChatDisplay.js";
-import { ChatMessage, IssueType } from "../models/chat.js";
-import { streamChatResponse } from "../lib/clients/baz.js";
-import { MAIN_COLOR } from "../theme/colors.js";
+import { ChatMessage, IssueType } from "../../models/chat.js";
+import { streamChatResponse } from "../../lib/clients/baz.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
 
 const INITIAL_PROMPT =
   "Please walk me through this pull request. Start by showing me a very short description on what the pull request do, followed by a brief summary of the sections. Do not include any section yet in your answer";
@@ -86,73 +86,76 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
     sendInitialMessage();
   }, [prId, repoId]);
 
-  const handleChatSubmit = async (message: string) => {
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: message,
-    };
+  const handleChatSubmit = useCallback(
+    async (message: string) => {
+      const userMessage: ChatMessage = {
+        role: "user",
+        content: message,
+      };
 
-    setChatMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
+      setChatMessages((prev) => [...prev, userMessage]);
+      setIsLoading(true);
 
-    const assistantMessage: ChatMessage = {
-      role: "assistant",
-      content: "",
-    };
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: "",
+      };
 
-    setChatMessages((prev) => [...prev, assistantMessage]);
+      setChatMessages((prev) => [...prev, assistantMessage]);
 
-    try {
-      let accumulatedResponse = "";
-      let firstChunk = true;
+      try {
+        let accumulatedResponse = "";
+        let firstChunk = true;
 
-      for await (const chunk of streamChatResponse({
-        repoId,
-        prId,
-        issue: {
-          type: IssueType.PULL_REQUEST,
-          data: {
-            id: prId,
+        for await (const chunk of streamChatResponse({
+          repoId,
+          prId,
+          issue: {
+            type: IssueType.PULL_REQUEST,
+            data: {
+              id: prId,
+            },
           },
-        },
-        freeText: message,
-        conversationId,
-      })) {
-        if (chunk.conversationId) {
-          setConversationId(chunk.conversationId);
-        }
-
-        if (chunk.content) {
-          if (firstChunk) {
-            setIsLoading(false);
-            firstChunk = false;
+          freeText: message,
+          conversationId,
+        })) {
+          if (chunk.conversationId) {
+            setConversationId(chunk.conversationId);
           }
 
-          accumulatedResponse += chunk.content;
+          if (chunk.content) {
+            if (firstChunk) {
+              setIsLoading(false);
+              firstChunk = false;
+            }
 
-          setChatMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              role: "assistant",
-              content: accumulatedResponse,
-            };
-            return updated;
-          });
+            accumulatedResponse += chunk.content;
+
+            setChatMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content: accumulatedResponse,
+              };
+              return updated;
+            });
+          }
         }
+      } catch (error) {
+        console.error("Failed to get chat response:", error);
+        setIsLoading(false);
+        setChatMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: "Sorry, I encountered an error. Please try again.",
+          };
+          return updated;
+        });
       }
-    } catch (error) {
-      console.error("Failed to get chat response:", error);
-      setIsLoading(false);
-      setChatMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
-        };
-        return updated;
-      });
-    }
-  };
+    },
+    [prId, repoId, conversationId],
+  );
 
   return (
     <Box flexDirection="column">

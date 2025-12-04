@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { Box, Text } from "ink";
-import { Requirement, streamChatResponse } from "../lib/clients/baz.js";
-import { MAIN_COLOR } from "../theme/colors.js";
-import ChatDisplay from "./ChatDisplay.js";
-import { ChatMessage, IssueType } from "../models/chat.js";
-import { IssueCommand } from "../issues/types.js";
+import React, { useState } from "react"
+import { Box, Text, useInput } from "ink";
+import { Requirement, streamChatResponse } from "../../lib/clients/baz.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
+import { renderMarkdown } from "../../lib/markdown.js";
+import ChatDisplay from "../PRWalkthrough/ChatDisplay.js";
+import { ChatMessage, IssueType } from "../../models/chat.js";
+import { IssueCommand } from "../../issues/types.js";
 
-interface MetRequirementBrowserProps {
-  metRequirements: Requirement[];
+interface SpecReviewBrowserProps {
+  unmetRequirements: Requirement[];
   prId: string;
   repoId: string;
   onComplete: () => void;
@@ -16,8 +17,8 @@ interface MetRequirementBrowserProps {
 
 type ViewState = "requirement" | "evidence";
 
-const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
-  metRequirements,
+const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
+  unmetRequirements,
   prId,
   repoId,
   onComplete,
@@ -31,7 +32,7 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const currentRequirement = metRequirements[currentIndex];
+  const currentRequirement = unmetRequirements[currentIndex];
 
   // Guard against invalid state after completion
   if (!currentRequirement) {
@@ -109,7 +110,7 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
   const handleNext = () => {
     setCurrentIndex((prev) => {
       const nextIndex = prev + 1;
-      if (nextIndex < metRequirements.length) {
+      if (nextIndex < unmetRequirements.length) {
         // Move to next requirement
         setViewState("requirement");
         setConversationId(undefined);
@@ -149,9 +150,9 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
     {
       command: "next",
       description:
-        currentIndex + 1 < metRequirements.length
-          ? "Move to next requirement"
-          : "Complete requirement review",
+        currentIndex + 1 >= unmetRequirements.length
+          ? "Complete requirement review"
+          : "Move to next requirement",
     },
     {
       command: "explain",
@@ -163,7 +164,7 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color={MAIN_COLOR} bold>
-          Met requirement ({currentIndex + 1}/{metRequirements.length})
+          Unmet requirement ({currentIndex + 1}/{unmetRequirements.length})
         </Text>
       </Box>
 
@@ -181,9 +182,9 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
 
       <Box marginBottom={1} flexDirection="column">
         <Text bold>Verdict:</Text>
-        <Text color="green">{currentRequirement.verdict}</Text>
+        <Text color="red">{currentRequirement.verdict}</Text>
         {currentRequirement.verdict_explanation && (
-          <Text dimColor>{currentRequirement.verdict_explanation}</Text>
+          <Text>{renderMarkdown(currentRequirement.verdict_explanation)}</Text>
         )}
       </Box>
 
@@ -210,4 +211,4 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
   );
 };
 
-export default MetRequirementBrowser;
+export default SpecReviewBrowser;

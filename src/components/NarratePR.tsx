@@ -75,7 +75,10 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
 
   const handleChatSubmit = useCallback(
     async (userInput: string) => {
-      setChatMessages((prev) => [...prev, { role: "user", content: userInput }]);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "user", content: userInput },
+      ]);
       setIsLoading(true);
 
       try {

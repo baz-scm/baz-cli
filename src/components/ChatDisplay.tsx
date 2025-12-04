@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, memo, useCallback } from "react";
-import { Box, Text, useStdout, useInput } from "ink";
+import { Box, Text, useStdout } from "ink";
 import Spinner from "ink-spinner";
-import { ChatMessage, ChatToolCall } from "../models/chat.js";
+import { ChatMessage } from "../models/chat.js";
 import { IssueCommand } from "../issues/types.js";
 import { renderMarkdown } from "../lib/markdown.js";
 import ChatInput from "./ChatInput.js";
@@ -154,7 +154,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
       <Box flexDirection="column">
         {messages.length > 0 && (
           <Box flexDirection="column" marginBottom={0}>
-            {false && messages.map((message, index) => (
+            {messages.map((message, index) => (
               <MemoizedMessage
                 key={index}
                 message={message}
@@ -162,9 +162,6 @@ const ChatDisplay = memo<ChatDisplayProps>(
                 showExpandHint={!isLoading && !hasPendingToolCalls}
               />
             ))}
-            <Text color="gray">
-              Messages: {messages.length}
-            </Text>
           </Box>
         )}
 

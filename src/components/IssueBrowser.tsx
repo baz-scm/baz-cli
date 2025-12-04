@@ -37,7 +37,10 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
 
   const handleChatSubmit = useCallback(
     async (userInput: string) => {
-      setChatMessages((prev) => [...prev, { role: "user", content: userInput }]);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "user", content: userInput },
+      ]);
       setIsLoading(true);
 
       try {

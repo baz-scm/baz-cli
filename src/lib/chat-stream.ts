@@ -4,7 +4,11 @@ import { streamChatResponse } from "./clients/baz.js";
 export interface StreamHandlerCallbacks {
   onConversationId: (id: string) => void;
   onFirstTextContent: () => void;
-  onUpdate: (content: string, toolCalls: ChatToolCall[], isFirst: boolean) => void;
+  onUpdate: (
+    content: string,
+    toolCalls: ChatToolCall[],
+    isFirst: boolean,
+  ) => void;
 }
 
 export async function processStream(
@@ -35,11 +39,22 @@ export async function processStream(
           { id: toolCallId, toolName, toolArgs, message },
         ];
       } else {
-        // Update message - create new object to trigger React re-render
-        const lastPendingIndex = toolCalls.findLastIndex((tc) => !tc.result);
-        if (lastPendingIndex !== -1) {
+        // Update message - match by toolArgs (unique per tool call)
+        const argsKey = JSON.stringify(toolArgs);
+        const targetIndex = toolCalls.findIndex(
+          (tc) =>
+            !tc.result &&
+            tc.toolName === toolName &&
+            JSON.stringify(tc.toolArgs) === argsKey,
+        );
+        // Fallback to first pending without message if no exact match
+        const finalIndex =
+          targetIndex !== -1
+            ? targetIndex
+            : toolCalls.findIndex((tc) => !tc.result && !tc.message);
+        if (finalIndex !== -1) {
           toolCalls = toolCalls.map((tc, i) =>
-            i === lastPendingIndex ? { ...tc, message } : tc,
+            i === finalIndex ? { ...tc, message } : tc,
           );
         }
       }

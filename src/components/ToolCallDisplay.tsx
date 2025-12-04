@@ -85,7 +85,6 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
             borderStyle="single"
             borderColor="gray"
           >
-
             <Box paddingLeft={1}>
               <Text>{renderedResult}</Text>
             </Box>

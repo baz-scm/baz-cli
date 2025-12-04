@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
-import ChatDisplay from "./ChatDisplay.js";
+import ChatDisplay from "./PRWalkthrough/ChatDisplay.js";
 import { ChatMessage } from "../models/chat.js";
 import { streamChatResponse } from "../lib/clients/baz.js";
 

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
-import { MAIN_COLOR } from "../theme/colors.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
 
 export type ReviewMenuAction =
   | "viewUnmetRequirements"

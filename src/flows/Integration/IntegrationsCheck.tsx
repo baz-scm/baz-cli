@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { IntegrationProvider } from "../integrations/types.js";
-import { getAllProviders } from "../integrations/registry.js";
+import { IntegrationProvider } from "../../integrations/types.js";
+import { getAllProviders } from "../../integrations/registry.js";
 import IntegrationPrompt from "./IntegrationPrompt.js";
 import ProviderSelector from "./IntegrationProviderSelector.js";
 import IntegrationFlow from "./IntegrationFlow.js";

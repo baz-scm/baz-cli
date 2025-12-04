@@ -1,7 +1,7 @@
 import React from "react";
-import { IntegrationProvider } from "../integrations/types.js";
-import OAuthFlow from "./integrations/OAuthFlow.js";
-import CredentialsFlow from "./integrations/CredentialsFlow.js";
+import { IntegrationProvider } from "../../integrations/types.js";
+import OAuthFlow from "../../pages/integrations/OAuthFlow.js";
+import CredentialsFlow from "../../pages/integrations/CredentialsFlow.js";
 
 interface IntegrationFlowProps {
   provider: IntegrationProvider;

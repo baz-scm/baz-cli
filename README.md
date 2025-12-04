@@ -9,7 +9,7 @@
       <br />
       <b>Install via NPM</b>
       <br />
-      <code>npm install @baz-scm/cli</code>
+      <code>npm install -g @baz-scm/cli</code>
       <br />
    </p>
 </div>

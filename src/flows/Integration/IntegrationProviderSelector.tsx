@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { IntegrationProvider } from "../integrations/types.js";
+import { IntegrationProvider } from "../../integrations/types.js";
 
 interface IntegrationProviderSelectorProps {
   providers: IntegrationProvider[];

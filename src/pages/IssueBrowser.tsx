@@ -2,9 +2,9 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
-import ChatDisplay from "./ChatDisplay.js";
+import ChatDisplay from "./PRWalkthrough/ChatDisplay.js";
 import { ChatMessage } from "../models/chat.js";
-import { processStream } from "../lib/chat-stream.js";
+import { streamChatResponse } from "../lib/clients/baz.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -36,58 +36,71 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const DisplayComponent = handler.displayComponent;
 
   const handleChatSubmit = useCallback(
-    async (userInput: string) => {
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "user", content: userInput },
-      ]);
+    async (message: string) => {
+      const userMessage: ChatMessage = {
+        role: "user",
+        content: message,
+      };
+
+      setChatMessages((prev) => [...prev, userMessage]);
       setIsLoading(true);
 
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: "",
+      };
+
+      setChatMessages((prev) => [...prev, assistantMessage]);
+
       try {
-        await processStream(
-          {
-            repoId,
-            prId,
-            issue: {
-              type: handler.getApiIssueType(currentIssue),
-              data: { id: currentIssue.data.id },
-            },
-            freeText: userInput,
-            conversationId,
-          },
-          {
-            onConversationId: setConversationId,
-            onFirstTextContent: () => setIsLoading(false),
-            onUpdate: (content, toolCalls, isFirst) => {
-              if (isFirst) {
-                setChatMessages((prev) => [
-                  ...prev,
-                  { role: "assistant", content, toolCalls },
-                ]);
-              } else {
-                setChatMessages((prev) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = {
-                    role: "assistant",
-                    content,
-                    toolCalls,
-                  };
-                  return updated;
-                });
-              }
+        let accumulatedResponse = "";
+        let firstChunk = true;
+
+        for await (const chunk of streamChatResponse({
+          repoId,
+          prId,
+          issue: {
+            type: handler.getApiIssueType(currentIssue),
+            data: {
+              id: currentIssue.data.id,
             },
           },
-        );
+          freeText: message,
+          conversationId,
+        })) {
+          if (chunk.conversationId) {
+            setConversationId(chunk.conversationId);
+          }
+
+          if (chunk.content) {
+            if (firstChunk) {
+              setIsLoading(false);
+              firstChunk = false;
+            }
+
+            accumulatedResponse += chunk.content;
+
+            setChatMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content: accumulatedResponse,
+              };
+              return updated;
+            });
+          }
+        }
       } catch (error) {
         console.error("Failed to get chat response:", error);
         setIsLoading(false);
-        setChatMessages((prev) => [
-          ...prev,
-          {
+        setChatMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
             role: "assistant",
             content: "Sorry, I encountered an error. Please try again.",
-          },
-        ]);
+          };
+          return updated;
+        });
       }
     },
     [repoId, prId, handler, currentIssue, conversationId],

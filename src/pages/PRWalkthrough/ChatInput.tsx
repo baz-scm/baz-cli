@@ -1,10 +1,13 @@
 import React, { useState, useEffect, memo, useMemo, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { MentionableUser } from "../models/chat.js";
-import { IssueCommand } from "../issues/types.js";
-import { ChangeReviewer, fetchEligibleReviewers } from "../lib/clients/baz.js";
-import MentionAutocomplete from "./MentionAutocomplete.js";
+import { MentionableUser } from "../../models/chat.js";
+import { IssueCommand } from "../../issues/types.js";
+import {
+  ChangeReviewer,
+  fetchEligibleReviewers,
+} from "../../lib/clients/baz.js";
+import MentionAutocomplete from "../../components/MentionAutocomplete.js";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -37,7 +40,6 @@ const ChatInput = memo<ChatInputProps>(
       useState(false);
     const [mentionSearchQuery, setMentionSearchQuery] = useState("");
     const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-    const [inputKey, setInputKey] = useState(0);
 
     // Use ref to track input value for useInput callback to avoid stale closures
     const inputValueRef = useRef(inputValue);
@@ -76,17 +78,9 @@ const ChatInput = memo<ChatInputProps>(
     );
 
     const handleInputChange = (value: string) => {
-      // Skip input if it was a Ctrl shortcut (TextInput only sees the letter, not the Ctrl)
-      if (skipNextInputRef.current) {
-        skipNextInputRef.current = false;
-        setInputKey((prev) => prev + 1); // Reset TextInput to remove the extra character
-        return;
-      }
-
       // Handle "?" for help toggle when input is empty
       if (inputValueRef.current === "" && value === "?") {
         setShowFullHelp((prev) => !prev);
-        setInputKey((prev) => prev + 1);
         return;
       }
 
@@ -135,7 +129,6 @@ const ChatInput = memo<ChatInputProps>(
       setShowMentionAutocomplete(false);
       setMentionSearchQuery("");
       setMentionStartIndex(-1);
-      setInputKey((prev) => prev + 1);
     };
 
     const handleMentionCancel = () => {
@@ -215,7 +208,6 @@ const ChatInput = memo<ChatInputProps>(
           flexShrink={1}
         >
           <TextInput
-            key={inputKey}
             value={inputValue}
             onChange={handleInputChange}
             onSubmit={handleSubmit}

@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import Spinner from "ink-spinner";
-import { triggerSpecReview } from "../lib/clients/baz.js";
-import { MAIN_COLOR } from "../theme/colors.js";
+import { triggerSpecReview } from "../../lib/clients/baz.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
 import ErrorPrompt from "./SpecReviewErrorPrompt.js";
 
 interface TriggerSpecReviewPromptProps {

@@ -1,22 +1,45 @@
-import React, { memo } from "react";
+import React, { memo, useMemo, useState, useEffect } from "react";
 import { Box, Text } from "ink";
+import Spinner from "ink-spinner";
 import { ChatToolCall } from "../models/chat.js";
+import { renderMarkdown } from "../lib/markdown.js";
 import { MAIN_COLOR } from "../theme/colors.js";
+
+const MIN_LOADER_TIME_MS = 3000;
 
 interface ToolCallDisplayProps {
   toolCall: ChatToolCall;
   isExpanded?: boolean;
+  showExpandHint?: boolean;
 }
 
 const ToolCallDisplay = memo<ToolCallDisplayProps>(
-  ({ toolCall, isExpanded = false }) => {
+  ({ toolCall, isExpanded = false, showExpandHint = false }) => {
     const { toolName, message, result } = toolCall;
 
-    // Format tool name for display (e.g., get_pull_request_diff -> Get Pull Request Diff)
+    // Ensure loader shows for minimum time even if result arrives quickly
+    const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setMinTimeElapsed(true);
+      }, MIN_LOADER_TIME_MS);
+
+      return () => clearTimeout(timer);
+    }, []);
+
+    // Show loader if no result yet, OR if result arrived but min time hasn't passed
+    const showLoader = !result || !minTimeElapsed;
+
     const formattedToolName = toolName
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
+
+    const renderedResult = useMemo(
+      () => (result ? renderMarkdown("```diff\n" + result + "\n```") : null),
+      [result],
+    );
 
     return (
       <Box
@@ -27,25 +50,34 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
         borderColor={isExpanded ? MAIN_COLOR : "gray"}
       >
         <Box>
-          <Text color="cyan" bold>
-            ⚡
-          </Text>
-          <Text color="cyan" bold>
-            {" "}
-            {formattedToolName}
-          </Text>
-          {!isExpanded && result && (
-            <Text dimColor> (Press Ctrl+o to expand)</Text>
+          {showLoader ? (
+            <>
+              <Text color="magenta">
+                <Spinner type="arrow3" />
+              </Text>
+              <Text color="cyan" bold>
+                {" "}
+                {formattedToolName}
+              </Text>
+              {message && <Text color="gray"> ({message})</Text>}
+            </>
+          ) : (
+            <>
+              <Text color="cyan" bold>
+                🔧 {formattedToolName}
+              </Text>
+              {message && <Text color="gray"> ({message})</Text>}
+              {!isExpanded && showExpandHint && (
+                <Text dimColor italic>
+                  {" "}
+                  - Press Ctrl+o to expand
+                </Text>
+              )}
+            </>
           )}
         </Box>
 
-        {message && (
-          <Box paddingLeft={2}>
-            <Text dimColor>{message}</Text>
-          </Box>
-        )}
-
-        {isExpanded && result && (
+        {isExpanded && !showLoader && result && (
           <Box
             flexDirection="column"
             marginTop={1}
@@ -53,11 +85,9 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
             borderStyle="single"
             borderColor="gray"
           >
-            <Text color="gray" bold>
-              Result:
-            </Text>
+
             <Box paddingLeft={1}>
-              <Text wrap="wrap">{result}</Text>
+              <Text>{renderedResult}</Text>
             </Box>
           </Box>
         )}
@@ -68,8 +98,8 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
     prevProps.toolCall.id === nextProps.toolCall.id &&
     prevProps.toolCall.message === nextProps.toolCall.message &&
     prevProps.toolCall.result === nextProps.toolCall.result &&
-    prevProps.isExpanded === nextProps.isExpanded,
+    prevProps.isExpanded === nextProps.isExpanded &&
+    prevProps.showExpandHint === nextProps.showExpandHint,
 );
 
 export default ToolCallDisplay;
-

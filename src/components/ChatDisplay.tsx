@@ -10,10 +10,11 @@ import ToolCallDisplay from "./ToolCallDisplay.js";
 interface MemoizedMessageProps {
   message: ChatMessage;
   isToolExpanded: boolean;
+  showExpandHint: boolean;
 }
 
 const MemoizedMessage = memo<MemoizedMessageProps>(
-  ({ message, isToolExpanded }) => {
+  ({ message, isToolExpanded, showExpandHint }) => {
     const renderedContent = useMemo(
       () => renderMarkdown(message.content),
       [message.content],
@@ -32,6 +33,7 @@ const MemoizedMessage = memo<MemoizedMessageProps>(
                   key={toolCall.id}
                   toolCall={toolCall}
                   isExpanded={isToolExpanded}
+                  showExpandHint={showExpandHint}
                 />
               ))}
             </Box>
@@ -45,7 +47,8 @@ const MemoizedMessage = memo<MemoizedMessageProps>(
     if (
       prevProps.message.content !== nextProps.message.content ||
       prevProps.message.role !== nextProps.message.role ||
-      prevProps.isToolExpanded !== nextProps.isToolExpanded
+      prevProps.isToolExpanded !== nextProps.isToolExpanded ||
+      prevProps.showExpandHint !== nextProps.showExpandHint
     ) {
       return false;
     }
@@ -117,6 +120,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
     }, [messages]);
 
     const activeToolCalls = latestAssistantMessage?.toolCalls ?? [];
+    const hasPendingToolCalls = activeToolCalls.some((tc) => !tc.result);
 
     useEffect(() => {
       const handleResize = () => {
@@ -136,23 +140,35 @@ const ChatDisplay = memo<ChatDisplayProps>(
 
     const onToggleToolCallExpansion = useCallback(() => {
       setToolsExpanded((prev) => !prev);
-    }, [activeToolCalls]);
+    }, []);
+
+    const handleSubmit = useCallback(
+      (message: string) => {
+        setToolsExpanded(false); // Collapse tools when submitting new question
+        onSubmit(message);
+      },
+      [onSubmit],
+    );
 
     return (
       <Box flexDirection="column">
         {messages.length > 0 && (
           <Box flexDirection="column" marginBottom={0}>
-            {messages.map((message, index) => (
+            {false && messages.map((message, index) => (
               <MemoizedMessage
                 key={index}
                 message={message}
                 isToolExpanded={toolsExpanded}
+                showExpandHint={!isLoading && !hasPendingToolCalls}
               />
             ))}
+            <Text color="gray">
+              Messages: {messages.length}
+            </Text>
           </Box>
         )}
 
-        {isLoading && (
+        {(isLoading || hasPendingToolCalls) && (
           <Box marginBottom={1}>
             <Text color="magenta">
               <Spinner type="dots" />
@@ -161,9 +177,9 @@ const ChatDisplay = memo<ChatDisplayProps>(
           </Box>
         )}
 
-        {!disabled && !isLoading && (
+        {!disabled && !isLoading && !hasPendingToolCalls && (
           <ChatInput
-            onSubmit={onSubmit}
+            onSubmit={handleSubmit}
             placeholder={placeholder}
             availableCommands={availableCommands}
             enableMentions={enableMentions}

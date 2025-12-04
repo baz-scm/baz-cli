@@ -39,7 +39,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
           },
           {
             onConversationId: setConversationId,
-            onFirstContent: () => setIsLoading(false),
+            onFirstTextContent: () => setIsLoading(false),
             onUpdate: (content, toolCalls, isFirst) => {
               if (isFirst) {
                 setChatMessages([{ role: "assistant", content, toolCalls }]);
@@ -89,7 +89,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
           },
           {
             onConversationId: setConversationId,
-            onFirstContent: () => setIsLoading(false),
+            onFirstTextContent: () => setIsLoading(false),
             onUpdate: (content, toolCalls, isFirst) => {
               if (isFirst) {
                 setChatMessages((prev) => [

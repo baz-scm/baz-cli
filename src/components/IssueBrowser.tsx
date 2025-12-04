@@ -54,7 +54,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           },
           {
             onConversationId: setConversationId,
-            onFirstContent: () => setIsLoading(false),
+            onFirstTextContent: () => setIsLoading(false),
             onUpdate: (content, toolCalls, isFirst) => {
               if (isFirst) {
                 setChatMessages((prev) => [

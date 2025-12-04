@@ -3,7 +3,7 @@ import { streamChatResponse } from "./clients/baz.js";
 
 export interface StreamHandlerCallbacks {
   onConversationId: (id: string) => void;
-  onFirstContent: () => void;
+  onFirstTextContent: () => void;
   onUpdate: (content: string, toolCalls: ChatToolCall[], isFirst: boolean) => void;
 }
 
@@ -14,13 +14,11 @@ export async function processStream(
   let accumulatedResponse = "";
   let toolCalls: ChatToolCall[] = [];
   let isFirstUpdate = true;
+  let hasReceivedTextContent = false;
 
   const update = () => {
     callbacks.onUpdate(accumulatedResponse, toolCalls, isFirstUpdate);
-    if (isFirstUpdate) {
-      callbacks.onFirstContent();
-      isFirstUpdate = false;
-    }
+    isFirstUpdate = false;
   };
 
   for await (const chunk of streamChatResponse(request)) {
@@ -37,10 +35,12 @@ export async function processStream(
           { id: toolCallId, toolName, toolArgs, message },
         ];
       } else {
-        const lastPending = toolCalls.findLast((tc) => !tc.result);
-        if (lastPending) {
-          lastPending.message = message;
-          toolCalls = [...toolCalls];
+        // Update message - create new object to trigger React re-render
+        const lastPendingIndex = toolCalls.findLastIndex((tc) => !tc.result);
+        if (lastPendingIndex !== -1) {
+          toolCalls = toolCalls.map((tc, i) =>
+            i === lastPendingIndex ? { ...tc, message } : tc,
+          );
         }
       }
 
@@ -49,19 +49,29 @@ export async function processStream(
 
     if (chunk.toolResult) {
       const { toolCallId, content } = chunk.toolResult;
-      const toolCall =
-        toolCalls.find((tc) => tc.id === toolCallId) ??
-        toolCalls.findLast((tc) => !tc.result);
+      // Find by ID first, fallback to last pending
+      const targetIndex = toolCalls.findIndex((tc) => tc.id === toolCallId);
+      const finalIndex =
+        targetIndex !== -1
+          ? targetIndex
+          : toolCalls.findLastIndex((tc) => !tc.result);
 
-      if (toolCall) {
-        toolCall.result = content;
-        toolCalls = [...toolCalls];
+      if (finalIndex !== -1) {
+        // Create new object to trigger React re-render
+        toolCalls = toolCalls.map((tc, i) =>
+          i === finalIndex ? { ...tc, result: content } : tc,
+        );
         update();
       }
     }
 
     if (chunk.content) {
       accumulatedResponse += chunk.content;
+      // Only notify on first TEXT content (not tool calls)
+      if (!hasReceivedTextContent) {
+        hasReceivedTextContent = true;
+        callbacks.onFirstTextContent();
+      }
       update();
     }
   }

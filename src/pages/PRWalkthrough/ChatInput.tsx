@@ -33,7 +33,6 @@ const ChatInput = memo<ChatInputProps>(
       useState(false);
     const [mentionSearchQuery, setMentionSearchQuery] = useState("");
     const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-    const [inputKey, setInputKey] = useState(0);
 
     // Use ref to track input value for useInput callback to avoid stale closures
     const inputValueRef = useRef(inputValue);
@@ -69,7 +68,6 @@ const ChatInput = memo<ChatInputProps>(
       // Handle "?" for help toggle when input is empty
       if (inputValueRef.current === "" && value === "?") {
         setShowFullHelp((prev) => !prev);
-        setInputKey((prev) => prev + 1);
         return;
       }
 
@@ -118,7 +116,6 @@ const ChatInput = memo<ChatInputProps>(
       setShowMentionAutocomplete(false);
       setMentionSearchQuery("");
       setMentionStartIndex(-1);
-      setInputKey((prev) => prev + 1);
     };
 
     const handleMentionCancel = () => {
@@ -198,7 +195,6 @@ const ChatInput = memo<ChatInputProps>(
           flexShrink={1}
         >
           <TextInput
-            key={inputKey}
             value={inputValue}
             onChange={handleInputChange}
             onSubmit={handleSubmit}

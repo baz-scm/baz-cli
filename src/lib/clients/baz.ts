@@ -204,6 +204,7 @@ export interface SpecReviewResult {
 
 export interface Requirement {
   title: string;
+  description?: string;
   verdict: Verdict;
   verdict_explanation: string | null;
   evidence: string;

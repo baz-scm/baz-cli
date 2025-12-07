@@ -154,7 +154,22 @@ const ChatInput = memo<ChatInputProps>(
             cmd.command.includes("next") || cmd.aliases?.includes("/next"),
         );
         if (nextCmd) {
-          hints.push(`${nextCmd.command} for next issue`);
+          const cmdDisplay = nextCmd.command.startsWith("/")
+            ? nextCmd.command
+            : `/${nextCmd.command}`;
+          hints.push(`Ask questions or use ${cmdDisplay} to continue`);
+        }
+
+        const explainCmd = availableCommands.find(
+          (cmd) =>
+            cmd.command.includes("explain") ||
+            cmd.aliases?.includes("/explain"),
+        );
+        if (explainCmd) {
+          const cmdDisplay = explainCmd.command.startsWith("/")
+            ? explainCmd.command
+            : `/${explainCmd.command}`;
+          hints.push(`${cmdDisplay} for additional information`);
         }
       }
 

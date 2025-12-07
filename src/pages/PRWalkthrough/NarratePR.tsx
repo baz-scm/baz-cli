@@ -145,7 +145,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
         messages={chatMessages}
         isLoading={isLoading}
         onSubmit={handleChatSubmit}
-        placeholder="Explain me about the pull request"
+        placeholder="Explain the changes in this PR"
         prId={prId}
         enableMentions={false}
         onBack={onBack}

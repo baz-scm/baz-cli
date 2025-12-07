@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.3](https://github.com/baz-scm/baz-cli/compare/v0.2.2...v0.2.3) (2025-12-04)
+
+
+### 🐛 Bug Fixes
+
+* avoid re-rendering the input box ([#52](https://github.com/baz-scm/baz-cli/issues/52)) ([11f31ef](https://github.com/baz-scm/baz-cli/commit/11f31ef28a5eace69f2a92efed13bed20c752ef4))
+
+
+### ✨ New Features
+
+* CR-2812 align to new spec review response ([#49](https://github.com/baz-scm/baz-cli/issues/49)) ([dbbd95b](https://github.com/baz-scm/baz-cli/commit/dbbd95bf0b61c5b8bade264b3fc1fb0d748e9cb5))
+* CR-2849 typing performance improvements ([#51](https://github.com/baz-scm/baz-cli/issues/51)) ([27ca86f](https://github.com/baz-scm/baz-cli/commit/27ca86f6f063a7e1229e55bf675f6940b5072cbd))
+* Implement spec requirement support in terminal ([#54](https://github.com/baz-scm/baz-cli/issues/54)) ([61d8ed2](https://github.com/baz-scm/baz-cli/commit/61d8ed2b32d46e70047688f576ef4a5556a2b0b7))
+
+
+### 📚 Documentation
+
+* Enhance README with project details and installation info ([#53](https://github.com/baz-scm/baz-cli/issues/53)) ([dca9017](https://github.com/baz-scm/baz-cli/commit/dca901707919fb27491d89e4a1a72a8ece70670d))
+
 ## [0.2.2](https://github.com/baz-scm/baz-cli/compare/v0.2.1...v0.2.2) (2025-12-01)
 
 

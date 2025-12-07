@@ -203,6 +203,7 @@ export interface SpecReviewResult {
 }
 
 export interface Requirement {
+  id: string;
   title: string;
   description?: string;
   verdict: Verdict;

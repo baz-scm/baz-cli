@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
-import { Requirement, streamChatResponse } from "../../lib/clients/baz.js";
+import { Requirement } from "../../lib/clients/baz.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { renderMarkdown } from "../../lib/markdown.js";
-import ChatDisplay from "../PRWalkthrough/ChatDisplay.js";
+import ChatDisplay from "../chat/ChatDisplay.js";
 import { ChatMessage, IssueType } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
+import { processStream } from "../../lib/chat-stream.js";
 
 interface SpecReviewBrowserProps {
   unmetRequirements: Requirement[];
@@ -56,43 +57,35 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
     setChatMessages((prev) => [...prev, assistantMessage]);
 
     try {
-      let accumulatedResponse = "";
-      let firstChunk = true;
-
-      for await (const chunk of streamChatResponse({
-        repoId,
-        prId,
-        issue: {
-          type: IssueType.PULL_REQUEST,
-          data: {
-            id: prId,
+      await processStream(
+        {
+          repoId,
+          prId,
+          issue: {
+            type: IssueType.SPEC_REVIEW,
+            data: {
+              id: currentRequirement.id,
+            },
+          },
+          freeText: message,
+          conversationId,
+        },
+        {
+          onConversationId: (id) => setConversationId(id),
+          onFirstTextContent: () => setIsLoading(false),
+          onUpdate: (content, toolCalls) => {
+            setChatMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content,
+                toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+              };
+              return updated;
+            });
           },
         },
-        freeText: message,
-        conversationId,
-      })) {
-        if (chunk.conversationId) {
-          setConversationId(chunk.conversationId);
-        }
-
-        if (chunk.content) {
-          if (firstChunk) {
-            setIsLoading(false);
-            firstChunk = false;
-          }
-
-          accumulatedResponse += chunk.content;
-
-          setChatMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              role: "assistant",
-              content: accumulatedResponse,
-            };
-            return updated;
-          });
-        }
-      }
+      );
     } catch (error) {
       console.error("Failed to get chat response:", error);
       setIsLoading(false);

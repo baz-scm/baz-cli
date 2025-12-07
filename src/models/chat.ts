@@ -1,6 +1,7 @@
 export enum IssueType {
   DISCUSSION = "discussion",
   PULL_REQUEST = "pull_request",
+  SPEC_REVIEW = "spec_review",
 }
 
 export interface IssueDiscussion {
@@ -17,7 +18,14 @@ export interface IssuePullRequest {
   };
 }
 
-export type ChatIssue = IssueDiscussion | IssuePullRequest;
+export interface IssueSpecReview {
+  type: IssueType.SPEC_REVIEW;
+  data: {
+    id: string;
+  };
+}
+
+export type ChatIssue = IssueDiscussion | IssuePullRequest | IssueSpecReview;
 
 export interface CheckoutChatRequest {
   repoId: string;

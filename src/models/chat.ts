@@ -87,7 +87,7 @@ export type ChatStreamMessage =
 export interface ToolCallData {
   toolName: string;
   toolArgs: Record<string, unknown>;
-  toolCallId: string;
+  toolCallId?: string;
   message?: string;
 }
 

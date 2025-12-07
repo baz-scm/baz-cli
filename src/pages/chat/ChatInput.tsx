@@ -78,6 +78,12 @@ const ChatInput = memo<ChatInputProps>(
     );
 
     const handleInputChange = (value: string) => {
+      // Skip input if a Ctrl shortcut was just pressed (e.g., Ctrl+O adds stray "o")
+      if (skipNextInputRef.current) {
+        skipNextInputRef.current = false;
+        return;
+      }
+
       // Handle "?" for help toggle when input is empty
       if (inputValueRef.current === "" && value === "?") {
         setShowFullHelp((prev) => !prev);

@@ -557,7 +557,6 @@ function* processStreamMessage(
         toolCall: {
           toolName: message.toolName,
           toolArgs: message.toolArgs,
-          toolCallId: "",
           message: message.content,
         },
       };

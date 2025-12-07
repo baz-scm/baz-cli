@@ -33,21 +33,29 @@ export async function processStream(
     if (chunk.toolCall) {
       const { toolName, toolArgs, toolCallId, message } = chunk.toolCall;
 
-      if (toolCallId) {
+      if (toolCallId && !message) {
+        // New tool call with ID
         toolCalls = [
           ...toolCalls,
           { id: toolCallId, toolName, toolArgs, message },
         ];
       } else {
-        // Update message - match by toolArgs (unique per tool call)
-        const argsKey = JSON.stringify(toolArgs);
-        const targetIndex = toolCalls.findIndex(
-          (tc) =>
-            !tc.result &&
-            tc.toolName === toolName &&
-            JSON.stringify(tc.toolArgs) === argsKey,
-        );
-        // Fallback to first pending without message if no exact match
+        // Update message - prefer matching by toolCallId if available
+        let targetIndex = -1;
+        if (toolCallId) {
+          targetIndex = toolCalls.findIndex((tc) => tc.id === toolCallId);
+        }
+        // Fallback: match by toolName + toolArgs
+        if (targetIndex === -1) {
+          const argsKey = JSON.stringify(toolArgs);
+          targetIndex = toolCalls.findIndex(
+            (tc) =>
+              !tc.result &&
+              tc.toolName === toolName &&
+              JSON.stringify(tc.toolArgs) === argsKey,
+          );
+        }
+        // Final fallback: first pending without message
         const finalIndex =
           targetIndex !== -1
             ? targetIndex

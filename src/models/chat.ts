@@ -65,6 +65,7 @@ export interface ToolCallMessage {
   content: string;
   toolName: string;
   toolArgs: Record<string, unknown>;
+  toolCallId?: string;
   conversationId: string;
 }
 

@@ -5,6 +5,11 @@ import { render } from "ink";
 import React from "react";
 import ReviewFlow from "./flows/Review/Review.js";
 import { createAuthCommand } from "./commands/auth.js";
+import {
+  AppModeProvider,
+  getAppConfig,
+  AppConfigError,
+} from "./lib/config/index.js";
 
 const VERSION = "0.2.3"; // x-release-please-version
 
@@ -16,7 +21,23 @@ program
   .command("review", { isDefault: true })
   .description("Start a review")
   .action(async () => {
-    render(React.createElement(ReviewFlow));
+    try {
+      getAppConfig(); // Validate early before rendering
+    } catch (e) {
+      if (e instanceof AppConfigError) {
+        console.error(e.message);
+        process.exit(1);
+      }
+      throw e;
+    }
+
+    render(
+      React.createElement(
+        AppModeProvider,
+        null,
+        React.createElement(ReviewFlow),
+      ),
+    );
   });
 
 program.addCommand(createAuthCommand());

@@ -1,6 +1,7 @@
 export enum IssueType {
   DISCUSSION = "discussion",
   PULL_REQUEST = "pull_request",
+  SPEC_REVIEW = "spec_review",
 }
 
 export interface IssueDiscussion {
@@ -17,7 +18,14 @@ export interface IssuePullRequest {
   };
 }
 
-export type ChatIssue = IssueDiscussion | IssuePullRequest;
+export interface IssueSpecReview {
+  type: IssueType.SPEC_REVIEW;
+  data: {
+    id: string;
+  };
+}
+
+export type ChatIssue = IssueDiscussion | IssuePullRequest | IssueSpecReview;
 
 export interface CheckoutChatRequest {
   repoId: string;
@@ -43,16 +51,71 @@ export interface MessageEnd {
   content: string;
 }
 
-export type ChatStreamMessage = MessageStart | MessageDelta | MessageEnd;
+export interface ToolCall {
+  type: "tool_call";
+  content: string;
+  toolName: string;
+  toolArgs: Record<string, unknown>;
+  toolCallId: string;
+  conversationId: string;
+}
+
+export interface ToolCallMessage {
+  type: "tool_call_message";
+  content: string;
+  toolName: string;
+  toolArgs: Record<string, unknown>;
+  toolCallId?: string;
+  conversationId: string;
+}
+
+export interface ToolResult {
+  type: "tool_result";
+  content: string;
+  toolName: string;
+  toolCallId: string;
+  conversationId: string;
+}
+
+export type ChatStreamMessage =
+  | MessageStart
+  | MessageDelta
+  | MessageEnd
+  | ToolCall
+  | ToolCallMessage
+  | ToolResult;
+
+export interface ToolCallData {
+  toolName: string;
+  toolArgs: Record<string, unknown>;
+  toolCallId?: string;
+  message?: string;
+}
+
+export interface ToolResultData {
+  toolCallId: string;
+  content: string;
+}
 
 export interface ChatStreamChunk {
   content?: string;
   conversationId?: string;
+  toolCall?: ToolCallData;
+  toolResult?: ToolResultData;
+}
+
+export interface ChatToolCall {
+  id: string;
+  toolName: string;
+  toolArgs: Record<string, unknown>;
+  message?: string;
+  result?: string;
 }
 
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  toolCalls?: ChatToolCall[];
 }
 
 export interface MentionableUser {

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Text } from "ink";
-import ChatDisplay from "./ChatDisplay.js";
+import ChatDisplay from "../chat/ChatDisplay.js";
 import { ChatMessage, IssueType } from "../../models/chat.js";
-import { streamChatResponse } from "../../lib/clients/baz.js";
+import { processStream } from "../../lib/chat-stream.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 
 const INITIAL_PROMPT =
@@ -28,48 +28,35 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
     hasInitialized.current = true;
 
     const sendInitialMessage = async () => {
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: "",
-      };
-      setChatMessages([assistantMessage]);
-
       try {
-        let accumulatedResponse = "";
-        let firstChunk = true;
-
-        for await (const chunk of streamChatResponse({
-          repoId,
-          prId,
-          issue: {
-            type: IssueType.PULL_REQUEST,
-            data: {
-              id: prId,
+        await processStream(
+          {
+            repoId,
+            prId,
+            issue: { type: IssueType.PULL_REQUEST, data: { id: prId } },
+            freeText: INITIAL_PROMPT,
+            conversationId: undefined,
+          },
+          {
+            onConversationId: setConversationId,
+            onFirstTextContent: () => setIsLoading(false),
+            onUpdate: (content, toolCalls, isFirst) => {
+              if (isFirst) {
+                setChatMessages([{ role: "assistant", content, toolCalls }]);
+              } else {
+                setChatMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content,
+                    toolCalls,
+                  };
+                  return updated;
+                });
+              }
             },
           },
-          freeText: INITIAL_PROMPT,
-          conversationId: undefined,
-        })) {
-          if (chunk.conversationId) {
-            setConversationId(chunk.conversationId);
-          }
-
-          if (chunk.content) {
-            if (firstChunk) {
-              setIsLoading(false);
-              firstChunk = false;
-            }
-
-            accumulatedResponse += chunk.content;
-
-            setChatMessages([
-              {
-                role: "assistant",
-                content: accumulatedResponse,
-              },
-            ]);
-          }
-        }
+        );
       } catch (error) {
         console.error("Failed to get initial chat response:", error);
         setIsLoading(false);
@@ -87,71 +74,55 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
   }, [prId, repoId]);
 
   const handleChatSubmit = useCallback(
-    async (message: string) => {
-      const userMessage: ChatMessage = {
-        role: "user",
-        content: message,
-      };
-
-      setChatMessages((prev) => [...prev, userMessage]);
+    async (userInput: string) => {
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "user", content: userInput },
+      ]);
       setIsLoading(true);
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: "",
-      };
-
-      setChatMessages((prev) => [...prev, assistantMessage]);
-
       try {
-        let accumulatedResponse = "";
-        let firstChunk = true;
-
-        for await (const chunk of streamChatResponse({
-          repoId,
-          prId,
-          issue: {
-            type: IssueType.PULL_REQUEST,
-            data: {
-              id: prId,
+        await processStream(
+          {
+            repoId,
+            prId,
+            issue: { type: IssueType.PULL_REQUEST, data: { id: prId } },
+            freeText: userInput,
+            conversationId,
+          },
+          {
+            onConversationId: setConversationId,
+            onFirstTextContent: () => setIsLoading(false),
+            onUpdate: (content, toolCalls, isFirst) => {
+              if (isFirst) {
+                setChatMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content, toolCalls },
+                ]);
+              } else {
+                setChatMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content,
+                    toolCalls,
+                  };
+                  return updated;
+                });
+              }
             },
           },
-          freeText: message,
-          conversationId,
-        })) {
-          if (chunk.conversationId) {
-            setConversationId(chunk.conversationId);
-          }
-
-          if (chunk.content) {
-            if (firstChunk) {
-              setIsLoading(false);
-              firstChunk = false;
-            }
-
-            accumulatedResponse += chunk.content;
-
-            setChatMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                role: "assistant",
-                content: accumulatedResponse,
-              };
-              return updated;
-            });
-          }
-        }
+        );
       } catch (error) {
         console.error("Failed to get chat response:", error);
         setIsLoading(false);
-        setChatMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
+        setChatMessages((prev) => [
+          ...prev,
+          {
             role: "assistant",
             content: "Sorry, I encountered an error. Please try again.",
-          };
-          return updated;
-        });
+          },
+        ]);
       }
     },
     [prId, repoId, conversationId],

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchPRs, PullRequest } from "../lib/clients/baz.js";
+import { getDataProvider, PullRequest } from "../lib/providers/index.js";
 
 export function usePullRequests() {
   const [data, setData] = useState<PullRequest[]>([]);
@@ -7,11 +7,12 @@ export function usePullRequests() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchPRs()
+    getDataProvider()
+      .fetchPRs()
       .then((prs) => {
         setData(prs.sort((a, b) => b.prNumber - a.prNumber));
       })
-      .catch((err) => setError(err.message))
+      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 

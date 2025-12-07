@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
-import { PullRequest, fetchIntegrations } from "../../lib/clients/baz.js";
+import { getDataProvider, PullRequest } from "../../lib/providers/index.js";
 import PullRequestSelectorContainer from "../../pages/PRSelector/PullRequestSelectorContainer.js";
 import HeaderDisplay from "../../components/HeaderDisplay.js";
 import IntegrationsCheck from "../Integration/IntegrationsCheck.js";
@@ -9,6 +9,7 @@ import { logger } from "../../lib/logger.js";
 import PullRequestReview from "../../components/PullRequestReview.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { REVIEW_COMPLETE_TEXT } from "../../theme/banners.js";
+import { useAppMode } from "../../lib/config/AppModeContext.js";
 
 const SelectedPRHeader: React.FC<{ pullRequest: PullRequest }> = ({
   pullRequest,
@@ -31,7 +32,7 @@ type FlowState =
       selectedPR: PullRequest;
     }
   | {
-      step: "handleIssueSelect";
+      step: "pullRequestReview";
       selectedPR: PullRequest;
       skippedIntegration?: boolean;
     }
@@ -51,11 +52,19 @@ const InternalReviewFlow: React.FC = () => {
     step: "handlePRSelect",
   });
   const [hasIntegration, setHasIntegration] = useState<boolean | null>(null);
+  const appMode = useAppMode();
 
   useEffect(() => {
     const checkIntegrations = async () => {
       try {
-        const integrations = await fetchIntegrations();
+        const integrations = await getDataProvider().fetchIntegrations();
+
+        // Integrations not supported in current mode - skip check
+        if (integrations === null) {
+          setHasIntegration(true);
+          return;
+        }
+
         const hasTicketingIntegration = integrations.some(
           (integration) =>
             integration.integrationType === "jira" ||
@@ -76,6 +85,15 @@ const InternalReviewFlow: React.FC = () => {
   const handlePRSelect = (pr: PullRequest) => {
     if (flowState.step !== "handlePRSelect") return;
 
+    // Skip integrations config for tokens mode
+    if (appMode.mode === "tokens") {
+      setFlowState({
+        selectedPR: pr,
+        step: "pullRequestReview",
+      });
+      return;
+    }
+
     if (hasIntegration === false) {
       setFlowState({
         selectedPR: pr,
@@ -89,7 +107,7 @@ const InternalReviewFlow: React.FC = () => {
       }
       setFlowState({
         selectedPR: pr,
-        step: "handleIssueSelect",
+        step: "pullRequestReview",
         skippedIntegration: false,
       });
     }
@@ -101,14 +119,14 @@ const InternalReviewFlow: React.FC = () => {
 
     setFlowState({
       selectedPR: flowState.selectedPR,
-      step: "handleIssueSelect",
+      step: "pullRequestReview",
       skippedIntegration: skipped,
     });
   };
 
   // Step 3: Browse Issues
   const handleIssueComplete = () => {
-    if (flowState.step !== "handleIssueSelect") return;
+    if (flowState.step !== "pullRequestReview") return;
 
     setFlowState({
       selectedPR: flowState.selectedPR,
@@ -136,7 +154,7 @@ const InternalReviewFlow: React.FC = () => {
   };
 
   const handleBackFromIssueSelect = () => {
-    if (flowState.step !== "handleIssueSelect") return;
+    if (flowState.step !== "pullRequestReview") return;
 
     setFlowState({
       step: "handlePRSelect",
@@ -163,7 +181,7 @@ const InternalReviewFlow: React.FC = () => {
         </Box>
       );
 
-    case "handleIssueSelect":
+    case "pullRequestReview":
       return (
         <Box flexDirection="column">
           <SelectedPRHeader pullRequest={flowState.selectedPR} />

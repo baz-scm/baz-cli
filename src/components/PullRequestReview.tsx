@@ -84,6 +84,11 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     unmetRequirements: Requirement[];
     metRequirements: Requirement[];
   } => {
+    // Spec reviews not supported in current mode
+    if (specReviews.data === null) {
+      return { unmetRequirements: [], metRequirements: [] };
+    }
+
     const latestSpecReview = specReviews.data.at(-1);
 
     if (!latestSpecReview) {
@@ -110,6 +115,17 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
 
   // Handle prompt selection - check spec review status and go to menu
   const handlePrOverviewContinue = () => {
+    // Spec reviews not supported in current mode - skip directly to menu
+    if (specReviews.data === null) {
+      setState({
+        step: "menu",
+        unmetRequirements: [],
+        metRequirements: [],
+        completedSteps: initialCompletedSteps,
+      });
+      return;
+    }
+
     const latestSpecReview = specReviews.data.at(-1);
 
     if (!latestSpecReview) {
@@ -123,11 +139,6 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     }
 
     if (latestSpecReview.status !== "success") {
-      setState({ step: "triggerSpecReview" });
-      return;
-    }
-
-    if (!latestSpecReview) {
       setState({ step: "triggerSpecReview" });
       return;
     }
@@ -312,7 +323,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <PullRequestOverviewSelect
           pr={pr.data}
           issues={issues.data}
-          specReviews={specReviews.data}
+          specReviews={specReviews.data ?? []}
           onContinue={handlePrOverviewContinue}
           onBack={onBack}
         />

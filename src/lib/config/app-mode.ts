@@ -20,29 +20,29 @@ export class AppConfigError extends Error {
 }
 
 function initializeAppConfig(): AppConfig {
-  const hasGhToken = Boolean(env.GH_TOKEN);
-  const hasAnthropicToken = Boolean(env.ANTHROPIC_TOKEN);
+  const ghToken = env.GH_TOKEN;
+  const anthropicToken = env.ANTHROPIC_TOKEN;
 
   // Both tokens present → tokens mode
-  if (hasGhToken && hasAnthropicToken) {
+  if (ghToken && anthropicToken) {
     return {
       mode: "tokens",
       tokens: {
-        githubToken: env.GH_TOKEN!,
-        anthropicToken: env.ANTHROPIC_TOKEN!,
+        githubToken: ghToken,
+        anthropicToken: anthropicToken,
       },
     };
   }
 
   // Neither token present → baz mode
-  if (!hasGhToken && !hasAnthropicToken) {
+  if (!ghToken && !anthropicToken) {
     return {
       mode: "baz",
     };
   }
 
   // Only one token present → error
-  const missing = hasGhToken ? "ANTHROPIC_TOKEN" : "GH_TOKEN";
+  const missing = ghToken ? "ANTHROPIC_TOKEN" : "GH_TOKEN";
   throw new AppConfigError(
     `Error: Incomplete token configuration.\n` +
       `Both GH_TOKEN and ANTHROPIC_TOKEN must be set to use tokens mode.\n` +

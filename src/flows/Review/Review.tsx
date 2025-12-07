@@ -57,13 +57,13 @@ const InternalReviewFlow: React.FC = () => {
   useEffect(() => {
     const checkIntegrations = async () => {
       try {
-        const integrations = await getDataProvider().fetchIntegrations();
-
         // Integrations not supported in current mode - skip check
-        if (integrations === null) {
+        if (appMode.mode === "tokens") {
           setHasIntegration(true);
           return;
         }
+
+        const integrations = await getDataProvider().fetchIntegrations();
 
         const hasTicketingIntegration = integrations.some(
           (integration) =>

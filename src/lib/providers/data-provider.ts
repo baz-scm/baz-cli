@@ -8,5 +8,5 @@ export interface IDataProvider {
 
   fetchSpecReviews(prId: string): Promise<SpecReview[] | null>;
 
-  fetchIntegrations(): Promise<Integration[] | null>;
+  fetchIntegrations(): Promise<Integration[]>;
 }

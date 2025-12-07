@@ -16,5 +16,5 @@ export function useSpecReviews(prId: string) {
       .finally(() => setLoading(false));
   }, [prId]);
 
-  return { data, loading, error, isSupported: data !== null };
+  return { data, loading, error };
 }

@@ -75,6 +75,48 @@ export async function fetchOpenPullRequests(): Promise<PullRequestData[]> {
   }
 }
 
+export interface GitHubPullRequestDetails {
+  id: number;
+  number: number;
+  title: string;
+  url: string;
+  filesChanged: number;
+  linesAdded: number;
+  linesDeleted: number;
+}
+
+export async function fetchPullRequestDetails(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+): Promise<GitHubPullRequestDetails> {
+  const octokit = getOctokitClient();
+
+  try {
+    const response = await octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number: pullNumber,
+    });
+
+    return {
+      id: response.data.id,
+      number: response.data.number,
+      title: response.data.title,
+      url: response.data.html_url,
+      filesChanged: response.data.changed_files ?? 0,
+      linesAdded: response.data.additions ?? 0,
+      linesDeleted: response.data.deletions ?? 0,
+    };
+  } catch (error) {
+    logger.error(
+      { error, owner, repo, pullNumber },
+      "Error fetching pull request details from GitHub",
+    );
+    throw error;
+  }
+}
+
 export function resetOctokitClient(): void {
   octokitClient = null;
 }

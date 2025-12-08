@@ -92,6 +92,69 @@ What to expect:
 
 The review command is also the default, so running `baz` without subcommands starts the same flow.
 
+### Headless mode (CI-friendly)
+Run reviews without the Ink UI for scripts and CI:
+
+```bash
+baz review \
+  --headless \
+  --repo owner/name \
+  --pr 123 \
+  --run spec,summary \
+  --output json \
+  --fail-on unmet_requirements
+```
+
+- `--repo` and `--pr` are required (or use `BAZ_REPO` and `BAZ_PR_NUMBER`).
+- `--run` accepts `spec` and `summary` to control which flows execute.
+- `--output` supports `json` (default) or `markdown` for comment-ready output.
+- `--fail-on unmet_requirements` exits with code `2` when unmet spec requirements are found; other errors exit with `1`.
+
+Headless mode still respects `getAppConfig` for selecting Baz or tokens mode; when spec reviews are unsupported the output reports `supported: false` and defaults to a zero exit code unless failure rules are triggered.
+
+#### Practical headless examples
+
+1. **Application security code review**
+
+   ```bash
+   baz review \
+     --headless \
+     --repo my-org/payments-api \
+     --pr 2481 \
+     --run spec,summary \
+     --output markdown \
+     --fail-on unmet_requirements
+   ```
+
+   Generates a markdown-ready report highlighting unmet security requirements for the payments API PR—ideal for posting as a CI comment and gating merges when checks fail.
+
+2. **Performance testing readiness**
+
+   ```bash
+   baz review \
+     --headless \
+     --repo my-org/edge-cache \
+     --pr 552 \
+     --run summary \
+     --output json
+   ```
+
+   Produces a JSON summary of file churn and line deltas that can feed into load-test triggers or observability dashboards before rolling out caching changes.
+
+3. **Regression testing gate**
+
+   ```bash
+   baz review \
+     --headless \
+     --repo my-org/mobile-app \
+     --pr 901 \
+     --run spec \
+     --output json \
+     --fail-on unmet_requirements
+   ```
+
+   Ensures spec coverage (when supported) is met before regression suites run, exiting with code `2` if requirements remain unmet so downstream jobs can halt early.
+
 ## Development
 Clone the repository and install dependencies:
 

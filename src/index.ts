@@ -11,7 +11,7 @@ import {
   AppConfigError,
 } from "./lib/config/index.js";
 
-const VERSION = "0.2.3"; // x-release-please-version
+const VERSION = "0.3.0"; // x-release-please-version
 
 const program = new Command();
 

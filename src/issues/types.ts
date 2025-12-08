@@ -17,6 +17,7 @@ export interface IssueCommand {
 export interface IssueContext {
   prId: string;
   repoId: string;
+  prNumber: number;
   currentIndex: number;
   totalIssues: number;
   hasNext: boolean;

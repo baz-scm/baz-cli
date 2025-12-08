@@ -3,10 +3,8 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
-import {
-  ChangeReviewer,
-  fetchEligibleReviewers,
-} from "../../lib/clients/baz.js";
+import type { ChangeReviewer } from "../../lib/providers/data-provider.js";
+import { useAppMode } from "../../lib/config/AppModeContext.js";
 import MentionAutocomplete from "../../components/MentionAutocomplete.js";
 
 interface ChatInputProps {
@@ -15,6 +13,8 @@ interface ChatInputProps {
   availableCommands: IssueCommand[];
   enableMentions: boolean;
   prId?: string;
+  repoId?: string;
+  prNumber?: number;
   onBack: () => void;
   toolsExist: boolean;
   onToggleToolCallExpansion: () => void;
@@ -28,6 +28,8 @@ const ChatInput = memo<ChatInputProps>(
     availableCommands,
     enableMentions,
     prId,
+    repoId,
+    prNumber,
     onBack,
     toolsExist,
     onToggleToolCallExpansion,
@@ -40,6 +42,8 @@ const ChatInput = memo<ChatInputProps>(
       useState(false);
     const [mentionSearchQuery, setMentionSearchQuery] = useState("");
     const [mentionStartIndex, setMentionStartIndex] = useState(-1);
+    const appMode = useAppMode();
+    const dataProvider = appMode.mode.dataProvider;
 
     // Use ref to track input value for useInput callback to avoid stale closures
     const inputValueRef = useRef(inputValue);
@@ -49,14 +53,15 @@ const ChatInput = memo<ChatInputProps>(
     const skipNextInputRef = useRef(false);
 
     useEffect(() => {
-      if (enableMentions && prId) {
-        fetchEligibleReviewers(prId)
+      if (enableMentions && prId && repoId && prNumber !== undefined) {
+        dataProvider
+          .fetchEligibleReviewers({ prId, repoId, prNumber })
           .then(setReviewers)
           .catch((error) => {
             console.error("Failed to fetch eligible reviewers:", error);
           });
       }
-    }, [enableMentions, prId]);
+    }, [enableMentions, prId, repoId, prNumber]);
 
     // Only handle escape key in useInput - let TextInput handle all other input
     useInput(

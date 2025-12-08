@@ -154,7 +154,10 @@ export async function fetchPullRequestDetails(
       })),
     };
   } catch (error) {
-    logger.error({ error, repoId, prNumber }, "Error fetching PR details from GitHub");
+    logger.error(
+      { error, repoId, prNumber },
+      "Error fetching PR details from GitHub",
+    );
     throw error;
   }
 }
@@ -167,6 +170,7 @@ export interface GitHubReviewThread {
   line: number | null;
   startLine: number | null;
   diffSide: "LEFT" | "RIGHT";
+  originalCommitOid: string;
   comments: Array<{
     id: string;
     body: string;
@@ -193,6 +197,7 @@ interface GraphQLReviewThreadsResponse {
               body: string;
               author: { login: string } | null;
               createdAt: string;
+              originalCommit: { oid: string } | null;
             }>;
           };
         }>;
@@ -224,6 +229,7 @@ const REVIEW_THREADS_QUERY = `
                 body
                 author { login }
                 createdAt
+                originalCommit { oid }
               }
             }
           }
@@ -264,6 +270,8 @@ export async function fetchUnresolvedReviewThreads(
 
       for (const thread of threads) {
         if (!thread.isResolved) {
+          // Get the commit from the first comment (where the thread was originally created)
+          const firstComment = thread.comments.nodes[0];
           allThreads.push({
             id: thread.id,
             isResolved: thread.isResolved,
@@ -272,6 +280,7 @@ export async function fetchUnresolvedReviewThreads(
             line: thread.line,
             startLine: thread.startLine,
             diffSide: thread.diffSide,
+            originalCommitOid: firstComment?.originalCommit?.oid ?? "",
             comments: thread.comments.nodes.map((comment) => ({
               id: comment.id,
               body: comment.body,
@@ -282,13 +291,17 @@ export async function fetchUnresolvedReviewThreads(
         }
       }
 
-      hasNextPage = response.repository.pullRequest.reviewThreads.pageInfo.hasNextPage;
+      hasNextPage =
+        response.repository.pullRequest.reviewThreads.pageInfo.hasNextPage;
       cursor = response.repository.pullRequest.reviewThreads.pageInfo.endCursor;
     }
 
     return allThreads;
   } catch (error) {
-    logger.error({ error, repoId, prNumber }, "Error fetching review threads from GitHub");
+    logger.error(
+      { error, repoId, prNumber },
+      "Error fetching review threads from GitHub",
+    );
     throw error;
   }
 }
@@ -356,7 +369,10 @@ export async function fetchMergeStatus(
       mergeable_state: response.data.mergeable_state,
     };
   } catch (error) {
-    logger.error({ error, repoId, prNumber }, "Error fetching merge status from GitHub");
+    logger.error(
+      { error, repoId, prNumber },
+      "Error fetching merge status from GitHub",
+    );
     throw error;
   }
 }
@@ -379,6 +395,232 @@ export async function fetchAuthenticatedUser(): Promise<GitHubUser> {
     };
   } catch (error) {
     logger.error({ error }, "Error fetching authenticated user from GitHub");
+    throw error;
+  }
+}
+
+// Types for file diff parsing
+export interface GitHubLine {
+  number?: number;
+  content?: string;
+  new_line_number?: number;
+  new_content?: string;
+  line_type: "Added" | "Changed" | "Deleted" | "Unchanged";
+}
+
+export interface GitHubChunk {
+  lines: GitHubLine[];
+  before_lines: GitHubLine[];
+  after_lines: GitHubLine[];
+}
+
+export interface GitHubDiff {
+  chunks: GitHubChunk[];
+  file_relative_path: string;
+  old_relative_path?: string;
+}
+
+export interface GitHubFileDiff {
+  prFileId: string;
+  diff: GitHubDiff;
+}
+
+/**
+ * Parse a unified diff patch string into structured chunks
+ */
+function parsePatch(patch: string): GitHubChunk[] {
+  const chunks: GitHubChunk[] = [];
+  const lines = patch.split("\n");
+
+  let currentChunk: GitHubChunk | null = null;
+  let oldLineNum = 0;
+  let newLineNum = 0;
+  let inBeforeContext = true;
+  let beforeContextLines: GitHubLine[] = [];
+  let afterContextLines: GitHubLine[] = [];
+
+  for (const line of lines) {
+    // Parse hunk header: @@ -oldStart,oldCount +newStart,newCount @@
+    const hunkMatch = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunkMatch) {
+      // Save previous chunk
+      if (currentChunk) {
+        currentChunk.after_lines = afterContextLines;
+        chunks.push(currentChunk);
+      }
+
+      oldLineNum = parseInt(hunkMatch[1], 10);
+      newLineNum = parseInt(hunkMatch[2], 10);
+      currentChunk = {
+        lines: [],
+        before_lines: [],
+        after_lines: [],
+      };
+      inBeforeContext = true;
+      beforeContextLines = [];
+      afterContextLines = [];
+      continue;
+    }
+
+    if (!currentChunk) continue;
+
+    const prefix = line[0];
+    const content = line.slice(1);
+
+    if (prefix === "-") {
+      // Deleted line
+      inBeforeContext = false;
+      currentChunk.before_lines = beforeContextLines;
+      beforeContextLines = [];
+
+      currentChunk.lines.push({
+        number: oldLineNum,
+        content: content,
+        line_type: "Deleted",
+      });
+      oldLineNum++;
+    } else if (prefix === "+") {
+      // Added line
+      inBeforeContext = false;
+      currentChunk.before_lines = beforeContextLines;
+      beforeContextLines = [];
+
+      currentChunk.lines.push({
+        new_line_number: newLineNum,
+        new_content: content,
+        line_type: "Added",
+      });
+      newLineNum++;
+    } else if (prefix === " " || prefix === undefined) {
+      // Context line (unchanged)
+      const contextLine: GitHubLine = {
+        number: oldLineNum,
+        content: content,
+        new_line_number: newLineNum,
+        new_content: content,
+        line_type: "Unchanged",
+      };
+
+      if (inBeforeContext) {
+        beforeContextLines.push(contextLine);
+      } else if (currentChunk.lines.length > 0) {
+        // After the changed lines, collect as after_lines
+        afterContextLines.push(contextLine);
+      }
+
+      oldLineNum++;
+      newLineNum++;
+    }
+  }
+
+  // Save the last chunk
+  if (currentChunk) {
+    currentChunk.after_lines = afterContextLines;
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+}
+
+/**
+ * Fetch file diffs for specific files at a specific commit.
+ * Uses the compare API to get diffs between the PR's base branch and the commit,
+ * which ensures we get file diffs even if the file wasn't modified in that specific commit.
+ */
+export async function fetchFileDiffs(
+  repoId: string,
+  prNumber: number,
+  commit: string,
+  files: string[],
+): Promise<GitHubFileDiff[]> {
+  const octokit = getOctokitClient();
+  const { owner, repo } = parseRepoId(repoId);
+
+  try {
+    // First, get the PR to find the base branch
+    const prResponse = await octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number: prNumber,
+    });
+
+    const baseBranch = prResponse.data.base.ref;
+
+    // Use compare API to get diffs between base branch and the commit
+    // This includes all files that differ, not just files changed in that specific commit
+    const response = await octokit.rest.repos.compareCommitsWithBasehead({
+      owner,
+      repo,
+      basehead: `${baseBranch}...${commit}`,
+    });
+
+    const fileDiffs: GitHubFileDiff[] = [];
+
+    for (const file of response.data.files ?? []) {
+      // Only include requested files
+      if (!files.includes(file.filename)) {
+        continue;
+      }
+
+      const chunks = file.patch ? parsePatch(file.patch) : [];
+
+      fileDiffs.push({
+        prFileId: `${commit}-${file.filename}`,
+        diff: {
+          chunks,
+          file_relative_path: file.filename,
+          old_relative_path:
+            file.previous_filename !== file.filename
+              ? file.previous_filename
+              : undefined,
+        },
+      });
+    }
+
+    return fileDiffs;
+  } catch (error) {
+    logger.error(
+      { error, repoId, prNumber, commit, files },
+      "Error fetching file diffs from GitHub",
+    );
+    throw error;
+  }
+}
+
+export interface GitHubAssignee {
+  id: number;
+  login: string;
+  avatar_url: string;
+  type: string;
+}
+
+/**
+ * Fetch users who can be assigned to issues/PRs in a repository
+ */
+export async function fetchAssignees(
+  repoId: string,
+): Promise<GitHubAssignee[]> {
+  const octokit = getOctokitClient();
+  const { owner, repo } = parseRepoId(repoId);
+
+  try {
+    const assignees = await octokit.paginate(
+      octokit.rest.issues.listAssignees,
+      {
+        owner,
+        repo,
+        per_page: 100,
+      },
+    );
+
+    return assignees.map((assignee) => ({
+      id: assignee.id,
+      login: assignee.login,
+      avatar_url: assignee.avatar_url,
+      type: assignee.type ?? "User",
+    }));
+  } catch (error) {
+    logger.error({ error, repoId }, "Error fetching assignees from GitHub");
     throw error;
   }
 }

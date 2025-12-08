@@ -4,7 +4,7 @@ import Spinner from "ink-spinner";
 import { useFileDiffs } from "../hooks/useFileDiffs.js";
 import DiffDisplay from "./DiffDisplay.js";
 import { FileSelectionLines } from "../models/Diff.js";
-import type { PRContext } from "../lib/providers/data-provider.js";
+import type { PRContext } from "../lib/providers/index.js";
 
 interface DiffDisplayContainerProps {
   prContext: PRContext;

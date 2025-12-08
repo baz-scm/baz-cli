@@ -1,5 +1,5 @@
+import { IDataProvider } from "./data-provider.js";
 import type {
-  IDataProvider,
   PRContext,
   PullRequest,
   Integration,
@@ -9,7 +9,7 @@ import type {
   User,
   FileDiff,
   ChangeReviewer,
-} from "./data-provider.js";
+} from "./types.js";
 import {
   fetchOpenPullRequests,
   fetchPullRequestDetails,

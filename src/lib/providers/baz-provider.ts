@@ -12,7 +12,6 @@ import {
   fetchEligibleReviewers as bazFetchEligibleReviewers,
 } from "../clients/baz.js";
 import type {
-  IDataProvider,
   PRContext,
   PullRequest,
   SpecReview,
@@ -23,7 +22,8 @@ import type {
   User,
   FileDiff,
   ChangeReviewer,
-} from "./data-provider.js";
+} from "./types.js";
+import { IDataProvider } from "./data-provider.js";
 
 export class BazDataProvider implements IDataProvider {
   async fetchPRs(): Promise<PullRequest[]> {

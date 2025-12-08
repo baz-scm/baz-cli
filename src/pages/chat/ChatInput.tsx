@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
-import type { ChangeReviewer } from "../../lib/providers/data-provider.js";
+import type { ChangeReviewer } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
 import MentionAutocomplete from "../../components/MentionAutocomplete.js";
 

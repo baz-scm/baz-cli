@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAppMode } from "../lib/config/AppModeContext.js";
-import type { PRContext, FileDiff } from "../lib/providers/data-provider.js";
+import type { PRContext, FileDiff } from "../lib/providers/index.js";
 
 export function useFileDiffs(ctx: PRContext, commit: string, files: string[]) {
   const [data, setData] = useState<FileDiff[]>([]);

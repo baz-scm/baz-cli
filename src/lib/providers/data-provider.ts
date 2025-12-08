@@ -1,27 +1,3 @@
-// Re-export all shared types from types.ts
-export type {
-  PullRequest,
-  PullRequestDetails,
-  CodeChangeReview,
-  FileViewed,
-  Discussion,
-  AuthorUser,
-  Comment,
-  SpecReview,
-  Requirement,
-  Verdict,
-  IntegrationType,
-  Integration,
-  User,
-  ChangeReviewer,
-  MergeStatus,
-  Line,
-  Chunk,
-  Diff,
-  FileDiff,
-  PRContext,
-} from "./types.js";
-
 import type {
   PullRequest,
   SpecReview,

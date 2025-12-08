@@ -5,4 +5,5 @@ export interface PullRequestData {
   description: string;
   repoId: string;
   repositoryName: string;
+  updatedAt?: string;
 }

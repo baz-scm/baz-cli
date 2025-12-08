@@ -34,7 +34,7 @@ export async function fetchOpenPullRequests(): Promise<PullRequestData[]> {
     // Step 2: Fetch open PRs from each repository
     for (const repo of repos) {
       try {
-        const prs = await octokit.rest.pulls.list({
+        const prs = await octokit.paginate(octokit.rest.pulls.list, {
           owner: repo.owner.login,
           repo: repo.name,
           state: "open",
@@ -43,7 +43,7 @@ export async function fetchOpenPullRequests(): Promise<PullRequestData[]> {
           per_page: 100,
         });
 
-        for (const pr of prs.data) {
+        for (const pr of prs) {
           pullRequests.push({
             id: pr.id.toString(),
             prNumber: pr.number,
@@ -51,6 +51,7 @@ export async function fetchOpenPullRequests(): Promise<PullRequestData[]> {
             description: pr.body ?? "",
             repoId: `${repo.owner.login}/${repo.name}`,
             repositoryName: repo.full_name,
+            updatedAt: pr.updated_at,
           });
         }
       } catch (repoError) {
@@ -63,7 +64,9 @@ export async function fetchOpenPullRequests(): Promise<PullRequestData[]> {
     }
 
     // Sort all PRs by updated date (most recent first)
-    pullRequests.sort((a, b) => b.prNumber - a.prNumber);
+    pullRequests.sort(
+      (a, b) => b.updatedAt?.localeCompare(a.updatedAt ?? "") ?? 0,
+    );
 
     return pullRequests;
   } catch (error) {

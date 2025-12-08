@@ -128,6 +128,7 @@ export interface PullRequest {
   description: string;
   repoId: string;
   repositoryName: string;
+  updatedAt?: string;
 }
 
 export interface PullRequestsResponse {

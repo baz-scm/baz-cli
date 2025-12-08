@@ -16,6 +16,7 @@ import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js"
 import NarratePR from "../pages/PRWalkthrough/NarratePR.js";
 import { MAIN_COLOR } from "../theme/colors.js";
 import { Requirement } from "../lib/clients/baz.js";
+import { useAppMode } from "../lib/config/AppModeContext.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
@@ -46,7 +47,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   onBack,
 }) => {
   const [state, setState] = useState<State>({ step: "prOverview" });
-
+  const appMode = useAppMode();
   const pr = usePullRequest(prId);
   const issues = useIssues(prId);
   const specReviews = useSpecReviews(prId);
@@ -84,6 +85,11 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     unmetRequirements: Requirement[];
     metRequirements: Requirement[];
   } => {
+    // Spec reviews not supported in current mode
+    if (appMode.mode.name === "tokens" || specReviews.data === null) {
+      return { unmetRequirements: [], metRequirements: [] };
+    }
+
     const latestSpecReview = specReviews.data.at(-1);
 
     if (!latestSpecReview) {
@@ -110,6 +116,17 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
 
   // Handle prompt selection - check spec review status and go to menu
   const handlePrOverviewContinue = () => {
+    // Spec reviews not supported in current mode - skip directly to menu
+    if (appMode.mode.name === "tokens" || specReviews.data === null) {
+      setState({
+        step: "menu",
+        unmetRequirements: [],
+        metRequirements: [],
+        completedSteps: initialCompletedSteps,
+      });
+      return;
+    }
+
     const latestSpecReview = specReviews.data.at(-1);
 
     if (!latestSpecReview) {
@@ -123,11 +140,6 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     }
 
     if (latestSpecReview.status !== "success") {
-      setState({ step: "triggerSpecReview" });
-      return;
-    }
-
-    if (!latestSpecReview) {
       setState({ step: "triggerSpecReview" });
       return;
     }
@@ -312,7 +324,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <PullRequestOverviewSelect
           pr={pr.data}
           issues={issues.data}
-          specReviews={specReviews.data}
+          specReviews={specReviews.data ?? []}
           onContinue={handlePrOverviewContinue}
           onBack={onBack}
         />

@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
-import { fetchSpecReviews, SpecReview } from "../lib/clients/baz.js";
+import { SpecReview } from "../lib/providers/index.js";
+import { useAppMode } from "../lib/config/AppModeContext.js";
 
 export function useSpecReviews(prId: string) {
-  const [data, setData] = useState<SpecReview[]>([]);
+  const [data, setData] = useState<SpecReview[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const appMode = useAppMode();
 
   useEffect(() => {
-    fetchSpecReviews(prId)
+    appMode.mode.dataProvider
+      .fetchSpecReviews(prId)
       .then((specReviews) => {
         setData(specReviews);
       })
-      .catch((err) => setError(err.message))
+      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, [prId]);
 

@@ -2,7 +2,6 @@ import React from "react";
 import { Box } from "ink";
 import { Issue, IssueContext } from "../types.js";
 import DiffDisplayContainer from "../../components/DiffDisplayContainer.js";
-import type { PRContext } from "../../lib/providers/data-provider.js";
 
 interface DiscussionIssueDisplayProps {
   issue: Issue & { type: "discussion" };
@@ -15,17 +14,11 @@ const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
 }) => {
   const discussion = issue.data;
 
-  const prContext: PRContext = {
-    prId: context.prId,
-    repoId: context.repoId,
-    prNumber: context.prNumber,
-  };
-
   return (
     <Box flexDirection="column">
       <DiffDisplayContainer
         key={discussion.id}
-        prContext={prContext}
+        prContext={context}
         commit={discussion.commit_sha}
         fileSelectionLines={
           new Map([

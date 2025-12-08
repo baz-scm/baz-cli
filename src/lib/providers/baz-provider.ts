@@ -14,6 +14,7 @@ import {
 import type {
   IDataProvider,
   PRContext,
+  PullRequest,
   SpecReview,
   Integration,
   PullRequestDetails,
@@ -23,10 +24,9 @@ import type {
   FileDiff,
   ChangeReviewer,
 } from "./data-provider.js";
-import { PullRequestData } from "./types.js";
 
 export class BazDataProvider implements IDataProvider {
-  async fetchPRs(): Promise<PullRequestData[]> {
+  async fetchPRs(): Promise<PullRequest[]> {
     return bazFetchPRs();
   }
 

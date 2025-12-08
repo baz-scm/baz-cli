@@ -1,7 +1,7 @@
 import { Octokit } from "octokit";
 import { env } from "../env-schema.js";
 import { logger } from "../logger.js";
-import type { PullRequestData } from "../providers/types.js";
+import type { PullRequest, Line, Chunk, FileDiff } from "../providers/types.js";
 
 let octokitClient: Octokit | null = null;
 
@@ -15,7 +15,7 @@ function getOctokitClient(): Octokit {
   return octokitClient;
 }
 
-export async function fetchOpenPullRequests(): Promise<PullRequestData[]> {
+export async function fetchOpenPullRequests(): Promise<PullRequest[]> {
   const octokit = getOctokitClient();
 
   try {
@@ -29,7 +29,7 @@ export async function fetchOpenPullRequests(): Promise<PullRequestData[]> {
       },
     );
 
-    const pullRequests: PullRequestData[] = [];
+    const pullRequests: PullRequest[] = [];
 
     // Step 2: Fetch open PRs from each repository
     for (const repo of repos) {
@@ -399,45 +399,19 @@ export async function fetchAuthenticatedUser(): Promise<GitHubUser> {
   }
 }
 
-// Types for file diff parsing
-export interface GitHubLine {
-  number?: number;
-  content?: string;
-  new_line_number?: number;
-  new_content?: string;
-  line_type: "Added" | "Changed" | "Deleted" | "Unchanged";
-}
-
-export interface GitHubChunk {
-  lines: GitHubLine[];
-  before_lines: GitHubLine[];
-  after_lines: GitHubLine[];
-}
-
-export interface GitHubDiff {
-  chunks: GitHubChunk[];
-  file_relative_path: string;
-  old_relative_path?: string;
-}
-
-export interface GitHubFileDiff {
-  prFileId: string;
-  diff: GitHubDiff;
-}
-
 /**
  * Parse a unified diff patch string into structured chunks
  */
-function parsePatch(patch: string): GitHubChunk[] {
-  const chunks: GitHubChunk[] = [];
+function parsePatch(patch: string): Chunk[] {
+  const chunks: Chunk[] = [];
   const lines = patch.split("\n");
 
-  let currentChunk: GitHubChunk | null = null;
+  let currentChunk: Chunk | null = null;
   let oldLineNum = 0;
   let newLineNum = 0;
   let inBeforeContext = true;
-  let beforeContextLines: GitHubLine[] = [];
-  let afterContextLines: GitHubLine[] = [];
+  let beforeContextLines: Line[] = [];
+  let afterContextLines: Line[] = [];
 
   for (const line of lines) {
     // Parse hunk header: @@ -oldStart,oldCount +newStart,newCount @@
@@ -493,7 +467,7 @@ function parsePatch(patch: string): GitHubChunk[] {
       newLineNum++;
     } else if (prefix === " " || prefix === undefined) {
       // Context line (unchanged)
-      const contextLine: GitHubLine = {
+      const contextLine: Line = {
         number: oldLineNum,
         content: content,
         new_line_number: newLineNum,
@@ -532,7 +506,7 @@ export async function fetchFileDiffs(
   prNumber: number,
   commit: string,
   files: string[],
-): Promise<GitHubFileDiff[]> {
+): Promise<FileDiff[]> {
   const octokit = getOctokitClient();
   const { owner, repo } = parseRepoId(repoId);
 
@@ -554,7 +528,7 @@ export async function fetchFileDiffs(
       basehead: `${baseBranch}...${commit}`,
     });
 
-    const fileDiffs: GitHubFileDiff[] = [];
+    const fileDiffs: FileDiff[] = [];
 
     for (const file of response.data.files ?? []) {
       // Only include requested files

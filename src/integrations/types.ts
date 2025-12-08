@@ -1,4 +1,4 @@
-import { IntegrationType } from "../lib/clients/baz.js";
+import type { IntegrationType } from "../lib/providers/index.js";
 
 export type IntegrationFlowType = "oauth" | "credentials";
 

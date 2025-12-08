@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
-import { IntegrationType, fetchIntegrations } from "../../lib/clients/baz.js";
+import type { IntegrationType } from "../../lib/providers/index.js";
+import { fetchIntegrations } from "../../lib/clients/baz.js";
 import open from "open";
 
 interface OAuthFlowProps {

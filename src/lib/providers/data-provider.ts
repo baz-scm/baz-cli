@@ -1,4 +1,28 @@
+// Re-export all shared types from types.ts
 export type {
+  PullRequest,
+  PullRequestDetails,
+  CodeChangeReview,
+  FileViewed,
+  Discussion,
+  AuthorUser,
+  Comment,
+  SpecReview,
+  Requirement,
+  Verdict,
+  IntegrationType,
+  Integration,
+  User,
+  ChangeReviewer,
+  MergeStatus,
+  Line,
+  Chunk,
+  Diff,
+  FileDiff,
+  PRContext,
+} from "./types.js";
+
+import type {
   PullRequest,
   SpecReview,
   Integration,
@@ -7,32 +31,12 @@ export type {
   MergeStatus,
   User,
   FileDiff,
-  Diff,
-  Chunk,
-  Line,
   ChangeReviewer,
-} from "../clients/baz.js";
-
-import type {
-  SpecReview,
-  Integration,
-  PullRequestDetails,
-  Discussion,
-  MergeStatus,
-  User,
-  FileDiff,
-  ChangeReviewer,
-} from "../clients/baz.js";
-import { PullRequestData } from "./types.js";
-
-export interface PRContext {
-  prId: string;
-  repoId: string;
-  prNumber: number;
-}
+  PRContext,
+} from "./types.js";
 
 export interface IDataProvider {
-  fetchPRs(): Promise<PullRequestData[]>;
+  fetchPRs(): Promise<PullRequest[]>;
 
   fetchSpecReviews(prId: string): Promise<SpecReview[] | null>;
 

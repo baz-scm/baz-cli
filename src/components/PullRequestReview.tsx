@@ -15,8 +15,8 @@ import TriggerSpecReviewPrompt from "../pages/SpecReview/TriggerSpecReviewPrompt
 import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js";
 import NarratePR from "../pages/PRWalkthrough/NarratePR.js";
 import { MAIN_COLOR } from "../theme/colors.js";
-import { Requirement } from "../lib/clients/baz.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
+import type { Requirement } from "../lib/providers/index.js";
 import { PRContext } from "../lib/providers/index.js";
 
 interface MenuStateData {
@@ -53,7 +53,6 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   const issues = useIssues(prContext);
   const specReviews = useSpecReviews(prContext.prId);
 
-  // For backwards compatibility with components that still use prId/repoId
   const prId = prContext.prId;
   const repoId = useMemo(
     () => pr.data?.repository_id ?? prContext.repoId,

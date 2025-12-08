@@ -260,21 +260,6 @@ const ChatInput = memo<ChatInputProps>(
       </Box>
     );
   },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.placeholder === nextProps.placeholder &&
-      prevProps.enableMentions === nextProps.enableMentions &&
-      prevProps.prId === nextProps.prId &&
-      prevProps.terminalWidth === nextProps.terminalWidth &&
-      prevProps.availableCommands?.length ===
-        nextProps.availableCommands?.length &&
-      prevProps.availableCommands?.every(
-        (cmd, i) =>
-          cmd.command === nextProps.availableCommands?.[i]?.command &&
-          cmd.description === nextProps.availableCommands?.[i]?.description,
-      )
-    );
-  },
 );
 
 export default ChatInput;

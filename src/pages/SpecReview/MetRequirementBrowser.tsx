@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
-import { Requirement } from "../../lib/clients/baz.js";
+import type { Requirement } from "../../lib/providers/index.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import ChatDisplay from "../chat/ChatDisplay.js";
 import { ChatMessage, IssueType } from "../../models/chat.js";

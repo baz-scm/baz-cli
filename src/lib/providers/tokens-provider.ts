@@ -1,6 +1,7 @@
 import type {
   IDataProvider,
   PRContext,
+  PullRequest,
   Integration,
   PullRequestDetails,
   Discussion,
@@ -20,10 +21,9 @@ import {
   fetchFileDiffs as ghFetchFileDiffs,
   fetchAssignees,
 } from "../clients/github.js";
-import { PullRequestData } from "./types.js";
 
 export class TokensDataProvider implements IDataProvider {
-  async fetchPRs(): Promise<PullRequestData[]> {
+  async fetchPRs(): Promise<PullRequest[]> {
     return fetchOpenPullRequests();
   }
 

@@ -1,6 +1,9 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import { PullRequestDetails, SpecReview } from "../../lib/clients/baz.js";
+import type {
+  PullRequestDetails,
+  SpecReview,
+} from "../../lib/providers/index.js";
 import { Issue } from "../../issues/types.js";
 import PullRequestOverview from "./PullRequestOverview.js";
 

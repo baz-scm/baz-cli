@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { User } from "../lib/clients/baz.js";
+import type { User } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
 
 export function useFetchUser() {

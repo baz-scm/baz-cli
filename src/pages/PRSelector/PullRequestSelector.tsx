@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Box, Text, useInput } from "ink";
-import { PullRequest } from "../../lib/clients/baz.js";
+import type { PullRequest } from "../../lib/providers/index.js";
 
 interface PullRequestSelectorProps {
   pullRequests: PullRequest[];

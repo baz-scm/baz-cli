@@ -1,4 +1,4 @@
-import { IntegrationType } from "../lib/clients/baz.js";
+import type { IntegrationType } from "../lib/providers/index.js";
 import { IntegrationProvider } from "./types.js";
 import { jiraProvider } from "./providers/jira.js";
 import { linearProvider } from "./providers/linear.js";

@@ -6,6 +6,18 @@ import {
   ChatStreamMessage,
   CheckoutChatRequest,
 } from "../../models/chat.js";
+import type {
+  Integration,
+  IntegrationType,
+  PullRequest,
+  PullRequestDetails,
+  Discussion,
+  SpecReview,
+  Requirement,
+  ChangeReviewer,
+  MergeStatus,
+  FileDiff,
+} from "../providers/types.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
@@ -35,20 +47,7 @@ const getMergeUrl = (prId: string) =>
 
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
 
-export type IntegrationType = "jira" | "linear" | "youtrack";
-
-export interface Integration {
-  id: string;
-  integrationType: IntegrationType;
-  status: string;
-  updatedAt: string;
-  updatedBy: string;
-}
-
-export interface User {
-  login: string | undefined;
-}
-
+// API Response wrapper types (baz-specific)
 export interface IntegrationsResponse {
   integrations: Integration[];
 }
@@ -121,16 +120,6 @@ export async function fetchRepositories(): Promise<Repository[]> {
   return repos.repositories;
 }
 
-export interface PullRequest {
-  id: string;
-  prNumber: number;
-  title: string;
-  description: string;
-  repoId: string;
-  repositoryName: string;
-  updatedAt?: string;
-}
-
 export interface PullRequestsResponse {
   changes: PullRequest[];
 }
@@ -157,62 +146,13 @@ export async function fetchPRs(): Promise<PullRequest[]> {
   return repos.changes;
 }
 
-// there are more fields, if needed
-export interface PullRequestDetails {
-  id: string;
-  pr_number: number;
-  title: string;
-  description?: string;
-  lines_added: number;
-  lines_deleted: number;
-  files_changed: number;
-  files_added: number;
-  files_deleted: number;
-  files_viewed: FileViewed[];
-  spec_reviews: SpecReview[];
-  author_name: string;
-  reviews: CodeChangeReview[];
-  repository_id: string;
-}
-
-export interface CodeChangeReview {
-  review_state: string;
-  assignee: string;
-}
-
-export interface FileViewed {
-  path: string;
-}
-
-export interface SpecReview {
-  id: string;
-  commitSha: string;
-  status: "success" | "failed" | "in_progress" | "user_canceled";
-  requirementsFound: number;
-  requirementsMet: number;
-  requirements: Requirement[];
-  commentId: string;
-  createdAt: string;
-  checkRunId: string;
-}
-
+// API Response wrapper types
 export interface SpecReviewResult {
   summary: string;
   requirements: Requirement[];
   requirements_met: number;
   requirements_found: number;
 }
-
-export interface Requirement {
-  id: string;
-  title: string;
-  description?: string;
-  verdict: Verdict;
-  verdict_explanation: string | null;
-  evidence: string;
-}
-
-export type Verdict = "met" | "partially met" | "not met";
 
 export interface SpecReviewsResponse {
   specReviews: SpecReview[];
@@ -234,53 +174,12 @@ export async function fetchPRDetails(
     });
 }
 
-export interface Discussion {
-  id: string;
-  author: string;
-  author_user?: AuthorUser;
-  commit_sha: string;
-  outdated: boolean;
-  file?: string;
-  start_line?: number;
-  end_line?: number;
-  comments: Comment[];
-  side?: "left" | "right";
-  commented_code?: string;
-  original_start_line?: number;
-  original_end_line?: number;
-}
-
-export interface AuthorUser {
-  display_name: string;
-}
-
-export interface Comment {
-  id: string;
-  comment_body: string;
-  body_content_type: "html" | "markdown";
-  author: string;
-  author_user?: AuthorUser;
-}
-
 export interface DiscussionsResponse {
   discussions: Discussion[];
 }
 
-export interface ChangeReviewer {
-  id: string;
-  reviewer_type: string;
-  name: string;
-  login?: string;
-  avatar_url?: string;
-  group_members_count?: number;
-}
-
 export interface CodeChangeReviewersResponse {
   reviewers: ChangeReviewer[];
-}
-
-export interface MergeStatus {
-  is_mergeable: boolean;
 }
 
 export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
@@ -464,31 +363,6 @@ export async function triggerSpecReview(
       throw error;
     });
 }
-export interface Line {
-  number?: number;
-  content?: string;
-  new_line_number?: number;
-  new_content?: string;
-  line_type: "Added" | "Changed" | "Deleted" | "Unchanged";
-}
-
-export interface Chunk {
-  lines: Line[];
-  after_lines: Line[];
-  before_lines: Line[];
-}
-
-export interface Diff {
-  chunks: Chunk[];
-  old_relative_path?: string;
-  file_relative_path: string;
-}
-
-export interface FileDiff {
-  prFileId: string;
-  diff: Diff;
-}
-
 export interface FileDiffsResponse {
   fileDiffs: FileDiff[];
 }

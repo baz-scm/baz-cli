@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/baz-scm/baz-cli/compare/v0.2.3...v0.3.0) (2025-12-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Support tokens mode ([#57](https://github.com/baz-scm/baz-cli/issues/57))
+
+### ✨ New Features
+
+* Support tokens mode ([#57](https://github.com/baz-scm/baz-cli/issues/57)) ([1894e4d](https://github.com/baz-scm/baz-cli/commit/1894e4dbbef8b27afaad8fa74f714cbbc20048d9))
+* Tool call rendering ([#55](https://github.com/baz-scm/baz-cli/issues/55)) ([a44cfd8](https://github.com/baz-scm/baz-cli/commit/a44cfd837930a60bd328aaad41701f5d990002e2))
+
 ## [0.2.3](https://github.com/baz-scm/baz-cli/compare/v0.2.2...v0.2.3) (2025-12-04)
 
 

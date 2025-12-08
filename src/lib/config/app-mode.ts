@@ -1,6 +1,12 @@
 import { env } from "../env-schema.js";
+import { IDataProvider } from "../providers/data-provider.js";
+import { TokensDataProvider } from "../providers/tokens-provider.js";
+import { BazDataProvider } from "../providers/baz-provider.js";
 
-export type AppMode = "baz" | "tokens";
+export interface AppMode {
+  name: "baz" | "tokens";
+  dataProvider: IDataProvider;
+}
 
 export interface TokensConfig {
   githubToken: string;
@@ -26,7 +32,10 @@ function initializeAppConfig(): AppConfig {
   // Both tokens present → tokens mode
   if (ghToken && anthropicToken) {
     return {
-      mode: "tokens",
+      mode: {
+        name: "tokens",
+        dataProvider: new TokensDataProvider(),
+      },
       tokens: {
         githubToken: ghToken,
         anthropicToken: anthropicToken,
@@ -37,7 +46,10 @@ function initializeAppConfig(): AppConfig {
   // Neither token present → baz mode
   if (!ghToken && !anthropicToken) {
     return {
-      mode: "baz",
+      mode: {
+        name: "baz",
+        dataProvider: new BazDataProvider(),
+      },
     };
   }
 

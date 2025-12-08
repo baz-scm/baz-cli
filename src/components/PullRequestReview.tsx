@@ -16,6 +16,7 @@ import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js"
 import NarratePR from "../pages/PRWalkthrough/NarratePR.js";
 import { MAIN_COLOR } from "../theme/colors.js";
 import { Requirement } from "../lib/clients/baz.js";
+import { useAppMode } from "../lib/config/AppModeContext.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
@@ -46,7 +47,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   onBack,
 }) => {
   const [state, setState] = useState<State>({ step: "prOverview" });
-
+  const appMode = useAppMode();
   const pr = usePullRequest(prId);
   const issues = useIssues(prId);
   const specReviews = useSpecReviews(prId);
@@ -85,7 +86,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     metRequirements: Requirement[];
   } => {
     // Spec reviews not supported in current mode
-    if (specReviews.data === null) {
+    if (appMode.mode.name === "tokens" || specReviews.data === null) {
       return { unmetRequirements: [], metRequirements: [] };
     }
 
@@ -116,7 +117,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   // Handle prompt selection - check spec review status and go to menu
   const handlePrOverviewContinue = () => {
     // Spec reviews not supported in current mode - skip directly to menu
-    if (specReviews.data === null) {
+    if (appMode.mode.name === "tokens" || specReviews.data === null) {
       setState({
         step: "menu",
         unmetRequirements: [],

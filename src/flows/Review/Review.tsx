@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
-import { getDataProvider, PullRequest } from "../../lib/providers/index.js";
+import { PullRequest } from "../../lib/providers/index.js";
 import PullRequestSelectorContainer from "../../pages/PRSelector/PullRequestSelectorContainer.js";
 import HeaderDisplay from "../../components/HeaderDisplay.js";
 import IntegrationsCheck from "../Integration/IntegrationsCheck.js";
@@ -58,12 +58,13 @@ const InternalReviewFlow: React.FC = () => {
     const checkIntegrations = async () => {
       try {
         // Integrations not supported in current mode - skip check
-        if (appMode.mode === "tokens") {
+        if (appMode.mode.name === "tokens") {
           setHasIntegration(true);
           return;
         }
 
-        const integrations = await getDataProvider().fetchIntegrations();
+        const integrations =
+          await appMode.mode.dataProvider.fetchIntegrations();
 
         const hasTicketingIntegration = integrations.some(
           (integration) =>
@@ -86,7 +87,7 @@ const InternalReviewFlow: React.FC = () => {
     if (flowState.step !== "handlePRSelect") return;
 
     // Skip integrations config for tokens mode
-    if (appMode.mode === "tokens") {
+    if (appMode.mode.name === "tokens") {
       setFlowState({
         selectedPR: pr,
         step: "pullRequestReview",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import IssueBrowser from "../pages/IssueBrowser.js";
@@ -17,6 +17,7 @@ import NarratePR from "../pages/PRWalkthrough/NarratePR.js";
 import { MAIN_COLOR } from "../theme/colors.js";
 import { Requirement } from "../lib/clients/baz.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
+import { PRContext } from "../lib/providers/index.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
@@ -36,21 +37,25 @@ type State =
   | { step: "complete" };
 
 interface PullRequestReviewProps {
-  prId: string;
+  prContext: PRContext;
   onComplete: () => void;
   onBack: () => void;
 }
 
 const PullRequestReview: React.FC<PullRequestReviewProps> = ({
-  prId,
+  prContext,
   onComplete,
   onBack,
 }) => {
   const [state, setState] = useState<State>({ step: "prOverview" });
   const appMode = useAppMode();
-  const pr = usePullRequest(prId);
-  const issues = useIssues(prId);
-  const specReviews = useSpecReviews(prId);
+  const pr = usePullRequest(prContext);
+  const issues = useIssues(prContext);
+  const specReviews = useSpecReviews(prContext.prId);
+  
+  // For backwards compatibility with components that still use prId/repoId
+  const prId = prContext.prId;
+  const repoId = useMemo(() => pr.data?.repository_id ?? prContext.repoId, [pr.data, prContext.repoId]);
 
   const loading = pr.loading || issues.loading || specReviews.loading;
   const error = pr.error || issues.error || specReviews.error;
@@ -77,8 +82,6 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       />
     );
   }
-
-  const repoId = pr.data.repository_id;
 
   // Get requirements from latest spec review
   const getRequirementsData = (): {

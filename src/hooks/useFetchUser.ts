@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchUser, User } from "../lib/clients/baz.js";
+import { getDataProvider, User } from "../lib/providers/index.js";
 
 export function useFetchUser() {
   const [data, setData] = useState<User | null>(null);
@@ -7,13 +7,9 @@ export function useFetchUser() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchUser()
-      .then((user) => {
-        const firstLogin = user.user_logins?.[0];
-        setData({
-          login: firstLogin?.login,
-        });
-      })
+    getDataProvider()
+      .fetchUser()
+      .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);

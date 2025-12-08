@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchPRDetails, PullRequestDetails } from "../lib/clients/baz.js";
+import {
+  getDataProvider,
+  PRContext,
+  PullRequestDetails,
+} from "../lib/providers/index.js";
 
-export function usePullRequest(prId: string) {
+export function usePullRequest(ctx: PRContext) {
   const [data, setData] = useState<PullRequestDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -10,14 +14,14 @@ export function usePullRequest(prId: string) {
     setLoading(true);
     setError(null);
     try {
-      const pr = await fetchPRDetails(prId);
+      const pr = await getDataProvider().fetchPRDetails(ctx);
       setData(pr);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
-  }, [prId]);
+  }, [ctx.prId, ctx.repoId, ctx.prNumber]);
 
   useEffect(() => {
     fetchData();

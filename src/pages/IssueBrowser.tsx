@@ -10,6 +10,7 @@ interface IssueBrowserProps {
   issues: Issue[];
   prId: string;
   repoId: string;
+  prNumber: number;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -18,6 +19,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   issues,
   prId,
   repoId,
+  prNumber,
   onComplete,
   onBack,
 }) => {
@@ -110,6 +112,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     () => ({
       prId,
       repoId,
+      prNumber,
       currentIndex,
       totalIssues: issues.length,
       hasNext,
@@ -130,6 +133,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     [
       prId,
       repoId,
+      prNumber,
       currentIndex,
       issues.length,
       hasNext,
@@ -185,6 +189,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           onSubmit={handleSubmit}
           availableCommands={availableCommands}
           prId={prId}
+          repoId={repoId}
+          prNumber={prNumber}
           enableMentions={currentIssue.type === "discussion"}
           onBack={onBack}
         />

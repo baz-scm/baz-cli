@@ -6,6 +6,8 @@ import type {
   Discussion,
   MergeStatus,
   User,
+  FileDiff,
+  ChangeReviewer,
 } from "./data-provider.js";
 import {
   fetchOpenPullRequests,
@@ -15,6 +17,8 @@ import {
   mergePullRequest,
   fetchMergeStatus as ghFetchMergeStatus,
   fetchAuthenticatedUser,
+  fetchFileDiffs as ghFetchFileDiffs,
+  fetchAssignees,
 } from "../clients/github.js";
 import { PullRequestData } from "./types.js";
 
@@ -60,7 +64,10 @@ export class TokensDataProvider implements IDataProvider {
 
   async fetchDiscussions(ctx: PRContext): Promise<Discussion[]> {
     // Fetch only unresolved review threads (matching baz behavior of fetching "pending" discussions)
-    const threads = await fetchUnresolvedReviewThreads(ctx.repoId, ctx.prNumber);
+    const threads = await fetchUnresolvedReviewThreads(
+      ctx.repoId,
+      ctx.prNumber,
+    );
 
     return threads.map((thread) => {
       const firstComment = thread.comments[0];
@@ -70,12 +77,14 @@ export class TokensDataProvider implements IDataProvider {
         author_user: firstComment?.author
           ? { display_name: firstComment.author }
           : undefined,
-        commit_sha: "",
+        commit_sha: thread.originalCommitOid,
         outdated: thread.isOutdated,
         file: thread.path,
         start_line: thread.startLine ?? thread.line ?? undefined,
         end_line: thread.line ?? undefined,
         side: thread.diffSide === "LEFT" ? "left" : "right",
+        original_start_line: thread.startLine ?? thread.line ?? undefined,
+        original_end_line: thread.line ?? undefined,
         comments: thread.comments.map((c) => ({
           id: c.id,
           comment_body: c.body,
@@ -107,5 +116,25 @@ export class TokensDataProvider implements IDataProvider {
     return {
       login: ghUser.login,
     };
+  }
+
+  async fetchFileDiffs(
+    ctx: PRContext,
+    commit: string,
+    files: string[],
+  ): Promise<FileDiff[]> {
+    return ghFetchFileDiffs(ctx.repoId, ctx.prNumber, commit, files);
+  }
+
+  async fetchEligibleReviewers(ctx: PRContext): Promise<ChangeReviewer[]> {
+    const assignees = await fetchAssignees(ctx.repoId);
+
+    return assignees.map((assignee) => ({
+      id: assignee.id.toString(),
+      reviewer_type: assignee.type.toLowerCase(),
+      name: assignee.login, // GitHub doesn't return display name in assignees endpoint
+      login: assignee.login,
+      avatar_url: assignee.avatar_url,
+    }));
   }
 }

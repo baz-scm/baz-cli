@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { FileDiff } from "../lib/clients/baz.js";
+import type { FileDiff } from "../lib/providers/data-provider.js";
 import { FileSelectionLines } from "../models/Diff.js";
 import {
   DIFF_ADDED_LINE_COLOR,

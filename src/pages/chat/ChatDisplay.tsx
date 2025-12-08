@@ -87,6 +87,8 @@ interface ChatDisplayProps {
   availableCommands?: IssueCommand[];
   disabled?: boolean;
   prId?: string;
+  repoId?: string;
+  prNumber?: number;
   enableMentions?: boolean;
   onBack: () => void;
   // onToggleToolCallExpansion?: (toolCallId: string) => void;
@@ -101,6 +103,8 @@ const ChatDisplay = memo<ChatDisplayProps>(
     availableCommands = [],
     disabled = false,
     prId,
+    repoId,
+    prNumber,
     enableMentions = false,
     onBack,
     // onToggleToolCallExpansion,
@@ -181,6 +185,8 @@ const ChatDisplay = memo<ChatDisplayProps>(
             availableCommands={availableCommands}
             enableMentions={enableMentions}
             prId={prId}
+            repoId={repoId}
+            prNumber={prNumber}
             onBack={onBack}
             terminalWidth={terminalWidth}
             onToggleToolCallExpansion={onToggleToolCallExpansion}

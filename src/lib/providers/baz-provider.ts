@@ -8,6 +8,8 @@ import {
   mergePR as bazMergePR,
   fetchMergeStatus as bazFetchMergeStatus,
   fetchUser as bazFetchUser,
+  fetchFileDiffs as bazFetchFileDiffs,
+  fetchEligibleReviewers as bazFetchEligibleReviewers,
 } from "../clients/baz.js";
 import type {
   IDataProvider,
@@ -18,6 +20,8 @@ import type {
   Discussion,
   MergeStatus,
   User,
+  FileDiff,
+  ChangeReviewer,
 } from "./data-provider.js";
 import { PullRequestData } from "./types.js";
 
@@ -60,5 +64,17 @@ export class BazDataProvider implements IDataProvider {
     return {
       login: firstLogin?.login,
     };
+  }
+
+  async fetchFileDiffs(
+    ctx: PRContext,
+    commit: string,
+    files: string[],
+  ): Promise<FileDiff[]> {
+    return bazFetchFileDiffs(ctx.prId, commit, files);
+  }
+
+  async fetchEligibleReviewers(ctx: PRContext): Promise<ChangeReviewer[]> {
+    return bazFetchEligibleReviewers(ctx.prId);
   }
 }

@@ -5,7 +5,8 @@ import { usePullRequest } from "../../hooks/usePullRequest.js";
 import { useFetchUser } from "../../hooks/useFetchUser.js";
 import { useFetchMergeStatus } from "../../hooks/useFetchMergeStatus.js";
 import LoadingSpinner from "../../components/LoadingSpinner.js";
-import { getDataProvider, PRContext } from "../../lib/providers/index.js";
+import { PRContext } from "../../lib/providers/index.js";
+import { useAppMode } from "../../lib/config/AppModeContext.js";
 
 export type PostReviewAction =
   | "approve"
@@ -35,6 +36,9 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
   const pr = usePullRequest(prContext);
   const user = useFetchUser();
   const mergeStatus = useFetchMergeStatus(prContext);
+  const appMode = useAppMode();
+
+  const dataProvider = appMode.mode.dataProvider;
 
   const canApprove = useMemo(() => {
     if (!pr.data || !user.data) return false;
@@ -69,7 +73,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setIsApproving(true);
     setActionError(null);
     try {
-      await getDataProvider().approvePR(prContext);
+      await dataProvider.approvePR(prContext);
       await pr.refetch();
       setIsSelected(false);
     } catch (_) {
@@ -84,7 +88,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setIsMerging(true);
     setActionError(null);
     try {
-      await getDataProvider().mergePR(prContext);
+      await dataProvider.mergePR(prContext);
       await pr.refetch();
       setIsSelected(false);
     } catch (_) {

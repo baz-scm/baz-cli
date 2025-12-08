@@ -52,10 +52,13 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   const pr = usePullRequest(prContext);
   const issues = useIssues(prContext);
   const specReviews = useSpecReviews(prContext.prId);
-  
+
   // For backwards compatibility with components that still use prId/repoId
   const prId = prContext.prId;
-  const repoId = useMemo(() => pr.data?.repository_id ?? prContext.repoId, [pr.data, prContext.repoId]);
+  const repoId = useMemo(
+    () => pr.data?.repository_id ?? prContext.repoId,
+    [pr.data, prContext.repoId],
+  );
 
   const loading = pr.loading || issues.loading || specReviews.loading;
   const error = pr.error || issues.error || specReviews.error;
@@ -387,6 +390,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
           issues={issues.data}
           prId={prId}
           repoId={repoId}
+          prNumber={prContext.prNumber}
           onComplete={handleIssuesComplete}
           onBack={handleBackFromIssues}
         />

@@ -4,7 +4,7 @@ import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
 import ChatDisplay from "./chat/ChatDisplay.js";
 import { ChatMessage } from "../models/chat.js";
-import { streamChatResponse } from "../lib/clients/baz.js";
+import { processStream } from "../lib/chat-stream.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -41,70 +41,56 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
 
   const handleChatSubmit = useCallback(
     async (message: string) => {
-      const userMessage: ChatMessage = {
-        role: "user",
-        content: message,
-      };
-
-      setChatMessages((prev) => [...prev, userMessage]);
+      setChatMessages((prev) => [...prev, { role: "user", content: message }]);
       setIsLoading(true);
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: "",
-      };
-
-      setChatMessages((prev) => [...prev, assistantMessage]);
-
       try {
-        let accumulatedResponse = "";
-        let firstChunk = true;
-
-        for await (const chunk of streamChatResponse({
-          repoId: bazRepoId ?? fullRepoName,
-          prId,
-          issue: {
-            type: handler.getApiIssueType(currentIssue),
-            data: {
-              id: currentIssue.data.id,
+        await processStream(
+          {
+            repoId: bazRepoId ?? fullRepoName,
+            prId,
+            issue: {
+              type: handler.getApiIssueType(currentIssue),
+              data: {
+                id: currentIssue.data.id,
+              },
+            },
+            freeText: message,
+            conversationId,
+          },
+          {
+            onConversationId: setConversationId,
+            onFirstTextContent: () => setIsLoading(false),
+            onUpdate: (content, toolCalls, isFirst) => {
+              if (isFirst) {
+                setChatMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content, toolCalls },
+                ]);
+              } else {
+                setChatMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content,
+                    toolCalls,
+                  };
+                  return updated;
+                });
+              }
             },
           },
-          freeText: message,
-          conversationId,
-        })) {
-          if (chunk.conversationId) {
-            setConversationId(chunk.conversationId);
-          }
-
-          if (chunk.content) {
-            if (firstChunk) {
-              setIsLoading(false);
-              firstChunk = false;
-            }
-
-            accumulatedResponse += chunk.content;
-
-            setChatMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                role: "assistant",
-                content: accumulatedResponse,
-              };
-              return updated;
-            });
-          }
-        }
+        );
       } catch (error) {
         console.error("Failed to get chat response:", error);
         setIsLoading(false);
-        setChatMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
+        setChatMessages((prev) => [
+          ...prev,
+          {
             role: "assistant",
             content: "Sorry, I encountered an error. Please try again.",
-          };
-          return updated;
-        });
+          },
+        ]);
       }
     },
     [bazRepoId, fullRepoName, prId, handler, currentIssue, conversationId],

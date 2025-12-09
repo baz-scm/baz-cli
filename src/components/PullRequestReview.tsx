@@ -15,8 +15,9 @@ import TriggerSpecReviewPrompt from "../pages/SpecReview/TriggerSpecReviewPrompt
 import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js";
 import NarratePR from "../pages/PRWalkthrough/NarratePR.js";
 import { MAIN_COLOR } from "../theme/colors.js";
-import { Requirement } from "../lib/clients/baz.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
+import type { Requirement } from "../lib/providers/index.js";
+import { PRContext } from "../lib/providers/index.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
@@ -36,21 +37,26 @@ type State =
   | { step: "complete" };
 
 interface PullRequestReviewProps {
-  prId: string;
+  prContext: PRContext;
   onComplete: () => void;
   onBack: () => void;
 }
 
 const PullRequestReview: React.FC<PullRequestReviewProps> = ({
-  prId,
+  prContext,
   onComplete,
   onBack,
 }) => {
   const [state, setState] = useState<State>({ step: "prOverview" });
   const appMode = useAppMode();
-  const pr = usePullRequest(prId);
-  const issues = useIssues(prId);
-  const specReviews = useSpecReviews(prId);
+  const pr = usePullRequest(prContext);
+  const issues = useIssues(prContext);
+  const specReviews = useSpecReviews(prContext.prId);
+
+  const prId = prContext.prId;
+  const fullRepoName = prContext.fullRepoName;
+  // bazRepoId is only available in baz mode, undefined in tokens mode
+  const bazRepoId = pr.data?.repository_id;
 
   const loading = pr.loading || issues.loading || specReviews.loading;
   const error = pr.error || issues.error || specReviews.error;
@@ -77,8 +83,6 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       />
     );
   }
-
-  const repoId = pr.data.repository_id;
 
   // Get requirements from latest spec review
   const getRequirementsData = (): {
@@ -342,7 +346,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <TriggerSpecReviewPrompt
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onComplete={handleTriggerSpecReviewComplete}
           onBack={handleBackFromTriggerSpecReview}
         />
@@ -363,7 +367,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <SpecReviewBrowser
           unmetRequirements={state.unmetRequirements}
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onComplete={handleUnmetRequirementsComplete}
           onBack={handleBackFromUnmetRequirements}
         />
@@ -373,7 +377,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <MetRequirementBrowser
           metRequirements={state.metRequirements}
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onComplete={handleMetRequirementsComplete}
           onBack={handleBackFromMetRequirements}
         />
@@ -383,7 +387,9 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <IssueBrowser
           issues={issues.data}
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
+          prNumber={prContext.prNumber}
           onComplete={handleIssuesComplete}
           onBack={handleBackFromIssues}
         />
@@ -392,7 +398,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <NarratePR
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onBack={handleBackFromNarratePR}
         />
       );

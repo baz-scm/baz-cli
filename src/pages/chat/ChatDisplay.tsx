@@ -87,6 +87,8 @@ interface ChatDisplayProps {
   availableCommands?: IssueCommand[];
   disabled?: boolean;
   prId?: string;
+  fullRepoName?: string;
+  prNumber?: number;
   enableMentions?: boolean;
   onBack: () => void;
   // onToggleToolCallExpansion?: (toolCallId: string) => void;
@@ -101,6 +103,8 @@ const ChatDisplay = memo<ChatDisplayProps>(
     availableCommands = [],
     disabled = false,
     prId,
+    fullRepoName,
+    prNumber,
     enableMentions = false,
     onBack,
     // onToggleToolCallExpansion,
@@ -181,6 +185,8 @@ const ChatDisplay = memo<ChatDisplayProps>(
             availableCommands={availableCommands}
             enableMentions={enableMentions}
             prId={prId}
+            fullRepoName={fullRepoName}
+            prNumber={prNumber}
             onBack={onBack}
             terminalWidth={terminalWidth}
             onToggleToolCallExpansion={onToggleToolCallExpansion}
@@ -188,58 +194,6 @@ const ChatDisplay = memo<ChatDisplayProps>(
           />
         )}
       </Box>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Don't re-render if only the messages array reference changed
-    // but the actual message contents are the same
-    if (prevProps.messages.length !== nextProps.messages.length) {
-      return false;
-    }
-
-    // Check if any message content actually changed
-    for (let i = 0; i < prevProps.messages.length; i++) {
-      const prevMsg = prevProps.messages[i];
-      const nextMsg = nextProps.messages[i];
-
-      if (
-        prevMsg.content !== nextMsg.content ||
-        prevMsg.role !== nextMsg.role
-      ) {
-        return false;
-      }
-
-      // Check tool calls
-      if (prevMsg.toolCalls?.length !== nextMsg.toolCalls?.length) {
-        return false;
-      }
-
-      if (prevMsg.toolCalls && nextMsg.toolCalls) {
-        for (let j = 0; j < prevMsg.toolCalls.length; j++) {
-          const prevTool = prevMsg.toolCalls[j];
-          const nextTool = nextMsg.toolCalls[j];
-          if (
-            prevTool.id !== nextTool.id ||
-            prevTool.message !== nextTool.message ||
-            prevTool.result !== nextTool.result
-          ) {
-            return false;
-          }
-        }
-      }
-    }
-
-    // Check other props
-    return (
-      prevProps.isLoading === nextProps.isLoading &&
-      prevProps.disabled === nextProps.disabled &&
-      prevProps.placeholder === nextProps.placeholder &&
-      prevProps.prId === nextProps.prId &&
-      prevProps.enableMentions === nextProps.enableMentions &&
-      prevProps.availableCommands?.length ===
-        nextProps.availableCommands?.length
-      // Intentionally skip onSubmit, onBack, onToggleToolCallExpansion as they change on every render
-      // but don't affect the visual output when input isn't shown
     );
   },
 );

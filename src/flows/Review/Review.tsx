@@ -187,7 +187,11 @@ const InternalReviewFlow: React.FC = () => {
         <Box flexDirection="column">
           <SelectedPRHeader pullRequest={flowState.selectedPR} />
           <PullRequestReview
-            prId={flowState.selectedPR.id}
+            prContext={{
+              prId: flowState.selectedPR.id,
+              fullRepoName: flowState.selectedPR.repositoryName,
+              prNumber: flowState.selectedPR.prNumber,
+            }}
             onComplete={handleIssueComplete}
             onBack={handleBackFromIssueSelect}
           />
@@ -225,7 +229,14 @@ const CompleteMessage: React.FC<{
         <Text>CR Review completed</Text>
       </Box>
       {onSelect && (
-        <PostReviewPrompt onSelect={onSelect} prId={flowState.selectedPR.id} />
+        <PostReviewPrompt
+          onSelect={onSelect}
+          prContext={{
+            prId: flowState.selectedPR.id,
+            fullRepoName: flowState.selectedPR.repositoryName,
+            prNumber: flowState.selectedPR.prNumber,
+          }}
+        />
       )}
     </Box>
   );

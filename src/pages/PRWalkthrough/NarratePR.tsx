@@ -10,11 +10,11 @@ const INITIAL_PROMPT =
 
 interface NarratePRProps {
   prId: string;
-  repoId: string;
+  bazRepoId?: string;
   onBack: () => void;
 }
 
-const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
+const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     undefined,
   );
@@ -28,10 +28,22 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
     hasInitialized.current = true;
 
     const sendInitialMessage = async () => {
+      if (!bazRepoId) {
+        setIsLoading(false);
+        setChatMessages([
+          {
+            role: "assistant",
+            content:
+              "Repository ID not available. PR walkthrough is not available in this mode.",
+          },
+        ]);
+        return;
+      }
+
       try {
         await processStream(
           {
-            repoId,
+            repoId: bazRepoId,
             prId,
             issue: { type: IssueType.PULL_REQUEST, data: { id: prId } },
             freeText: INITIAL_PROMPT,
@@ -71,10 +83,23 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
     };
 
     sendInitialMessage();
-  }, [prId, repoId]);
+  }, [prId, bazRepoId]);
 
   const handleChatSubmit = useCallback(
     async (userInput: string) => {
+      if (!bazRepoId) {
+        setChatMessages((prev) => [
+          ...prev,
+          { role: "user", content: userInput },
+          {
+            role: "assistant",
+            content:
+              "Repository ID not available. Chat is not available in this mode.",
+          },
+        ]);
+        return;
+      }
+
       setChatMessages((prev) => [
         ...prev,
         { role: "user", content: userInput },
@@ -84,7 +109,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
       try {
         await processStream(
           {
-            repoId,
+            repoId: bazRepoId,
             prId,
             issue: { type: IssueType.PULL_REQUEST, data: { id: prId } },
             freeText: userInput,
@@ -125,7 +150,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, repoId, onBack }) => {
         ]);
       }
     },
-    [prId, repoId, conversationId],
+    [prId, bazRepoId, conversationId],
   );
 
   return (

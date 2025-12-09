@@ -3,10 +3,8 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
-import {
-  ChangeReviewer,
-  fetchEligibleReviewers,
-} from "../../lib/clients/baz.js";
+import type { ChangeReviewer } from "../../lib/providers/index.js";
+import { useAppMode } from "../../lib/config/AppModeContext.js";
 import MentionAutocomplete from "../../components/MentionAutocomplete.js";
 
 interface ChatInputProps {
@@ -15,6 +13,8 @@ interface ChatInputProps {
   availableCommands: IssueCommand[];
   enableMentions: boolean;
   prId?: string;
+  fullRepoName?: string;
+  prNumber?: number;
   onBack: () => void;
   toolsExist: boolean;
   onToggleToolCallExpansion: () => void;
@@ -28,6 +28,8 @@ const ChatInput = memo<ChatInputProps>(
     availableCommands,
     enableMentions,
     prId,
+    fullRepoName,
+    prNumber,
     onBack,
     toolsExist,
     onToggleToolCallExpansion,
@@ -40,6 +42,8 @@ const ChatInput = memo<ChatInputProps>(
       useState(false);
     const [mentionSearchQuery, setMentionSearchQuery] = useState("");
     const [mentionStartIndex, setMentionStartIndex] = useState(-1);
+    const appMode = useAppMode();
+    const dataProvider = appMode.mode.dataProvider;
 
     // Use ref to track input value for useInput callback to avoid stale closures
     const inputValueRef = useRef(inputValue);
@@ -49,14 +53,15 @@ const ChatInput = memo<ChatInputProps>(
     const skipNextInputRef = useRef(false);
 
     useEffect(() => {
-      if (enableMentions && prId) {
-        fetchEligibleReviewers(prId)
+      if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
+        dataProvider
+          .fetchEligibleReviewers({ prId, fullRepoName, prNumber })
           .then(setReviewers)
           .catch((error) => {
             console.error("Failed to fetch eligible reviewers:", error);
           });
       }
-    }, [enableMentions, prId]);
+    }, [enableMentions, prId, fullRepoName, prNumber]);
 
     // Only handle escape key in useInput - let TextInput handle all other input
     useInput(
@@ -253,21 +258,6 @@ const ChatInput = memo<ChatInputProps>(
           </Box>
         )}
       </Box>
-    );
-  },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.placeholder === nextProps.placeholder &&
-      prevProps.enableMentions === nextProps.enableMentions &&
-      prevProps.prId === nextProps.prId &&
-      prevProps.terminalWidth === nextProps.terminalWidth &&
-      prevProps.availableCommands?.length ===
-        nextProps.availableCommands?.length &&
-      prevProps.availableCommands?.every(
-        (cmd, i) =>
-          cmd.command === nextProps.availableCommands?.[i]?.command &&
-          cmd.description === nextProps.availableCommands?.[i]?.description,
-      )
     );
   },
 );

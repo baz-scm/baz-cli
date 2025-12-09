@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
-import { fetchFileDiffs, FileDiff } from "../lib/clients/baz.js";
+import { useAppMode } from "../lib/config/AppModeContext.js";
+import type { PRContext, FileDiff } from "../lib/providers/index.js";
 
-export function useFileDiffs(prId: string, commit: string, files: string[]) {
+export function useFileDiffs(ctx: PRContext, commit: string, files: string[]) {
   const [data, setData] = useState<FileDiff[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const appMode = useAppMode();
 
   useEffect(() => {
-    fetchFileDiffs(prId, commit, files)
+    appMode.mode.dataProvider
+      .fetchFileDiffs(ctx, commit, files)
       .then(setData)
-      .catch((err) => setError(err.message))
+      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [ctx, commit, files]);
 
   return { data, loading, error };
 }

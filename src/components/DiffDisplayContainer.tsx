@@ -4,22 +4,23 @@ import Spinner from "ink-spinner";
 import { useFileDiffs } from "../hooks/useFileDiffs.js";
 import DiffDisplay from "./DiffDisplay.js";
 import { FileSelectionLines } from "../models/Diff.js";
+import type { PRContext } from "../lib/providers/index.js";
 
 interface DiffDisplayContainerProps {
-  prId: string;
+  prContext: PRContext;
   commit: string;
   fileSelectionLines: FileSelectionLines;
   outdated: boolean;
 }
 
 const DiffDisplayContainer: React.FC<DiffDisplayContainerProps> = ({
-  prId,
+  prContext,
   commit,
   fileSelectionLines,
   outdated,
 }) => {
   const files = [...fileSelectionLines.keys()];
-  const { data, loading, error } = useFileDiffs(prId, commit, files);
+  const { data, loading, error } = useFileDiffs(prContext, commit, files);
 
   if (loading) {
     return (

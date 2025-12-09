@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
-import { fetchUser, User } from "../lib/clients/baz.js";
+import type { User } from "../lib/providers/index.js";
+import { useAppMode } from "../lib/config/AppModeContext.js";
 
 export function useFetchUser() {
   const [data, setData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const appMode = useAppMode();
 
   useEffect(() => {
-    fetchUser()
+    appMode.mode.dataProvider
+      .fetchUser()
       .then((user) => {
-        const firstLogin = user.user_logins?.[0];
         setData({
-          login: firstLogin?.login,
+          login: user.login,
         });
       })
       .catch((err) => setError(err.message))

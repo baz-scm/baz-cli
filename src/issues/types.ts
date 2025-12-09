@@ -1,4 +1,4 @@
-import { Discussion } from "../lib/clients/baz.js";
+import type { Discussion } from "../lib/providers/index.js";
 import { IssueType } from "../models/chat.js";
 
 export type Issue = {
@@ -16,7 +16,8 @@ export interface IssueCommand {
 
 export interface IssueContext {
   prId: string;
-  repoId: string;
+  fullRepoName: string;
+  prNumber: number;
   currentIndex: number;
   totalIssues: number;
   hasNext: boolean;

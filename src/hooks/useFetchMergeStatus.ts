@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
-import { fetchMergeStatus, MergeStatus } from "../lib/clients/baz.js";
+import { PRContext, MergeStatus } from "../lib/providers/index.js";
+import { useAppMode } from "../lib/config/AppModeContext.js";
 
-export function useFetchMergeStatus(prId: string) {
+export function useFetchMergeStatus(ctx: PRContext) {
   const [data, setData] = useState<MergeStatus>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const appMode = useAppMode();
 
   useEffect(() => {
-    fetchMergeStatus(prId)
+    appMode.mode.dataProvider
+      .fetchMergeStatus(ctx)
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [prId]);
+  }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
 
   return { data, loading, error };
 }

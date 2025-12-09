@@ -8,7 +8,7 @@ import ErrorPrompt from "./SpecReviewErrorPrompt.js";
 
 interface TriggerSpecReviewPromptProps {
   prId: string;
-  repoId: string;
+  bazRepoId?: string;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -26,7 +26,7 @@ interface SelectItem {
 
 const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
   prId,
-  repoId,
+  bazRepoId,
   onComplete,
   onBack,
 }) => {
@@ -45,10 +45,15 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
   ];
 
   const handleTrigger = async () => {
+    if (!bazRepoId) {
+      setError(new Error("Repository ID not available"));
+      setState({ step: "error" });
+      return;
+    }
     setState({ step: "triggering" });
     setError(null);
     try {
-      await triggerSpecReview(prId, repoId);
+      await triggerSpecReview(prId, bazRepoId);
       setState({ step: "triggered" });
       setTimeout(() => {
         onComplete();

@@ -18,7 +18,11 @@ const DiscussionIssueDisplay: React.FC<DiscussionIssueDisplayProps> = ({
     <Box flexDirection="column">
       <DiffDisplayContainer
         key={discussion.id}
-        prId={context.prId}
+        prContext={{
+          prId: context.prId,
+          fullRepoName: context.fullRepoName,
+          prNumber: context.prNumber,
+        }}
         commit={discussion.commit_sha}
         fileSelectionLines={
           new Map([

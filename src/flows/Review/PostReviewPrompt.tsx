@@ -3,9 +3,10 @@ import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { usePullRequest } from "../../hooks/usePullRequest.js";
 import { useFetchUser } from "../../hooks/useFetchUser.js";
-import { approvePR, mergePR } from "../../lib/clients/baz.js";
 import { useFetchMergeStatus } from "../../hooks/useFetchMergeStatus.js";
 import LoadingSpinner from "../../components/LoadingSpinner.js";
+import { PRContext } from "../../lib/providers/index.js";
+import { useAppMode } from "../../lib/config/AppModeContext.js";
 
 export type PostReviewAction =
   | "approve"
@@ -16,7 +17,7 @@ export type PostReviewAction =
 
 interface PostReviewPromptProps {
   onSelect: (action: PostReviewAction) => void;
-  prId: string;
+  prContext: PRContext;
 }
 
 interface SelectItem {
@@ -26,15 +27,18 @@ interface SelectItem {
 
 const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
   onSelect,
-  prId,
+  prContext,
 }) => {
   const [isSelected, setIsSelected] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const pr = usePullRequest(prId);
+  const pr = usePullRequest(prContext);
   const user = useFetchUser();
-  const mergeStatus = useFetchMergeStatus(prId);
+  const mergeStatus = useFetchMergeStatus(prContext);
+  const appMode = useAppMode();
+
+  const dataProvider = appMode.mode.dataProvider;
 
   const canApprove = useMemo(() => {
     if (!pr.data || !user.data) return false;
@@ -69,7 +73,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setIsApproving(true);
     setActionError(null);
     try {
-      await approvePR(prId);
+      await dataProvider.approvePR(prContext);
       await pr.refetch();
       setIsSelected(false);
     } catch (_) {
@@ -84,7 +88,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setIsMerging(true);
     setActionError(null);
     try {
-      await mergePR(prId);
+      await dataProvider.mergePR(prContext);
       await pr.refetch();
       setIsSelected(false);
     } catch (_) {

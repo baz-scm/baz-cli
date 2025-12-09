@@ -21,7 +21,7 @@ export function useIssues(ctx: PRContext) {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [ctx.prId, ctx.repoId, ctx.prNumber]);
+  }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
 
   return { data, loading, error };
 }

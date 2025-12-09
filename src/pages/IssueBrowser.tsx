@@ -9,7 +9,8 @@ import { streamChatResponse } from "../lib/clients/baz.js";
 interface IssueBrowserProps {
   issues: Issue[];
   prId: string;
-  repoId: string;
+  bazRepoId?: string;
+  fullRepoName: string;
   prNumber: number;
   onComplete: () => void;
   onBack: () => void;
@@ -18,7 +19,8 @@ interface IssueBrowserProps {
 const IssueBrowser: React.FC<IssueBrowserProps> = ({
   issues,
   prId,
-  repoId,
+  bazRepoId,
+  fullRepoName,
   prNumber,
   onComplete,
   onBack,
@@ -59,7 +61,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         let firstChunk = true;
 
         for await (const chunk of streamChatResponse({
-          repoId,
+          repoId: bazRepoId ?? fullRepoName,
           prId,
           issue: {
             type: handler.getApiIssueType(currentIssue),
@@ -105,13 +107,13 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         });
       }
     },
-    [repoId, prId, handler, currentIssue, conversationId],
+    [bazRepoId, fullRepoName, prId, handler, currentIssue, conversationId],
   );
 
   const context: IssueContext = useMemo(
     () => ({
       prId,
-      repoId,
+      fullRepoName,
       prNumber,
       currentIndex,
       totalIssues: issues.length,
@@ -132,7 +134,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     }),
     [
       prId,
-      repoId,
+      fullRepoName,
       prNumber,
       currentIndex,
       issues.length,
@@ -189,7 +191,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           onSubmit={handleSubmit}
           availableCommands={availableCommands}
           prId={prId}
-          repoId={repoId}
+          fullRepoName={fullRepoName}
           prNumber={prNumber}
           enableMentions={currentIssue.type === "discussion"}
           onBack={onBack}

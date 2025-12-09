@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import IssueBrowser from "../pages/IssueBrowser.js";
@@ -54,10 +54,9 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   const specReviews = useSpecReviews(prContext.prId);
 
   const prId = prContext.prId;
-  const repoId = useMemo(
-    () => pr.data?.repository_id ?? prContext.repoId,
-    [pr.data, prContext.repoId],
-  );
+  const fullRepoName = prContext.fullRepoName;
+  // bazRepoId is only available in baz mode, undefined in tokens mode
+  const bazRepoId = pr.data?.repository_id;
 
   const loading = pr.loading || issues.loading || specReviews.loading;
   const error = pr.error || issues.error || specReviews.error;
@@ -347,7 +346,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <TriggerSpecReviewPrompt
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onComplete={handleTriggerSpecReviewComplete}
           onBack={handleBackFromTriggerSpecReview}
         />
@@ -368,7 +367,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <SpecReviewBrowser
           unmetRequirements={state.unmetRequirements}
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onComplete={handleUnmetRequirementsComplete}
           onBack={handleBackFromUnmetRequirements}
         />
@@ -378,7 +377,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <MetRequirementBrowser
           metRequirements={state.metRequirements}
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onComplete={handleMetRequirementsComplete}
           onBack={handleBackFromMetRequirements}
         />
@@ -388,7 +387,8 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <IssueBrowser
           issues={issues.data}
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
           prNumber={prContext.prNumber}
           onComplete={handleIssuesComplete}
           onBack={handleBackFromIssues}
@@ -398,7 +398,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <NarratePR
           prId={prId}
-          repoId={repoId}
+          bazRepoId={bazRepoId}
           onBack={handleBackFromNarratePR}
         />
       );

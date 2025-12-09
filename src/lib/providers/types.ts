@@ -139,6 +139,6 @@ export interface FileDiff {
 
 export interface PRContext {
   prId: string;
-  repoId: string;
+  fullRepoName: string;
   prNumber: number;
 }

@@ -87,7 +87,7 @@ interface ChatDisplayProps {
   availableCommands?: IssueCommand[];
   disabled?: boolean;
   prId?: string;
-  repoId?: string;
+  fullRepoName?: string;
   prNumber?: number;
   enableMentions?: boolean;
   onBack: () => void;
@@ -103,7 +103,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
     availableCommands = [],
     disabled = false,
     prId,
-    repoId,
+    fullRepoName,
     prNumber,
     enableMentions = false,
     onBack,
@@ -185,7 +185,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
             availableCommands={availableCommands}
             enableMentions={enableMentions}
             prId={prId}
-            repoId={repoId}
+            fullRepoName={fullRepoName}
             prNumber={prNumber}
             onBack={onBack}
             terminalWidth={terminalWidth}

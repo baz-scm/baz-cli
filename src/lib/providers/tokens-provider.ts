@@ -38,7 +38,10 @@ export class TokensDataProvider implements IDataProvider {
   }
 
   async fetchPRDetails(ctx: PRContext): Promise<PullRequestDetails> {
-    const ghDetails = await fetchPullRequestDetails(ctx.repoId, ctx.prNumber);
+    const ghDetails = await fetchPullRequestDetails(
+      ctx.fullRepoName,
+      ctx.prNumber,
+    );
 
     // Map GitHub response to PullRequestDetails type
     return {
@@ -58,14 +61,14 @@ export class TokensDataProvider implements IDataProvider {
         review_state: review.state.toLowerCase(),
         assignee: review.user?.login ?? "",
       })),
-      repository_id: ctx.repoId,
+      repository_id: ctx.fullRepoName,
     };
   }
 
   async fetchDiscussions(ctx: PRContext): Promise<Discussion[]> {
     // Fetch only unresolved review threads (matching baz behavior of fetching "pending" discussions)
     const threads = await fetchUnresolvedReviewThreads(
-      ctx.repoId,
+      ctx.fullRepoName,
       ctx.prNumber,
     );
 
@@ -97,15 +100,15 @@ export class TokensDataProvider implements IDataProvider {
   }
 
   async approvePR(ctx: PRContext): Promise<void> {
-    await approvePullRequest(ctx.repoId, ctx.prNumber);
+    await approvePullRequest(ctx.fullRepoName, ctx.prNumber);
   }
 
   async mergePR(ctx: PRContext): Promise<void> {
-    await mergePullRequest(ctx.repoId, ctx.prNumber);
+    await mergePullRequest(ctx.fullRepoName, ctx.prNumber);
   }
 
   async fetchMergeStatus(ctx: PRContext): Promise<MergeStatus> {
-    const ghStatus = await ghFetchMergeStatus(ctx.repoId, ctx.prNumber);
+    const ghStatus = await ghFetchMergeStatus(ctx.fullRepoName, ctx.prNumber);
     return {
       is_mergeable: ghStatus.mergeable ?? false,
     };
@@ -123,11 +126,11 @@ export class TokensDataProvider implements IDataProvider {
     commit: string,
     files: string[],
   ): Promise<FileDiff[]> {
-    return ghFetchFileDiffs(ctx.repoId, ctx.prNumber, commit, files);
+    return ghFetchFileDiffs(ctx.fullRepoName, ctx.prNumber, commit, files);
   }
 
   async fetchEligibleReviewers(ctx: PRContext): Promise<ChangeReviewer[]> {
-    const assignees = await fetchAssignees(ctx.repoId);
+    const assignees = await fetchAssignees(ctx.fullRepoName);
 
     return assignees.map((assignee) => ({
       id: assignee.id.toString(),

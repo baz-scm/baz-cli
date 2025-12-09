@@ -79,10 +79,12 @@ export function resetOctokitClient(): void {
   octokitClient = null;
 }
 
-function parseRepoId(repoId: string): { owner: string; repo: string } {
-  const [owner, repo] = repoId.split("/");
+function parseRepoId(fullRepoName: string): { owner: string; repo: string } {
+  const [owner, repo] = fullRepoName.split("/");
   if (!owner || !repo) {
-    throw new Error(`Invalid repoId format: ${repoId}. Expected "owner/repo"`);
+    throw new Error(
+      `Invalid fullRepoName format: ${fullRepoName}. Expected "owner/repo"`,
+    );
   }
   return { owner, repo };
 }
@@ -106,11 +108,11 @@ export interface GitHubPullRequestDetails {
 }
 
 export async function fetchPullRequestDetails(
-  repoId: string,
+  fullRepoName: string,
   prNumber: number,
 ): Promise<GitHubPullRequestDetails> {
   const octokit = getOctokitClient();
-  const { owner, repo } = parseRepoId(repoId);
+  const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
     const [prResponse, reviewsResponse, files] = await Promise.all([
@@ -155,7 +157,7 @@ export async function fetchPullRequestDetails(
     };
   } catch (error) {
     logger.error(
-      { error, repoId, prNumber },
+      { error, fullRepoName, prNumber },
       "Error fetching PR details from GitHub",
     );
     throw error;
@@ -244,11 +246,11 @@ const REVIEW_THREADS_QUERY = `
 `;
 
 export async function fetchUnresolvedReviewThreads(
-  repoId: string,
+  fullRepoName: string,
   prNumber: number,
 ): Promise<GitHubReviewThread[]> {
   const octokit = getOctokitClient();
-  const { owner, repo } = parseRepoId(repoId);
+  const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
     const allThreads: GitHubReviewThread[] = [];
@@ -299,7 +301,7 @@ export async function fetchUnresolvedReviewThreads(
     return allThreads;
   } catch (error) {
     logger.error(
-      { error, repoId, prNumber },
+      { error, fullRepoName, prNumber },
       "Error fetching review threads from GitHub",
     );
     throw error;
@@ -307,11 +309,11 @@ export async function fetchUnresolvedReviewThreads(
 }
 
 export async function approvePullRequest(
-  repoId: string,
+  fullRepoName: string,
   prNumber: number,
 ): Promise<void> {
   const octokit = getOctokitClient();
-  const { owner, repo } = parseRepoId(repoId);
+  const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
     await octokit.rest.pulls.createReview({
@@ -321,17 +323,20 @@ export async function approvePullRequest(
       event: "APPROVE",
     });
   } catch (error) {
-    logger.error({ error, repoId, prNumber }, "Error approving PR on GitHub");
+    logger.error(
+      { error, fullRepoName, prNumber },
+      "Error approving PR on GitHub",
+    );
     throw error;
   }
 }
 
 export async function mergePullRequest(
-  repoId: string,
+  fullRepoName: string,
   prNumber: number,
 ): Promise<void> {
   const octokit = getOctokitClient();
-  const { owner, repo } = parseRepoId(repoId);
+  const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
     await octokit.rest.pulls.merge({
@@ -340,7 +345,10 @@ export async function mergePullRequest(
       pull_number: prNumber,
     });
   } catch (error) {
-    logger.error({ error, repoId, prNumber }, "Error merging PR on GitHub");
+    logger.error(
+      { error, fullRepoName, prNumber },
+      "Error merging PR on GitHub",
+    );
     throw error;
   }
 }
@@ -351,11 +359,11 @@ export interface GitHubMergeStatus {
 }
 
 export async function fetchMergeStatus(
-  repoId: string,
+  fullRepoName: string,
   prNumber: number,
 ): Promise<GitHubMergeStatus> {
   const octokit = getOctokitClient();
-  const { owner, repo } = parseRepoId(repoId);
+  const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
     const response = await octokit.rest.pulls.get({
@@ -370,7 +378,7 @@ export async function fetchMergeStatus(
     };
   } catch (error) {
     logger.error(
-      { error, repoId, prNumber },
+      { error, fullRepoName, prNumber },
       "Error fetching merge status from GitHub",
     );
     throw error;
@@ -502,13 +510,13 @@ function parsePatch(patch: string): Chunk[] {
  * which ensures we get file diffs even if the file wasn't modified in that specific commit.
  */
 export async function fetchFileDiffs(
-  repoId: string,
+  fullRepoName: string,
   prNumber: number,
   commit: string,
   files: string[],
 ): Promise<FileDiff[]> {
   const octokit = getOctokitClient();
-  const { owner, repo } = parseRepoId(repoId);
+  const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
     // First, get the PR to find the base branch
@@ -554,7 +562,7 @@ export async function fetchFileDiffs(
     return fileDiffs;
   } catch (error) {
     logger.error(
-      { error, repoId, prNumber, commit, files },
+      { error, fullRepoName, prNumber, commit, files },
       "Error fetching file diffs from GitHub",
     );
     throw error;
@@ -572,10 +580,10 @@ export interface GitHubAssignee {
  * Fetch users who can be assigned to issues/PRs in a repository
  */
 export async function fetchAssignees(
-  repoId: string,
+  fullRepoName: string,
 ): Promise<GitHubAssignee[]> {
   const octokit = getOctokitClient();
-  const { owner, repo } = parseRepoId(repoId);
+  const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
     const assignees = await octokit.paginate(
@@ -594,7 +602,10 @@ export async function fetchAssignees(
       type: assignee.type ?? "User",
     }));
   } catch (error) {
-    logger.error({ error, repoId }, "Error fetching assignees from GitHub");
+    logger.error(
+      { error, fullRepoName },
+      "Error fetching assignees from GitHub",
+    );
     throw error;
   }
 }

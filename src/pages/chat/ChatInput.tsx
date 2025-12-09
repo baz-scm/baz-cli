@@ -13,7 +13,7 @@ interface ChatInputProps {
   availableCommands: IssueCommand[];
   enableMentions: boolean;
   prId?: string;
-  repoId?: string;
+  fullRepoName?: string;
   prNumber?: number;
   onBack: () => void;
   toolsExist: boolean;
@@ -28,7 +28,7 @@ const ChatInput = memo<ChatInputProps>(
     availableCommands,
     enableMentions,
     prId,
-    repoId,
+    fullRepoName,
     prNumber,
     onBack,
     toolsExist,
@@ -53,15 +53,15 @@ const ChatInput = memo<ChatInputProps>(
     const skipNextInputRef = useRef(false);
 
     useEffect(() => {
-      if (enableMentions && prId && repoId && prNumber !== undefined) {
+      if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
         dataProvider
-          .fetchEligibleReviewers({ prId, repoId, prNumber })
+          .fetchEligibleReviewers({ prId, fullRepoName, prNumber })
           .then(setReviewers)
           .catch((error) => {
             console.error("Failed to fetch eligible reviewers:", error);
           });
       }
-    }, [enableMentions, prId, repoId, prNumber]);
+    }, [enableMentions, prId, fullRepoName, prNumber]);
 
     // Only handle escape key in useInput - let TextInput handle all other input
     useInput(

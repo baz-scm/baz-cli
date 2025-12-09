@@ -189,7 +189,7 @@ const InternalReviewFlow: React.FC = () => {
           <PullRequestReview
             prContext={{
               prId: flowState.selectedPR.id,
-              repoId: flowState.selectedPR.repoId,
+              fullRepoName: flowState.selectedPR.repositoryName,
               prNumber: flowState.selectedPR.prNumber,
             }}
             onComplete={handleIssueComplete}
@@ -233,7 +233,7 @@ const CompleteMessage: React.FC<{
           onSelect={onSelect}
           prContext={{
             prId: flowState.selectedPR.id,
-            repoId: flowState.selectedPR.repoId,
+            fullRepoName: flowState.selectedPR.repositoryName,
             prNumber: flowState.selectedPR.prNumber,
           }}
         />

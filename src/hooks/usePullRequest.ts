@@ -19,7 +19,7 @@ export function usePullRequest(ctx: PRContext) {
     } finally {
       setLoading(false);
     }
-  }, [ctx.prId, ctx.repoId, ctx.prNumber]);
+  }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
 
   useEffect(() => {
     fetchData();

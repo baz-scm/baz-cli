@@ -11,7 +11,7 @@ import { processStream } from "../../lib/chat-stream.js";
 interface SpecReviewBrowserProps {
   unmetRequirements: Requirement[];
   prId: string;
-  repoId: string;
+  bazRepoId?: string;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -21,7 +21,7 @@ type ViewState = "requirement" | "evidence";
 const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
   unmetRequirements,
   prId,
-  repoId,
+  bazRepoId,
   onComplete,
   onBack,
 }) => {
@@ -56,10 +56,24 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
 
     setChatMessages((prev) => [...prev, assistantMessage]);
 
+    if (!bazRepoId) {
+      console.error("Repository ID not available for chat");
+      setIsLoading(false);
+      setChatMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: "Repository ID not available. Please try again.",
+        };
+        return updated;
+      });
+      return;
+    }
+
     try {
       await processStream(
         {
-          repoId,
+          repoId: bazRepoId,
           prId,
           issue: {
             type: IssueType.SPEC_REVIEW,

@@ -14,7 +14,7 @@ export function useFileDiffs(ctx: PRContext, commit: string, files: string[]) {
       .then(setData)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [ctx, commit, files]);
 
   return { data, loading, error };
 }

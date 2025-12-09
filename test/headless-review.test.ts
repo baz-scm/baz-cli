@@ -25,10 +25,32 @@ afterEach(() => {
 
 test("tokens mode marks spec review unsupported", async () => {
   const config: AppConfig = {
-    mode: { name: "tokens", dataProvider: baseDataProvider },
+    mode: {
+      name: "tokens",
+      dataProvider: {
+        async fetchPRs() {
+          return [
+            {
+              id: "1",
+              prNumber: 5,
+              title: "Test PR",
+              description: "",
+              repoId: "owner/name",
+              repositoryName: "owner/name",
+            },
+          ];
+        },
+        async fetchSpecReviews() {
+          return null;
+        },
+        async fetchIntegrations() {
+          return [];
+        },
+      },
+    },
   };
 
-  const result = await runHeadlessReview({
+  const [result] = await runHeadlessReview({
     repo: "owner/name",
     prNumber: 5,
     runSpec: true,
@@ -103,7 +125,7 @@ test("baz mode reports unmet and met requirements", async () => {
     } },
   };
 
-  const result = await runHeadlessReview({
+  const [result] = await runHeadlessReview({
     repo: "owner/name",
     prNumber: 9,
     runSpec: true,
@@ -149,7 +171,7 @@ test("unmet requirements trigger failure code when requested", () => {
     },
   };
 
-  const exitCode = applyFailurePolicy(result, new Set(["unmet_requirements"]));
+  const exitCode = applyFailurePolicy([result], new Set(["unmet_requirements"]));
   assert.equal(exitCode, 2);
 });
 
@@ -169,18 +191,45 @@ test("applyFailurePolicy ignores unsupported spec", () => {
     },
   };
 
-  const exitCode = applyFailurePolicy(result, new Set(["unmet_requirements"]));
+  const exitCode = applyFailurePolicy([result], new Set(["unmet_requirements"]));
   assert.equal(exitCode, 0);
+});
+
+test("applyFailurePolicy flags any unmet requirements across multiple PRs", () => {
+  const passing: HeadlessReviewResult = {
+    pr: { id: "1", number: 1, title: "Pass", repository: "owner/a" },
+    spec: {
+      supported: true,
+      latestStatus: "success",
+      unmetRequirements: 0,
+      metRequirements: 2,
+    },
+  };
+
+  const failing: HeadlessReviewResult = {
+    pr: { id: "2", number: 2, title: "Fail", repository: "owner/b" },
+    spec: {
+      supported: true,
+      latestStatus: "failed",
+      unmetRequirements: 1,
+      metRequirements: 0,
+    },
+  };
+
+  const exitCode = applyFailurePolicy([passing, failing], new Set(["unmet_requirements"]));
+  assert.equal(exitCode, 2);
 });
 
 test("invalid run options are rejected", () => {
   assert.throws(() => parseRunOptions("spec,unknown"));
 });
 
-test("buildHeadlessRunConfig validates required fields", () => {
+test("buildHeadlessRunConfig validates optional fields when provided", () => {
   const config: AppConfig = { mode: { name: "baz", dataProvider: baseDataProvider } };
 
-  assert.throws(() => buildHeadlessRunConfig({ headless: true }, config));
+  assert.doesNotThrow(() => buildHeadlessRunConfig({ headless: true }, config));
+  assert.throws(() => buildHeadlessRunConfig({ headless: true, repo: "invalid" }, config));
+  assert.throws(() => buildHeadlessRunConfig({ headless: true, pr: "-1" }, config));
 });
 
 test("headless entry uses env fallbacks without rendering", async () => {
@@ -250,12 +299,34 @@ test("headless entry reports usage errors with exit code 1", async () => {
   });
 
   assert.equal(exitCode, 1);
-  assert.ok(consoleError.mock.calls[0].arguments[0].includes("Headless mode requires"));
+  assert.ok(consoleError.mock.calls[0].arguments[0].includes("No matching pull requests"));
 });
 
 test("headless entry supports markdown output", async () => {
   const config: AppConfig = {
-    mode: { name: "tokens", dataProvider: baseDataProvider },
+    mode: {
+      name: "tokens",
+      dataProvider: {
+        async fetchPRs() {
+          return [
+            {
+              id: "pr-10",
+              prNumber: 10,
+              title: "Markdown PR",
+              description: "",
+              repoId: "owner/name",
+              repositoryName: "owner/name",
+            },
+          ];
+        },
+        async fetchSpecReviews() {
+          return null;
+        },
+        async fetchIntegrations() {
+          return [];
+        },
+      },
+    },
   };
   const consoleLog = mock.method(console, "log", () => {});
 
@@ -282,6 +353,75 @@ test("headless entry supports markdown output", async () => {
 
   assert.equal(exitCode, 0);
   assert.ok(consoleLog.mock.calls[0].arguments[0].includes("# PR #10: Markdown PR"));
+});
+
+test("headless review defaults to most recent PR per repository when flags omitted", async () => {
+  const config: AppConfig = {
+    mode: {
+      name: "tokens",
+      dataProvider: {
+        async fetchPRs() {
+          return [
+            {
+              id: "pr-1",
+              prNumber: 1,
+              title: "Older",
+              description: "",
+              repoId: "owner/first",
+              repositoryName: "owner/first",
+              updatedAt: "2024-01-01T00:00:00Z",
+            },
+            {
+              id: "pr-2",
+              prNumber: 2,
+              title: "Newer",
+              description: "",
+              repoId: "owner/first",
+              repositoryName: "owner/first",
+              updatedAt: "2024-02-01T00:00:00Z",
+            },
+            {
+              id: "pr-3",
+              prNumber: 5,
+              title: "Other repo",
+              description: "",
+              repoId: "owner/second",
+              repositoryName: "owner/second",
+              updatedAt: "2024-03-01T00:00:00Z",
+            },
+          ];
+        },
+        async fetchSpecReviews() {
+          return null;
+        },
+        async fetchIntegrations() {
+          return [];
+        },
+      },
+    },
+  };
+
+  const results = await runHeadlessReview(
+    { runSpec: true, runSummary: false, mode: "tokens" },
+    config,
+    {
+      fetchGithubPRDetails: async (_owner, _repo, prNumber) => ({
+        id: prNumber,
+        number: prNumber,
+        title: `PR ${prNumber}`,
+        url: `https://example.com/${prNumber}`,
+        filesChanged: 0,
+        linesAdded: 0,
+        linesDeleted: 0,
+      }),
+    },
+  );
+
+  assert.equal(results.length, 2);
+  const repositories = new Set(results.map((r) => r.pr.repository));
+  assert.equal(repositories.has("owner/first"), true);
+  assert.equal(repositories.has("owner/second"), true);
+  assert.equal(results.find((r) => r.pr.repository === "owner/first")?.pr.number, 2);
 });
 
 test("unmet requirements propagate through headless entry failure policy", async () => {

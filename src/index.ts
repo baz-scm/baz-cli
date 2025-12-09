@@ -124,25 +124,13 @@ export function buildHeadlessRunConfig(
 ): HeadlessRunConfig {
   const repo = cmdOptions.repo ?? process.env.BAZ_REPO;
   const prInput = cmdOptions.pr ?? process.env.BAZ_PR_NUMBER;
+  const prNumber = prInput ? Number.parseInt(prInput, 10) : undefined;
 
-  if (!repo) {
-    throw new Error(
-      "Headless mode requires --repo <owner/name> or BAZ_REPO environment variable",
-    );
-  }
-
-  if (!repo.includes("/")) {
+  if (repo && !repo.includes("/")) {
     throw new Error("Repository must be in the format <owner>/<name>");
   }
 
-  if (!prInput) {
-    throw new Error(
-      "Headless mode requires --pr <number> or BAZ_PR_NUMBER environment variable",
-    );
-  }
-
-  const prNumber = Number.parseInt(prInput, 10);
-  if (Number.isNaN(prNumber) || prNumber <= 0) {
+  if (prInput && (Number.isNaN(prNumber) || (prNumber ?? 0) <= 0)) {
     throw new Error("Pull request number must be a positive integer");
   }
 
@@ -187,26 +175,28 @@ function formatMarkdown(result: HeadlessReviewResult): string {
 }
 
 function serializeResult(
-  result: HeadlessReviewResult,
+  results: HeadlessReviewResult[],
   format: OutputFormat,
 ): string {
   if (format === "markdown") {
-    return formatMarkdown(result);
+    return results.map((result) => formatMarkdown(result)).join("\n\n---\n\n");
   }
 
-  return JSON.stringify(result, null, 2);
+  return JSON.stringify(results, null, 2);
 }
 
 export function applyFailurePolicy(
-  result: HeadlessReviewResult,
+  results: HeadlessReviewResult[],
   failOn: Set<string>,
 ): number {
-  if (
-    failOn.has("unmet_requirements") &&
-    result.spec?.supported &&
-    result.spec.unmetRequirements > 0
-  ) {
-    return 2;
+  for (const result of results) {
+    if (
+      failOn.has("unmet_requirements") &&
+      result.spec?.supported &&
+      result.spec.unmetRequirements > 0
+    ) {
+      return 2;
+    }
   }
 
   return 0;
@@ -223,11 +213,11 @@ export async function runHeadlessEntryPoint(
       config,
     );
 
-    const result = await runHeadlessReview(options, config, dependencies);
-    const serialized = serializeResult(result, output);
+    const results = await runHeadlessReview(options, config, dependencies);
+    const serialized = serializeResult(results, output);
     console.log(serialized);
 
-    return applyFailurePolicy(result, failOn);
+    return applyFailurePolicy(results, failOn);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error(message);

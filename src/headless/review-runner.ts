@@ -10,8 +10,8 @@ import { PullRequestData } from "../lib/providers/types.js";
 export type HeadlessRunMode = "baz" | "tokens";
 
 export interface HeadlessRunOptions {
-  repo: string; // "owner/name"
-  prNumber: number;
+  repo?: string; // "owner/name"
+  prNumber?: number;
   runSpec: boolean;
   runSummary: boolean;
   mode: HeadlessRunMode; // derived from getAppConfig
@@ -47,16 +47,77 @@ export interface HeadlessReviewDependencies {
   fetchGithubPRDetails?: typeof fetchPullRequestDetails;
 }
 
-function findMatchingPullRequest(
+function sortByMostRecent(pullRequests: PullRequestData[]): PullRequestData[] {
+  return [...pullRequests].sort((a, b) => {
+    if (a.updatedAt && b.updatedAt) {
+      return b.updatedAt.localeCompare(a.updatedAt);
+    }
+
+    if (a.updatedAt) {
+      return -1;
+    }
+
+    if (b.updatedAt) {
+      return 1;
+    }
+
+    return 0;
+  });
+}
+
+function parseRepoIdentifier(pr: PullRequestData): string {
+  if (pr.repositoryName?.includes("/")) {
+    return pr.repositoryName;
+  }
+
+  if (pr.repoId.includes("/")) {
+    return pr.repoId;
+  }
+
+  return pr.repoId;
+}
+
+function selectPullRequests(
   pullRequests: PullRequestData[],
-  repo: string,
-  prNumber: number,
-): PullRequestData | undefined {
-  return pullRequests.find(
-    (pr) =>
-      pr.prNumber === prNumber &&
-      (pr.repositoryName === repo || pr.repoId === repo),
-  );
+  repo?: string,
+  prNumber?: number,
+): PullRequestData[] {
+  const sorted = sortByMostRecent(pullRequests);
+
+  const repoFiltered = repo
+    ? sorted.filter(
+        (pr) => pr.repositoryName === repo || pr.repoId === repo,
+      )
+    : sorted;
+
+  const prFiltered =
+    prNumber !== undefined
+      ? repoFiltered.filter((pr) => pr.prNumber === prNumber)
+      : repoFiltered;
+
+  if (prFiltered.length === 0) {
+    const scopeDescription = repo
+      ? `repository ${repo}${prNumber ? ` and PR #${prNumber}` : ""}`
+      : prNumber
+        ? `PR #${prNumber}`
+        : "any open pull requests";
+    throw new Error(`No matching pull requests found for ${scopeDescription}`);
+  }
+
+  if (!repo && prNumber === undefined) {
+    const seen = new Map<string, PullRequestData>();
+
+    for (const pr of prFiltered) {
+      const repoKey = pr.repositoryName ?? pr.repoId;
+      if (!seen.has(repoKey)) {
+        seen.set(repoKey, pr);
+      }
+    }
+
+    return Array.from(seen.values());
+  }
+
+  return [prFiltered[0]];
 }
 
 function mapSpecStatus(status: string): HeadlessSpecSummary["latestStatus"] {
@@ -75,122 +136,137 @@ async function fetchBazModeResult(
   options: HeadlessRunOptions,
   mode: AppMode,
   fetchBazDetails: typeof fetchPRDetails,
-): Promise<HeadlessReviewResult> {
+): Promise<HeadlessReviewResult[]> {
   const pullRequests = await mode.dataProvider.fetchPRs();
-  const pullRequest = findMatchingPullRequest(
+  const targets = selectPullRequests(
     pullRequests,
     options.repo,
     options.prNumber,
   );
 
-  if (!pullRequest) {
-    throw new Error(
-      `Pull request #${options.prNumber} not found in repository ${options.repo}`,
-    );
-  }
+  const results: HeadlessReviewResult[] = [];
 
-  const prDetails = await fetchBazDetails(pullRequest.id);
+  for (const pullRequest of targets) {
+    const prDetails = await fetchBazDetails(pullRequest.id);
 
-  const result: HeadlessReviewResult = {
-    pr: {
-      id: prDetails.id,
-      number: prDetails.pr_number,
-      title: prDetails.title,
-      repository: options.repo,
-    },
-  };
-
-  if (options.runSummary) {
-    result.summary = {
-      filesChanged: prDetails.files_changed,
-      linesAdded: prDetails.lines_added,
-      linesDeleted: prDetails.lines_deleted,
+    const result: HeadlessReviewResult = {
+      pr: {
+        id: prDetails.id,
+        number: prDetails.pr_number,
+        title: prDetails.title,
+        repository: parseRepoIdentifier(pullRequest),
+      },
     };
+
+    if (options.runSummary) {
+      result.summary = {
+        filesChanged: prDetails.files_changed,
+        linesAdded: prDetails.lines_added,
+        linesDeleted: prDetails.lines_deleted,
+      };
+    }
+
+    if (options.runSpec) {
+      const specReviews = await mode.dataProvider.fetchSpecReviews(prDetails.id);
+
+      if (!specReviews) {
+        result.spec = {
+          supported: false,
+          latestStatus: "not_found",
+          unmetRequirements: 0,
+          metRequirements: 0,
+        };
+      } else {
+        const latestSpecReview = specReviews.at(-1);
+
+        if (!latestSpecReview) {
+          result.spec = {
+            supported: true,
+            latestStatus: "not_found",
+            unmetRequirements: 0,
+            metRequirements: 0,
+          };
+        } else {
+          const unmetRequirements = latestSpecReview.requirements.filter(
+            (req) => req.verdict !== "met",
+          ).length;
+          const metRequirements = latestSpecReview.requirements.filter(
+            (req) => req.verdict === "met",
+          ).length;
+
+          result.spec = {
+            supported: true,
+            latestStatus: mapSpecStatus(latestSpecReview.status),
+            unmetRequirements,
+            metRequirements,
+          };
+        }
+      }
+    }
+
+    results.push(result);
   }
 
-  if (options.runSpec) {
-    const specReviews = await mode.dataProvider.fetchSpecReviews(prDetails.id);
+  return results;
+}
 
-    if (!specReviews) {
+async function fetchTokensModeResult(
+  options: HeadlessRunOptions,
+  dataProvider: AppMode["dataProvider"],
+  fetchGithubDetails: typeof fetchPullRequestDetails,
+): Promise<HeadlessReviewResult[]> {
+  const pullRequests = await dataProvider.fetchPRs();
+  const targets = selectPullRequests(
+    pullRequests,
+    options.repo,
+    options.prNumber,
+  );
+
+  const results: HeadlessReviewResult[] = [];
+
+  for (const pullRequest of targets) {
+    const repoIdentifier = parseRepoIdentifier(pullRequest);
+    const [owner, repo] = repoIdentifier.split("/");
+    const details = await fetchGithubDetails(owner, repo, pullRequest.prNumber);
+
+    const result: HeadlessReviewResult = {
+      pr: {
+        id: details.id.toString(),
+        number: details.number,
+        title: details.title,
+        repository: repoIdentifier,
+        url: details.url,
+      },
+    };
+
+    if (options.runSummary) {
+      result.summary = {
+        filesChanged: details.filesChanged,
+        linesAdded: details.linesAdded,
+        linesDeleted: details.linesDeleted,
+      };
+    }
+
+    if (options.runSpec) {
       result.spec = {
         supported: false,
         latestStatus: "not_found",
         unmetRequirements: 0,
         metRequirements: 0,
       };
-    } else {
-      const latestSpecReview = specReviews.at(-1);
-
-      if (!latestSpecReview) {
-        result.spec = {
-          supported: true,
-          latestStatus: "not_found",
-          unmetRequirements: 0,
-          metRequirements: 0,
-        };
-      } else {
-        const unmetRequirements = latestSpecReview.requirements.filter(
-          (req) => req.verdict !== "met",
-        ).length;
-        const metRequirements = latestSpecReview.requirements.filter(
-          (req) => req.verdict === "met",
-        ).length;
-
-        result.spec = {
-          supported: true,
-          latestStatus: mapSpecStatus(latestSpecReview.status),
-          unmetRequirements,
-          metRequirements,
-        };
-      }
     }
+
+    results.push(result);
   }
 
-  return result;
-}
-
-async function fetchTokensModeResult(
-  options: HeadlessRunOptions,
-  fetchGithubDetails: typeof fetchPullRequestDetails,
-): Promise<HeadlessReviewResult> {
-  const [owner, repo] = options.repo.split("/");
-  const details = await fetchGithubDetails(owner, repo, options.prNumber);
-
-  const result: HeadlessReviewResult = {
-    pr: {
-      id: details.id.toString(),
-      number: details.number,
-      title: details.title,
-      repository: options.repo,
-      url: details.url,
-    },
-  };
-
-  if (options.runSummary) {
-    result.summary = {
-      filesChanged: details.filesChanged,
-      linesAdded: details.linesAdded,
-      linesDeleted: details.linesDeleted,
-    };
-  }
-
-  if (options.runSpec) {
-    result.spec = {
-      supported: false,
-      latestStatus: "not_found",
-      unmetRequirements: 0,
-      metRequirements: 0,
-    };
-  }
-
-  return result;
+  return results;
 }
 
 export async function runHeadlessReview(
   options: HeadlessRunOptions,
   appConfig?: AppConfig,
   dependencies?: HeadlessReviewDependencies,
-): Promise<HeadlessReviewResult> {
+): Promise<HeadlessReviewResult[]> {
   const config: AppConfig = appConfig ?? getAppConfig();
   const fetchBazPRDetails = dependencies?.fetchBazPRDetails ?? fetchPRDetails;
   const fetchGithubPRDetails =
@@ -204,5 +280,5 @@ export async function runHeadlessReview(
     return fetchBazModeResult(options, config.mode, fetchBazPRDetails);
   }
 
-  return fetchTokensModeResult(options, fetchGithubPRDetails);
+  return fetchTokensModeResult(options, config.mode.dataProvider, fetchGithubPRDetails);
 }

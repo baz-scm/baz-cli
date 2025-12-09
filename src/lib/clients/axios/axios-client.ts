@@ -4,6 +4,8 @@ import axiosRetry from "axios-retry";
 import chalk from "chalk";
 import { OAuthFlow } from "../../../auth/oauth-flow.js";
 import { authConfig } from "../../../auth/config.js";
+import { getAppConfig } from "../../config/app-mode.js";
+import { env } from "../../env-schema.js";
 
 export interface TokenManager {
   getToken: () => string;
@@ -28,6 +30,18 @@ export const createAxiosClient = (baseURL: string) => {
   axiosClient.interceptors.request.use(function (config) {
     const token = tokenMgr.getToken();
     config.headers.Authorization = token ? `Bearer ${token}` : "";
+
+    // Add token headers in tokens mode for baz domain requests
+    const appConfig = getAppConfig();
+    if (appConfig.mode.name === "tokens" && appConfig.tokens) {
+      const isBazRequest = config.baseURL?.startsWith(env.BAZ_BASE_URL);
+      if (isBazRequest) {
+        config.headers["x-baz-github-token"] = appConfig.tokens.githubToken;
+        config.headers["x-baz-anthropic-token"] =
+          appConfig.tokens.anthropicToken;
+      }
+    }
+
     return config;
   });
 

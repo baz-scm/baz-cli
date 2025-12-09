@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { usePullRequest } from "../../hooks/usePullRequest.js";
@@ -33,6 +33,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
   const [isApproving, setIsApproving] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [hasApproved, setHasApproved] = useState(false);
   const pr = usePullRequest(prContext);
   const user = useFetchUser();
   const mergeStatus = useFetchMergeStatus(prContext);
@@ -50,8 +51,22 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
         review.review_state === "approved",
     );
 
-    return !isAuthor && !hasAlreadyApproved;
-  }, [pr.data, user.data]);
+    return !isAuthor && !hasAlreadyApproved && !hasApproved;
+  }, [pr.data, user.data, hasApproved]);
+
+  useEffect(() => {
+    if (!pr.data || !user.data || hasApproved) return;
+
+    const hasAlreadyApproved = pr?.data.reviews.some(
+      (review) =>
+        review.assignee === user?.data?.login &&
+        review.review_state === "approved",
+    );
+
+    if (hasAlreadyApproved) {
+      setHasApproved(true);
+    }
+  }, [pr.data, user.data, hasApproved]);
 
   const canMerge = useMemo(() => {
     if (!mergeStatus.data) return false;
@@ -75,6 +90,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     try {
       await dataProvider.approvePR(prContext);
       await pr.refetch();
+      setHasApproved(true);
       setIsSelected(false);
     } catch (_) {
       setActionError("Failed to approve PR. Please try again.");

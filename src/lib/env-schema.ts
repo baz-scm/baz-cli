@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { config } from "dotenv";
+import { join } from "node:path";
+import { homedir } from "node:os";
 
 config({ quiet: true });
 
@@ -21,6 +23,9 @@ const envSchema = z.object({
   LINEAR_CLIENT_ID: z.string().default("a20b70eadc1cce2121089f70402351d6"),
   GH_TOKEN: z.string().optional(),
   ANTHROPIC_TOKEN: z.string().optional(),
+  LOG_FILE_PATH: z
+    .string()
+    .default(join(homedir(), ".baz-cli", "baz-cli.log")),
 });
 
 export const env = envSchema.parse(process.env);

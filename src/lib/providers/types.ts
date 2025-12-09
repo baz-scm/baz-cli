@@ -6,6 +6,8 @@ export interface PullRequest {
   repoId: string;
   repositoryName: string;
   updatedAt?: string;
+  authorName?: string;
+  approvalStatus?: string;
 }
 
 export interface PullRequestDetails {

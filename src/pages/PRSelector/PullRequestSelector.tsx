@@ -29,7 +29,8 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     return (
       pr.title.toLowerCase().includes(query) ||
       pr.prNumber.toString().includes(query) ||
-      pr.repositoryName.toLowerCase().includes(query)
+      pr.repositoryName.toLowerCase().includes(query) ||
+      pr.authorName?.toLowerCase().includes(query)
     );
   });
 
@@ -104,22 +105,35 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                         ... {startIndex} more above
                       </Text>
                     )}
-                    {visiblePRs.map((pr, index) => {
-                      const actualIndex = startIndex + index;
-                      return (
-                        <Box key={pr.id}>
-                          <Text
-                            color={
-                              actualIndex === selectedIndex ? "cyan" : "white"
-                            }
-                          >
-                            {actualIndex === selectedIndex ? "❯ " : "  "}#
-                            {pr.prNumber} {pr.title}
-                            <Text color="gray"> [{pr.repositoryName}]</Text>
+                  {visiblePRs.map((pr, index) => {
+                    const actualIndex = startIndex + index;
+                    const approvalColor =
+                      pr.approvalStatus === "Approved"
+                        ? "green"
+                        : pr.approvalStatus === "Changes requested"
+                          ? "red"
+                          : "yellow";
+                    return (
+                      <Box key={pr.id} flexDirection="column">
+                        <Text
+                          color={
+                            actualIndex === selectedIndex ? "cyan" : "white"
+                          }
+                        >
+                          {actualIndex === selectedIndex ? "❯ " : "  "}#
+                          {pr.prNumber} {pr.title}
+                          <Text color="gray"> [{pr.repositoryName}]</Text>
+                        </Text>
+                        <Text dimColor>
+                          {pr.authorName ? `Author: ${pr.authorName}` : "Author unknown"}
+                          {"  •  "}
+                          <Text color={approvalColor}>
+                            {pr.approvalStatus ?? "Review status unknown"}
                           </Text>
-                        </Box>
-                      );
-                    })}
+                        </Text>
+                      </Box>
+                    );
+                  })}
                     {endIndex < filteredPRs.length && (
                       <Text dimColor italic>
                         ... {filteredPRs.length - endIndex} more below

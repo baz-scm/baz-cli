@@ -43,17 +43,66 @@ export async function fetchOpenPullRequests(): Promise<PullRequest[]> {
           per_page: 100,
         });
 
-        for (const pr of prs) {
-          pullRequests.push({
-            id: pr.id.toString(),
-            prNumber: pr.number,
-            title: pr.title,
-            description: pr.body ?? "",
-            repoId: `${repo.owner.login}/${repo.name}`,
-            repositoryName: repo.full_name,
-            updatedAt: pr.updated_at,
-          });
-        }
+        const enrichedPRs = await Promise.all(
+          prs.map(async (pr) => {
+            try {
+              const reviews = await octokit.paginate(
+                octokit.rest.pulls.listReviews,
+                {
+                  owner: repo.owner.login,
+                  repo: repo.name,
+                  pull_number: pr.number,
+                },
+              );
+
+              const hasApprovals = reviews.some(
+                (review) => review.state?.toLowerCase() === "approved",
+              );
+              const hasChangesRequested = reviews.some(
+                (review) =>
+                  review.state?.toLowerCase() === "changes_requested",
+              );
+
+              let approvalStatus = "Awaiting review";
+
+              if (hasApprovals) {
+                approvalStatus = "Approved";
+              } else if (hasChangesRequested) {
+                approvalStatus = "Changes requested";
+              }
+
+              return {
+                id: pr.id.toString(),
+                prNumber: pr.number,
+                title: pr.title,
+                description: pr.body ?? "",
+                repoId: `${repo.owner.login}/${repo.name}`,
+                repositoryName: repo.full_name,
+                updatedAt: pr.updated_at,
+                authorName: pr.user?.login ?? repo.owner.login,
+                approvalStatus,
+              } satisfies PullRequest;
+            } catch (prError) {
+              logger.debug(
+                { pr: pr.number, repo: repo.full_name, error: prError },
+                "Failed to fetch review info for PR",
+              );
+              return {
+                id: pr.id.toString(),
+                prNumber: pr.number,
+                title: pr.title,
+                description: pr.body ?? "",
+                repoId: `${repo.owner.login}/${repo.name}`,
+                repositoryName: repo.full_name,
+                updatedAt: pr.updated_at,
+                authorName: pr.user?.login ?? repo.owner.login,
+                approvalStatus: "Unknown",
+              } satisfies PullRequest;
+            }
+          }),
+        );
+
+        pullRequests.push(...enrichedPRs);
       } catch (repoError) {
         // Log but continue if we fail to fetch PRs for a specific repo
         logger.warn(

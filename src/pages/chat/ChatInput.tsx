@@ -91,7 +91,7 @@ const ChatInput = memo<ChatInputProps>(
 
       // Handle "?" for help toggle when input is empty
       if (inputValueRef.current === "" && value === "?") {
-        setShowFullHelp((prev) => !prev);
+        setShowFullHelp(true);
         return;
       }
 
@@ -182,10 +182,12 @@ const ChatInput = memo<ChatInputProps>(
             : `/${explainCmd.command}`;
           hints.push(`${cmdDisplay} for additional information`);
         }
-      }
 
-      if (availableCommands.length > 0) {
-        hints.push("? for help");
+        const commandList = availableCommands
+          .map((cmd) => cmd.command)
+          .join(", ");
+        hints.push(`Available commands: ${commandList}`);
+        hints.push("? for detailed help");
       }
 
       hints.push("ESC to go back");
@@ -194,7 +196,7 @@ const ChatInput = memo<ChatInputProps>(
     }, [availableCommands]);
 
     const allCommandHints = useMemo(() => {
-      if (availableCommands.length === 0) return [];
+      if (!showFullHelp || availableCommands.length === 0) return [];
 
       const hints: string[] = [];
       let commandsToShow = availableCommands;
@@ -219,10 +221,9 @@ const ChatInput = memo<ChatInputProps>(
         hints.push("No matching commands");
       }
 
-      hints.push("? to hide help");
       hints.push("ESC to go back");
       return hints;
-    }, [availableCommands, inputValue]);
+    }, [availableCommands, inputValue, showFullHelp]);
 
     return (
       <Box flexDirection="column">

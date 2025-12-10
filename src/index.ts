@@ -10,6 +10,8 @@ import {
   getAppConfig,
   AppConfigError,
 } from "./lib/config/index.js";
+import { OAuthFlow } from "./auth/oauth-flow.js";
+import { authConfig } from "./auth/config.js";
 
 const VERSION = "0.3.0"; // x-release-please-version
 
@@ -29,6 +31,13 @@ program
         process.exit(1);
       }
       throw e;
+    }
+
+    // Ensure user is registered with Baz and authenticated
+    const oauthFlow = OAuthFlow.getInstance();
+    if (!oauthFlow.isAuthenticated()) {
+      console.log("📝 Registration required. Opening browser...");
+      await oauthFlow.authenticate(authConfig);
     }
 
     render(

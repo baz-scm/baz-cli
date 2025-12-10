@@ -14,7 +14,11 @@ interface PRWalkthroughProps {
   onBack: () => void;
 }
 
-const PRWalkthrough: React.FC<PRWalkthroughProps> = ({ prId, bazRepoId, onBack }) => {
+const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
+  prId,
+  bazRepoId,
+  onBack,
+}) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     undefined,
   );

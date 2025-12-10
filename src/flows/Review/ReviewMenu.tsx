@@ -7,14 +7,14 @@ export type ReviewMenuAction =
   | "viewUnmetRequirements"
   | "viewMetRequirements"
   | "viewComments"
-  | "narratePR"
+  | "prWalkthrough"
   | "finish";
 
 export interface CompletedSteps {
   unmetRequirements: boolean;
   metRequirements: boolean;
   comments: boolean;
-  narratePR: boolean;
+  prWalkthrough: boolean;
 }
 
 interface ReviewMenuProps {
@@ -82,9 +82,9 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   // Build menu items - only show options with data, plus always show Narrate PR
   const items: SelectItem[] = [
     {
-      label: "Narrate change request",
-      value: "narratePR",
-      completed: completedSteps.narratePR,
+      label: "PR Walkthrough",
+      value: "prWalkthrough",
+      completed: completedSteps.prWalkthrough,
     },
   ];
 

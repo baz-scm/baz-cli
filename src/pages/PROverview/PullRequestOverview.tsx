@@ -27,7 +27,7 @@ const PullRequestOverview: React.FC<PullRequestOverviewProps> = ({
         <Text color={MAIN_COLOR}>{REVIEW_HEADLINE_TEXT}</Text>
       </Box>
       <Box key="pr-overview-details" flexDirection="column" marginBottom={1}>
-        <Text>CR Overview</Text>
+        <Text>PR Overview</Text>
         <FilesSummary pr={pr} />
         <LinesSummary pr={pr} />
         <SpecReviewSummary specReviews={specReviews} />
@@ -84,7 +84,7 @@ const SpecReviewSummary: React.FC<{
     latestSpecReview?.requirementsFound &&
     latestSpecReview.requirementsFound > 0
   ) {
-    specReviewSummary = `${latestSpecReview.requirementsMet}/${latestSpecReview.requirementsFound} met requirements in this CR`;
+    specReviewSummary = `${latestSpecReview.requirementsMet}/${latestSpecReview.requirementsFound} met requirements in this PR`;
   }
 
   return (

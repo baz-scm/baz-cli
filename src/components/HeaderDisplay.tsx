@@ -9,8 +9,8 @@ const HeaderDisplay: React.FC = () => (
     borderStyle="round"
     flexDirection="column"
   >
-    <Text>Baz CheckOut</Text>
-    <Text>Review and approve your CRs with Baz's AI Code Review Agent</Text>
+    <Text>Baz Checkout</Text>
+    <Text>Review and approve your PRs with Baz's AI Code Review Agent</Text>
   </Box>
 );
 

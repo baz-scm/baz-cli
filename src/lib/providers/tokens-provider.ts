@@ -9,6 +9,7 @@ import type {
   User,
   FileDiff,
   ChangeReviewer,
+  RepoWriteAccess,
 } from "./types.js";
 import {
   fetchOpenPullRequests,
@@ -139,5 +140,14 @@ export class TokensDataProvider implements IDataProvider {
       login: assignee.login,
       avatar_url: assignee.avatar_url,
     }));
+  }
+
+  async fetchRepoWriteAccess(_ctx: PRContext): Promise<RepoWriteAccess> {
+    // if the user uses a fine-grained PAT, then we can't determine repo access therefore,
+    // let's assume we have it and fail on writing
+    return {
+      hasAccess: true,
+      reason: null,
+    };
   }
 }

@@ -18,6 +18,7 @@ import { MAIN_COLOR } from "../theme/colors.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
 import type { Requirement } from "../lib/providers/index.js";
 import { PRContext } from "../lib/providers/index.js";
+import { useRepoWriteAccess } from "../hooks/useRepoWriteAccess.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
@@ -52,14 +53,20 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   const pr = usePullRequest(prContext);
   const issues = useIssues(prContext);
   const specReviews = useSpecReviews(prContext.prId);
+  const repoWriteAccess = useRepoWriteAccess(prContext);
 
   const prId = prContext.prId;
   const fullRepoName = prContext.fullRepoName;
   // bazRepoId is only available in baz mode, undefined in tokens mode
   const bazRepoId = pr.data?.repository_id;
 
-  const loading = pr.loading || issues.loading || specReviews.loading;
-  const error = pr.error || issues.error || specReviews.error;
+  const loading =
+    pr.loading ||
+    issues.loading ||
+    specReviews.loading ||
+    repoWriteAccess.loading;
+  const error =
+    pr.error || issues.error || specReviews.error || repoWriteAccess.error;
 
   if (loading) {
     return (
@@ -390,6 +397,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
           bazRepoId={bazRepoId}
           fullRepoName={fullRepoName}
           prNumber={prContext.prNumber}
+          writeAccess={repoWriteAccess.data}
           onComplete={handleIssuesComplete}
           onBack={handleBackFromIssues}
         />

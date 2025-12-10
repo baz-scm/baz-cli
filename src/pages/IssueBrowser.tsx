@@ -5,6 +5,7 @@ import { getIssueHandler } from "../issues/registry.js";
 import ChatDisplay from "./chat/ChatDisplay.js";
 import { ChatMessage } from "../models/chat.js";
 import { streamChatResponse } from "../lib/clients/baz.js";
+import { RepoWriteAccess } from "../lib/providers/index.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -12,6 +13,7 @@ interface IssueBrowserProps {
   bazRepoId?: string;
   fullRepoName: string;
   prNumber: number;
+  writeAccess: RepoWriteAccess;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -22,6 +24,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   bazRepoId,
   fullRepoName,
   prNumber,
+  writeAccess,
   onComplete,
   onBack,
 }) => {
@@ -30,6 +33,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     undefined,
   );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [repoWriteAccess, setRepoWriteAccess] =
+    useState<RepoWriteAccess>(writeAccess);
   const [isLoading, setIsLoading] = useState(false);
 
   const currentIssue = issues[currentIndex];
@@ -119,6 +124,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       totalIssues: issues.length,
       hasNext,
       conversationId,
+      repoWriteAccess,
       moveToNext: () => {
         if (hasNext) {
           setCurrentIndex((prev) => prev + 1);
@@ -130,6 +136,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       },
       complete: onComplete,
       setConversationId,
+      setRepoWriteAccess,
       onChatSubmit: handleChatSubmit,
     }),
     [
@@ -140,6 +147,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       issues.length,
       hasNext,
       conversationId,
+      repoWriteAccess,
       onComplete,
       handleChatSubmit,
     ],
@@ -160,7 +168,18 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           context,
         );
 
-        if (result.shouldMoveNext) {
+        if (result.errorMessage && result.errorMessage.length > 0) {
+          const content = result.errorMessage;
+          setChatMessages((prev) => {
+            return [
+              ...prev,
+              {
+                role: "error",
+                content,
+              },
+            ];
+          });
+        } else if (result.shouldMoveNext) {
           context.moveToNext();
         } else if (result.shouldComplete) {
           onComplete();

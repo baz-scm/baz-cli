@@ -6,17 +6,18 @@ import {
   ChatStreamMessage,
   CheckoutChatRequest,
 } from "../../models/chat.js";
-import type {
+import {
+  ChangeReviewer,
+  Discussion,
+  FileDiff,
   Integration,
   IntegrationType,
+  MergeStatus,
   PullRequest,
   PullRequestDetails,
-  Discussion,
-  SpecReview,
+  RepoWriteAccess,
   Requirement,
-  ChangeReviewer,
-  MergeStatus,
-  FileDiff,
+  SpecReview,
 } from "../providers/types.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
@@ -44,6 +45,8 @@ const getApprovalUrl = (prId: string) =>
 
 const getMergeUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/merge`;
+const getRepoWriteAccessUrl = (fullRepoName: string) =>
+  `${env.BAZ_BASE_URL}/api/v2/installations/write-access/${encodeURIComponent(fullRepoName)}`;
 
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
 
@@ -392,6 +395,24 @@ export async function fetchFileDiffs(
     });
 
   return repos.fileDiffs;
+}
+
+export async function fetchRepoWriteAccess(
+  fullRepoName: string,
+): Promise<RepoWriteAccess> {
+  const resp = await axiosClient
+    .get<RepoWriteAccess>(getRepoWriteAccessUrl(fullRepoName), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((value) => value.data)
+    .catch((error: unknown) => {
+      logger.debug(`Axios error while resolving discussion: ${error}`);
+      throw error;
+    });
+
+  return resp;
 }
 
 function* processStreamMessage(

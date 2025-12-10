@@ -113,7 +113,7 @@ export interface ChatToolCall {
 }
 
 export interface ChatMessage {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "error";
   content: string;
   toolCalls?: ChatToolCall[];
 }

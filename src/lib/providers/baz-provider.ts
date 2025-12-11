@@ -10,6 +10,8 @@ import {
   fetchUser as bazFetchUser,
   fetchFileDiffs as bazFetchFileDiffs,
   fetchEligibleReviewers as bazFetchEligibleReviewers,
+  fetchRepoWriteAccess as bazFetchRepoWriteAccess,
+  postDiscussionReply as bazPostDiscussionReply,
 } from "../clients/baz.js";
 import type {
   PRContext,
@@ -22,6 +24,7 @@ import type {
   User,
   FileDiff,
   ChangeReviewer,
+  RepoWriteAccess,
 } from "./types.js";
 import { IDataProvider } from "./data-provider.js";
 
@@ -44,6 +47,14 @@ export class BazDataProvider implements IDataProvider {
 
   async fetchDiscussions(ctx: PRContext): Promise<Discussion[]> {
     return bazFetchDiscussions(ctx.prId);
+  }
+
+  async postDiscussionReply(
+    ctx: PRContext,
+    discussionId: string,
+    body: string,
+  ): Promise<void> {
+    await bazPostDiscussionReply(discussionId, body, ctx.prId);
   }
 
   async approvePR(ctx: PRContext): Promise<void> {
@@ -76,5 +87,9 @@ export class BazDataProvider implements IDataProvider {
 
   async fetchEligibleReviewers(ctx: PRContext): Promise<ChangeReviewer[]> {
     return bazFetchEligibleReviewers(ctx.prId);
+  }
+
+  async fetchRepoWriteAccess(ctx: PRContext): Promise<RepoWriteAccess> {
+    return bazFetchRepoWriteAccess(ctx.fullRepoName);
   }
 }

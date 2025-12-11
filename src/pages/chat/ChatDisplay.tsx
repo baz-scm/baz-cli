@@ -7,6 +7,29 @@ import { renderMarkdown } from "../../lib/markdown.js";
 import ChatInput from "./ChatInput.js";
 import ToolCallDisplay from "./ToolCallDisplay.js";
 
+const MemoizedMessageAuthor = memo(({ message }: { message: ChatMessage }) => {
+  switch (message.role) {
+    case "user":
+      return (
+        <Text bold color="cyan">
+          You:
+        </Text>
+      );
+    case "assistant":
+      return (
+        <Text bold color="yellow">
+          Baz:
+        </Text>
+      );
+    case "error":
+      return (
+        <Text bold color="red">
+          Error:
+        </Text>
+      );
+  }
+});
+
 interface MemoizedMessageProps {
   message: ChatMessage;
   isToolExpanded: boolean;
@@ -22,9 +45,7 @@ const MemoizedMessage = memo<MemoizedMessageProps>(
 
     return (
       <Box flexDirection="column" marginBottom={1}>
-        <Text bold color={message.role === "user" ? "cyan" : "yellow"}>
-          {message.role === "user" ? "You:" : "Baz:"}
-        </Text>
+        <MemoizedMessageAuthor message={message} />
         <Box paddingLeft={2} flexDirection="column">
           {message.toolCalls && message.toolCalls.length > 0 && (
             <Box flexDirection="column">

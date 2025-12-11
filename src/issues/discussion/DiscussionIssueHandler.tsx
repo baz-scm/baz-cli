@@ -1,15 +1,14 @@
 import React from "react";
 import { Issue, IssueTypeHandler, IssueCommand } from "../types.js";
 import DiscussionIssueDisplay from "./DiscussionIssueDisplay.js";
-import {
-  postDiscussionReply,
-  updateDiscussionState,
-} from "../../lib/clients/baz.js";
+import { updateDiscussionState } from "../../lib/clients/baz.js";
 import IssueExplanationDisplay from "../common/IssueExplanationDisplay.js";
 import { parseHtmlToMarkdown } from "../../lib/parser.js";
 import { Box, Text } from "ink";
 import { IssueType } from "../../models/chat.js";
 import { renderMarkdown } from "../../lib/markdown.js";
+import { RepoWriteAccessReason } from "../../lib/providers/index.js";
+import { env } from "../../lib/env-schema.js";
 
 export const discussionIssueHandler: IssueTypeHandler<
   Issue & { type: "discussion" }
@@ -73,6 +72,12 @@ export const discussionIssueHandler: IssueTypeHandler<
   },
 
   handleCommand: async (command, args, issue, context) => {
+    const prContext = {
+      prId: context.prId,
+      fullRepoName: context.fullRepoName,
+      prNumber: context.prNumber,
+    };
+
     switch (command) {
       case "comment":
         if (!args.trim()) {
@@ -80,7 +85,26 @@ export const discussionIssueHandler: IssueTypeHandler<
           return {};
         }
         try {
-          await postDiscussionReply(issue.data.id, args, context.prId);
+          if (!context.repoWriteAccess.hasAccess) {
+            const access =
+              await context.appMode.mode.dataProvider.fetchRepoWriteAccess(
+                prContext,
+              );
+            if (!access.hasAccess) {
+              return {
+                shouldMoveNext: false,
+                shouldComplete: false,
+                errorMessage: commentErrorMessage(access.reason),
+              };
+            } else {
+              context.setRepoWriteAccess(access);
+            }
+          }
+          await context.appMode.mode.dataProvider.postDiscussionReply(
+            prContext,
+            issue.data.id,
+            args,
+          );
           return {
             shouldMoveNext: context.hasNext,
             shouldComplete: !context.hasNext,
@@ -118,3 +142,21 @@ export const discussionIssueHandler: IssueTypeHandler<
     return IssueType.DISCUSSION;
   },
 };
+
+function commentErrorMessage(reason: RepoWriteAccessReason | null) {
+  switch (reason) {
+    case RepoWriteAccessReason.MISSING_USER_INSTALLATION:
+      return (
+        "Write access is required to post comments. Please grant access in Baz.\n" +
+        `${env.BAZ_BASE_URL}/privilege`
+      );
+    case RepoWriteAccessReason.MISSING_ORG_INSTALLATION:
+    case RepoWriteAccessReason.REPO_NOT_CONFIGURED:
+      return (
+        "Baz needs write access at the organization level. Please ask your GitHub admin to grant this permission.\n" +
+        `${env.BAZ_BASE_URL}/settings/integrations/github`
+      );
+    default:
+      return `Unknown error: ${reason}`;
+  }
+}

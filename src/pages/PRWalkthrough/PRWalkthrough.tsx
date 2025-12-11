@@ -8,13 +8,17 @@ import { MAIN_COLOR } from "../../theme/colors.js";
 const INITIAL_PROMPT =
   "Please walk me through this pull request. Start by showing me a very short description on what the pull request do, followed by a brief summary of the sections. Do not include any section yet in your answer";
 
-interface NarratePRProps {
+interface PRWalkthroughProps {
   prId: string;
   bazRepoId?: string;
   onBack: () => void;
 }
 
-const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
+const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
+  prId,
+  bazRepoId,
+  onBack,
+}) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     undefined,
   );
@@ -157,7 +161,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color={MAIN_COLOR} bold>
-          Narrate change request
+          PR Walkthrough
         </Text>
       </Box>
       <Box marginBottom={1}>
@@ -179,4 +183,4 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
   );
 };
 
-export default NarratePR;
+export default PRWalkthrough;

@@ -94,7 +94,7 @@ export const discussionIssueHandler: IssueTypeHandler<
               return {
                 shouldMoveNext: false,
                 shouldComplete: false,
-                errorMessages: commentErrorMessage(access.reason),
+                errorMessage: commentErrorMessage(access.reason),
               };
             } else {
               context.setRepoWriteAccess(access);
@@ -157,6 +157,6 @@ function commentErrorMessage(reason: RepoWriteAccessReason | null) {
         `${env.BAZ_BASE_URL}/settings/integrations/github`
       );
     default:
-      return undefined;
+      return `Unknown error: ${reason}`;
   }
 }

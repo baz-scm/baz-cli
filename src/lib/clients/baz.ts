@@ -408,7 +408,7 @@ export async function fetchRepoWriteAccess(
     })
     .then((value) => value.data)
     .catch((error: unknown) => {
-      logger.debug(`Axios error while resolving discussion: ${error}`);
+      logger.debug(`Axios error while fetching repo write access: ${error}`);
       throw error;
     });
 

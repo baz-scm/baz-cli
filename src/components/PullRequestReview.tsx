@@ -399,6 +399,8 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <NarratePR
           prId={prId}
           bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
+          prNumber={prContext.prNumber}
           onBack={handleBackFromNarratePR}
         />
       );

@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Text } from "ink";
 import ChatDisplay from "../chat/ChatDisplay.js";
-import { ChatMessage, IssueType } from "../../models/chat.js";
+import {
+  ChatMessage,
+  IssueType,
+  CheckoutChatRequest,
+} from "../../models/chat.js";
 import { processStream } from "../../lib/chat-stream.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
+import { useAppMode } from "../../lib/config/AppModeContext.js";
 
 const INITIAL_PROMPT =
   "Please walk me through this pull request. Start by showing me a very short description on what the pull request do, followed by a brief summary of the sections. Do not include any section yet in your answer";
@@ -11,16 +16,52 @@ const INITIAL_PROMPT =
 interface NarratePRProps {
   prId: string;
   bazRepoId?: string;
+  fullRepoName: string;
+  prNumber: number;
   onBack: () => void;
 }
 
-const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
+const NarratePR: React.FC<NarratePRProps> = ({
+  prId,
+  bazRepoId,
+  fullRepoName,
+  prNumber,
+  onBack,
+}) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     undefined,
   );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const hasInitialized = useRef(false);
+  const appMode = useAppMode();
+
+  // Build the chat request based on app mode
+  const buildChatRequest = useCallback(
+    (freeText: string, convId?: string): CheckoutChatRequest => {
+      const issue = { type: IssueType.PULL_REQUEST, data: { id: prId } } as const;
+
+      if (appMode.mode.name === "baz" && bazRepoId) {
+        return {
+          mode: "baz",
+          repoId: bazRepoId,
+          prId,
+          issue,
+          freeText,
+          conversationId: convId,
+        };
+      }
+
+      return {
+        mode: "tokens",
+        prContext: { prId, fullRepoName, prNumber },
+        issue,
+        freeText,
+        conversationId: convId,
+      };
+    },
+    [appMode.mode.name, bazRepoId, prId, fullRepoName, prNumber],
+  );
 
   // Send initial message on mount
   useEffect(() => {
@@ -28,47 +69,26 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
     hasInitialized.current = true;
 
     const sendInitialMessage = async () => {
-      if (!bazRepoId) {
-        setIsLoading(false);
-        setChatMessages([
-          {
-            role: "assistant",
-            content:
-              "Repository ID not available. PR walkthrough is not available in this mode.",
-          },
-        ]);
-        return;
-      }
-
       try {
-        await processStream(
-          {
-            repoId: bazRepoId,
-            prId,
-            issue: { type: IssueType.PULL_REQUEST, data: { id: prId } },
-            freeText: INITIAL_PROMPT,
-            conversationId: undefined,
+        await processStream(buildChatRequest(INITIAL_PROMPT, undefined), {
+          onConversationId: setConversationId,
+          onFirstTextContent: () => setIsLoading(false),
+          onUpdate: (content, toolCalls, isFirst) => {
+            if (isFirst) {
+              setChatMessages([{ role: "assistant", content, toolCalls }]);
+            } else {
+              setChatMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content,
+                  toolCalls,
+                };
+                return updated;
+              });
+            }
           },
-          {
-            onConversationId: setConversationId,
-            onFirstTextContent: () => setIsLoading(false),
-            onUpdate: (content, toolCalls, isFirst) => {
-              if (isFirst) {
-                setChatMessages([{ role: "assistant", content, toolCalls }]);
-              } else {
-                setChatMessages((prev) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = {
-                    role: "assistant",
-                    content,
-                    toolCalls,
-                  };
-                  return updated;
-                });
-              }
-            },
-          },
-        );
+        });
       } catch (error) {
         console.error("Failed to get initial chat response:", error);
         setIsLoading(false);
@@ -83,23 +103,10 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
     };
 
     sendInitialMessage();
-  }, [prId, bazRepoId]);
+  }, [buildChatRequest]);
 
   const handleChatSubmit = useCallback(
     async (userInput: string) => {
-      if (!bazRepoId) {
-        setChatMessages((prev) => [
-          ...prev,
-          { role: "user", content: userInput },
-          {
-            role: "assistant",
-            content:
-              "Repository ID not available. Chat is not available in this mode.",
-          },
-        ]);
-        return;
-      }
-
       setChatMessages((prev) => [
         ...prev,
         { role: "user", content: userInput },
@@ -107,37 +114,28 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
       setIsLoading(true);
 
       try {
-        await processStream(
-          {
-            repoId: bazRepoId,
-            prId,
-            issue: { type: IssueType.PULL_REQUEST, data: { id: prId } },
-            freeText: userInput,
-            conversationId,
+        await processStream(buildChatRequest(userInput, conversationId), {
+          onConversationId: setConversationId,
+          onFirstTextContent: () => setIsLoading(false),
+          onUpdate: (content, toolCalls, isFirst) => {
+            if (isFirst) {
+              setChatMessages((prev) => [
+                ...prev,
+                { role: "assistant", content, toolCalls },
+              ]);
+            } else {
+              setChatMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content,
+                  toolCalls,
+                };
+                return updated;
+              });
+            }
           },
-          {
-            onConversationId: setConversationId,
-            onFirstTextContent: () => setIsLoading(false),
-            onUpdate: (content, toolCalls, isFirst) => {
-              if (isFirst) {
-                setChatMessages((prev) => [
-                  ...prev,
-                  { role: "assistant", content, toolCalls },
-                ]);
-              } else {
-                setChatMessages((prev) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = {
-                    role: "assistant",
-                    content,
-                    toolCalls,
-                  };
-                  return updated;
-                });
-              }
-            },
-          },
-        );
+        });
       } catch (error) {
         console.error("Failed to get chat response:", error);
         setIsLoading(false);
@@ -150,7 +148,7 @@ const NarratePR: React.FC<NarratePRProps> = ({ prId, bazRepoId, onBack }) => {
         ]);
       }
     },
-    [prId, bazRepoId, conversationId],
+    [buildChatRequest, conversationId],
   );
 
   return (

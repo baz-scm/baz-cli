@@ -1,9 +1,16 @@
+import type {
+  Discussion,
+  FileDiff,
+  PRContext,
+} from "../lib/providers/types.js";
+
 export enum IssueType {
   DISCUSSION = "discussion",
   PULL_REQUEST = "pull_request",
   SPEC_REVIEW = "spec_review",
 }
 
+// Baz mode issue types (just ID, BE fetches the data)
 export interface IssueDiscussion {
   type: IssueType.DISCUSSION;
   data: {
@@ -27,13 +34,38 @@ export interface IssueSpecReview {
 
 export type ChatIssue = IssueDiscussion | IssuePullRequest | IssueSpecReview;
 
-export interface CheckoutChatRequest {
+// Tokens mode issue types (include full data since BE can't fetch it)
+export interface IssueDiscussionWithContext {
+  type: IssueType.DISCUSSION;
+  data: {
+    id: string;
+    discussion: Discussion;
+    diff: FileDiff[];
+  };
+}
+
+export type TokensChatIssue = IssueDiscussionWithContext | IssuePullRequest;
+
+// Baz mode request (current structure - BE fetches data using IDs)
+export interface BazChatRequest {
+  mode: "baz";
   repoId: string;
   prId: string;
   issue: ChatIssue;
   freeText: string;
   conversationId?: string;
 }
+
+// Tokens mode request (includes PR context, and for discussions includes full data)
+export interface TokensChatRequest {
+  mode: "tokens";
+  prContext: PRContext;
+  issue: TokensChatIssue;
+  freeText: string;
+  conversationId?: string;
+}
+
+export type CheckoutChatRequest = BazChatRequest | TokensChatRequest;
 
 export interface MessageStart {
   type: "message_start";

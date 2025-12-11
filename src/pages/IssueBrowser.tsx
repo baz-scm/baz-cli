@@ -3,8 +3,10 @@ import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
 import ChatDisplay from "./chat/ChatDisplay.js";
-import { ChatMessage } from "../models/chat.js";
+import { ChatMessage, CheckoutChatRequest, IssueType } from "../models/chat.js";
 import { processStream } from "../lib/chat-stream.js";
+import { useAppMode } from "../lib/config/AppModeContext.js";
+import type { Discussion } from "../lib/providers/types.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -31,6 +33,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const appMode = useAppMode();
 
   const currentIssue = issues[currentIndex];
   const hasNext = currentIndex < issues.length - 1;
@@ -39,48 +42,107 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const ExplainComponent = handler.displayExplainComponent;
   const DisplayComponent = handler.displayComponent;
 
+  // Build the chat request based on app mode and issue type
+  const buildChatRequest = useCallback(
+    async (
+      message: string,
+      issue: Issue,
+      convId?: string,
+    ): Promise<CheckoutChatRequest> => {
+      const issueType = handler.getApiIssueType(issue);
+      const prContext = { prId, fullRepoName, prNumber };
+
+      // Baz mode - use simple ID-based request
+      if (appMode.mode.name === "baz" && bazRepoId) {
+        return {
+          mode: "baz",
+          repoId: bazRepoId,
+          prId,
+          issue: {
+            type: issueType,
+            data: { id: issue.data.id },
+          },
+          freeText: message,
+          conversationId: convId,
+        };
+      }
+
+      // Tokens mode - include full data for discussions
+      if (issue.type === "discussion") {
+        const discussion = issue.data as Discussion;
+        const files = discussion.file ? [discussion.file] : [];
+
+        // Fetch diff data for the discussion
+        const diffData = await appMode.mode.dataProvider.fetchFileDiffs(
+          prContext,
+          discussion.commit_sha,
+          files,
+        );
+
+        return {
+          mode: "tokens",
+          prContext,
+          issue: {
+            type: IssueType.DISCUSSION,
+            data: {
+              id: discussion.id,
+              discussion,
+              diff: diffData,
+            },
+          },
+          freeText: message,
+          conversationId: convId,
+        };
+      }
+
+      // Tokens mode - other issue types (PR) - use IssuePullRequest
+      return {
+        mode: "tokens",
+        prContext,
+        issue: {
+          type: IssueType.PULL_REQUEST,
+          data: { id: issue.data.id },
+        },
+        freeText: message,
+        conversationId: convId,
+      };
+    },
+    [appMode.mode, bazRepoId, prId, fullRepoName, prNumber, handler],
+  );
+
   const handleChatSubmit = useCallback(
     async (message: string) => {
       setChatMessages((prev) => [...prev, { role: "user", content: message }]);
       setIsLoading(true);
 
       try {
-        await processStream(
-          {
-            repoId: bazRepoId ?? fullRepoName,
-            prId,
-            issue: {
-              type: handler.getApiIssueType(currentIssue),
-              data: {
-                id: currentIssue.data.id,
-              },
-            },
-            freeText: message,
-            conversationId,
-          },
-          {
-            onConversationId: setConversationId,
-            onFirstTextContent: () => setIsLoading(false),
-            onUpdate: (content, toolCalls, isFirst) => {
-              if (isFirst) {
-                setChatMessages((prev) => [
-                  ...prev,
-                  { role: "assistant", content, toolCalls },
-                ]);
-              } else {
-                setChatMessages((prev) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = {
-                    role: "assistant",
-                    content,
-                    toolCalls,
-                  };
-                  return updated;
-                });
-              }
-            },
-          },
+        const request = await buildChatRequest(
+          message,
+          currentIssue,
+          conversationId,
         );
+        await processStream(request, {
+          onConversationId: setConversationId,
+          onFirstTextContent: () => setIsLoading(false),
+          onUpdate: (content, toolCalls, isFirst) => {
+            if (isFirst) {
+              setChatMessages((prev) => [
+                ...prev,
+                { role: "assistant", content, toolCalls },
+              ]);
+            } else {
+              setChatMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content,
+                  toolCalls,
+                };
+                return updated;
+              });
+            }
+          },
+        });
       } catch (error) {
         console.error("Failed to get chat response:", error);
         setIsLoading(false);
@@ -93,7 +155,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         ]);
       }
     },
-    [bazRepoId, fullRepoName, prId, handler, currentIssue, conversationId],
+    [buildChatRequest, currentIssue, conversationId],
   );
 
   const context: IssueContext = useMemo(

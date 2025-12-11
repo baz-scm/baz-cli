@@ -11,6 +11,7 @@ import {
   fetchFileDiffs as bazFetchFileDiffs,
   fetchEligibleReviewers as bazFetchEligibleReviewers,
   fetchRepoWriteAccess as bazFetchRepoWriteAccess,
+  postDiscussionReply as bazPostDiscussionReply,
 } from "../clients/baz.js";
 import type {
   PRContext,
@@ -46,6 +47,14 @@ export class BazDataProvider implements IDataProvider {
 
   async fetchDiscussions(ctx: PRContext): Promise<Discussion[]> {
     return bazFetchDiscussions(ctx.prId);
+  }
+
+  async postDiscussionReply(
+    ctx: PRContext,
+    discussionId: string,
+    body: string,
+  ): Promise<void> {
+    await bazPostDiscussionReply(discussionId, body, ctx.prId);
   }
 
   async approvePR(ctx: PRContext): Promise<void> {

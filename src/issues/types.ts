@@ -1,5 +1,6 @@
 import type { Discussion, RepoWriteAccess } from "../lib/providers/index.js";
 import { IssueType } from "../models/chat.js";
+import { AppConfig } from "../lib/config/index.js";
 
 export type Issue = {
   type: "discussion";
@@ -23,6 +24,7 @@ export interface IssueContext {
   hasNext: boolean;
   conversationId?: string;
   repoWriteAccess: RepoWriteAccess;
+  appMode: AppConfig;
   moveToNext: () => void;
   complete: () => void;
   setConversationId: (id: string) => void;

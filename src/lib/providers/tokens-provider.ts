@@ -21,6 +21,7 @@ import {
   fetchAuthenticatedUser,
   fetchFileDiffs as ghFetchFileDiffs,
   fetchAssignees,
+  postReviewThreadReply,
 } from "../clients/github.js";
 
 export class TokensDataProvider implements IDataProvider {
@@ -98,6 +99,19 @@ export class TokensDataProvider implements IDataProvider {
         })),
       };
     });
+  }
+
+  async postDiscussionReply(
+    ctx: PRContext,
+    discussionId: string,
+    body: string,
+  ): Promise<void> {
+    await postReviewThreadReply(
+      ctx.fullRepoName,
+      ctx.prNumber,
+      discussionId,
+      body,
+    );
   }
 
   async approvePR(ctx: PRContext): Promise<void> {

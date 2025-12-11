@@ -1,11 +1,7 @@
 import React from "react";
 import { Issue, IssueTypeHandler, IssueCommand } from "../types.js";
 import DiscussionIssueDisplay from "./DiscussionIssueDisplay.js";
-import {
-  fetchRepoWriteAccess,
-  postDiscussionReply,
-  updateDiscussionState,
-} from "../../lib/clients/baz.js";
+import { updateDiscussionState } from "../../lib/clients/baz.js";
 import IssueExplanationDisplay from "../common/IssueExplanationDisplay.js";
 import { parseHtmlToMarkdown } from "../../lib/parser.js";
 import { Box, Text } from "ink";
@@ -76,6 +72,12 @@ export const discussionIssueHandler: IssueTypeHandler<
   },
 
   handleCommand: async (command, args, issue, context) => {
+    const prContext = {
+      prId: context.prId,
+      fullRepoName: context.fullRepoName,
+      prNumber: context.prNumber,
+    };
+
     switch (command) {
       case "comment":
         if (!args.trim()) {
@@ -84,7 +86,10 @@ export const discussionIssueHandler: IssueTypeHandler<
         }
         try {
           if (!context.repoWriteAccess.hasAccess) {
-            const access = await fetchRepoWriteAccess(context.fullRepoName);
+            const access =
+              await context.appMode.mode.dataProvider.fetchRepoWriteAccess(
+                prContext,
+              );
             if (!access.hasAccess) {
               return {
                 shouldMoveNext: false,
@@ -95,7 +100,11 @@ export const discussionIssueHandler: IssueTypeHandler<
               context.setRepoWriteAccess(access);
             }
           }
-          await postDiscussionReply(issue.data.id, args, context.prId);
+          await context.appMode.mode.dataProvider.postDiscussionReply(
+            prContext,
+            issue.data.id,
+            args,
+          );
           return {
             shouldMoveNext: context.hasNext,
             shouldComplete: !context.hasNext,

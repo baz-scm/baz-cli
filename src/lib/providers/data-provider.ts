@@ -23,6 +23,12 @@ export interface IDataProvider {
 
   fetchDiscussions(ctx: PRContext): Promise<Discussion[]>;
 
+  postDiscussionReply(
+    ctx: PRContext,
+    discussionId: string,
+    body: string,
+  ): Promise<void>;
+
   approvePR(ctx: PRContext): Promise<void>;
 
   mergePR(ctx: PRContext): Promise<void>;

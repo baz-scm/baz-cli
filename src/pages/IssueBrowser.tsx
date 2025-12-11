@@ -6,6 +6,7 @@ import ChatDisplay from "./chat/ChatDisplay.js";
 import { ChatMessage } from "../models/chat.js";
 import { streamChatResponse } from "../lib/clients/baz.js";
 import { RepoWriteAccess } from "../lib/providers/index.js";
+import { useAppMode } from "../lib/config/index.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -36,6 +37,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const [repoWriteAccess, setRepoWriteAccess] =
     useState<RepoWriteAccess>(writeAccess);
   const [isLoading, setIsLoading] = useState(false);
+  const appMode = useAppMode();
 
   const currentIssue = issues[currentIndex];
   const hasNext = currentIndex < issues.length - 1;
@@ -125,6 +127,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       hasNext,
       conversationId,
       repoWriteAccess,
+      appMode,
       moveToNext: () => {
         if (hasNext) {
           setCurrentIndex((prev) => prev + 1);
@@ -148,6 +151,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       hasNext,
       conversationId,
       repoWriteAccess,
+      appMode,
       onComplete,
       handleChatSubmit,
     ],

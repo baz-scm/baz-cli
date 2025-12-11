@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.1](https://github.com/baz-scm/baz-cli/compare/v0.3.0...v0.3.1) (2025-12-11)
+
+
+### 🐛 Bug Fixes
+
+* Add error message for insufficient write access ([#64](https://github.com/baz-scm/baz-cli/issues/64)) ([6f7ccb4](https://github.com/baz-scm/baz-cli/commit/6f7ccb4a740e2348c6153c88ded6aa8aa700c1b5))
+
+
+### ✨ New Features
+
+* Full pr data impl tokens mode ([#58](https://github.com/baz-scm/baz-cli/issues/58)) ([85dcd65](https://github.com/baz-scm/baz-cli/commit/85dcd65e7fb0ac6bb4fe76b66a41908df7464e4c))
+* require authentication on startup ([#61](https://github.com/baz-scm/baz-cli/issues/61)) ([9e8b525](https://github.com/baz-scm/baz-cli/commit/9e8b525f22facfc3d259044bd2b3cec5a54fbbb4))
+
 ## [0.3.0](https://github.com/baz-scm/baz-cli/compare/v0.2.3...v0.3.0) (2025-12-08)
 
 

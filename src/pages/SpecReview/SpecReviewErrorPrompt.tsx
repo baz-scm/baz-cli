@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { AxiosError } from "axios";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 
 interface ErrorPromptProps {
   error: unknown;
@@ -77,7 +78,7 @@ const ErrorPrompt: React.FC<ErrorPromptProps> = ({
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
           <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? "❯" : " "}
+            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (

@@ -5,6 +5,7 @@ import Spinner from "ink-spinner";
 import { triggerSpecReview } from "../../lib/clients/baz.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import ErrorPrompt from "./SpecReviewErrorPrompt.js";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 
 interface TriggerSpecReviewPromptProps {
   prId: string;
@@ -120,7 +121,7 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
           <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? "❯" : " "}
+            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (

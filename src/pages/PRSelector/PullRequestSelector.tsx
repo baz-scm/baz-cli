@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import type { PullRequest } from "../../lib/providers/index.js";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 
 interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
@@ -113,8 +114,10 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                               actualIndex === selectedIndex ? "cyan" : "white"
                             }
                           >
-                            {actualIndex === selectedIndex ? "❯ " : "  "}#
-                            {pr.prNumber} {pr.title}
+                            {actualIndex === selectedIndex
+                              ? ITEM_SELECTOR
+                              : ITEM_SELECTION_GAP}
+                            #{pr.prNumber} {pr.title}
                             <Text color="gray"> [{pr.repositoryName}]</Text>
                           </Text>
                         </Box>

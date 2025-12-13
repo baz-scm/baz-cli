@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import { MAIN_COLOR } from "../../theme/colors.js";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 
 export type ReviewStatusAction =
   | "viewMetRequirements"
@@ -117,7 +118,7 @@ const ReviewStatusPrompt: React.FC<ReviewStatusPromptProps> = ({
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
           <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? "❯" : " "}
+            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (

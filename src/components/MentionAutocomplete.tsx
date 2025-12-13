@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import type { ChangeReviewer } from "../lib/providers/index.js";
 import { MentionableUser } from "../models/chat.js";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../theme/symbols.js";
 
 interface MentionAutocompleteProps {
   reviewers: ChangeReviewer[];
@@ -95,7 +96,9 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
           return (
             <Box key={reviewer.id}>
               <Text color={actualIndex === selectedIndex ? "cyan" : "white"}>
-                {actualIndex === selectedIndex ? "❯ " : "  "}
+                {actualIndex === selectedIndex
+                  ? ITEM_SELECTOR
+                  : ITEM_SELECTION_GAP}
                 {reviewer.name}
                 {reviewer.login && (
                   <Text color="gray"> (@{reviewer.login})</Text>

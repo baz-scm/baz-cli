@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { IntegrationProvider } from "../../integrations/types.js";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 
 interface IntegrationProviderSelectorProps {
   providers: IntegrationProvider[];
@@ -74,7 +75,7 @@ const IntegrationProviderSelector: React.FC<
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
           <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? "❯" : " "}
+            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (

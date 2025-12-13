@@ -11,6 +11,7 @@ interface PRChatProps {
   chatInput?: string;
   chatTitle?: string;
   chatDescription?: string;
+  outputInitialMessage?: boolean;
   onBack: () => void;
 }
 
@@ -20,6 +21,7 @@ const PRChat: React.FC<PRChatProps> = ({
   chatInput,
   chatTitle,
   chatDescription,
+  outputInitialMessage = true,
   onBack,
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
@@ -31,11 +33,6 @@ const PRChat: React.FC<PRChatProps> = ({
 
   // Send initial message on mount
   useEffect(() => {
-    if (!chatInput) {
-      setIsLoading(false);
-      return;
-    }
-
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
@@ -52,6 +49,15 @@ const PRChat: React.FC<PRChatProps> = ({
         return;
       }
 
+      if (!chatInput) {
+        setIsLoading(false);
+        return;
+      }
+
+      if (outputInitialMessage && chatInput) {
+        setChatMessages([{ role: "user", content: chatInput }]);
+      }
+
       try {
         await processStream(
           {
@@ -66,7 +72,10 @@ const PRChat: React.FC<PRChatProps> = ({
             onFirstTextContent: () => setIsLoading(false),
             onUpdate: (content, toolCalls, isFirst) => {
               if (isFirst) {
-                setChatMessages([{ role: "assistant", content, toolCalls }]);
+                setChatMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content, toolCalls },
+                ]);
               } else {
                 setChatMessages((prev) => {
                   const updated = [...prev];

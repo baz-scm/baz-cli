@@ -22,6 +22,7 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
       chatInput={INITIAL_PROMPT}
       chatTitle="PR Walkthrough"
       chatDescription="Walkthrough the pull request with Baz. Press ESC to go back."
+      outputInitialMessage={false}
       onBack={onBack}
     />
   );

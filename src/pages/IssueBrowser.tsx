@@ -47,7 +47,6 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const ExplainComponent = handler.displayExplainComponent;
   const DisplayComponent = handler.displayComponent;
 
-  // Build the chat request based on app mode and issue type
   const buildChatRequest = useCallback(
     async (
       message: string,
@@ -57,7 +56,6 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       const issueType = handler.getApiIssueType(issue);
       const prContext = { prId, fullRepoName, prNumber };
 
-      // Baz mode - use simple ID-based request
       if (appMode.mode.name === "baz" && bazRepoId) {
         return {
           mode: "baz",
@@ -72,12 +70,10 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         };
       }
 
-      // Tokens mode - include full data for discussions
       if (issue.type === "discussion") {
         const discussion = issue.data as Discussion;
         const files = discussion.file ? [discussion.file] : [];
 
-        // Fetch diff data for the discussion
         const diffData = await appMode.mode.dataProvider.fetchFileDiffs(
           prContext,
           discussion.commit_sha,
@@ -100,7 +96,6 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         };
       }
 
-      // Tokens mode - other issue types (PR) - use IssuePullRequest
       return {
         mode: "tokens",
         prContext,

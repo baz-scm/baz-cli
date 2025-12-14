@@ -41,7 +41,6 @@ const PRChat: React.FC<PRChatProps> = ({
   const hasInitialized = useRef(false);
   const appMode = useAppMode();
 
-  // Build the chat request based on app mode
   const buildChatRequest = useCallback(
     (freeText: string, convId?: string): CheckoutChatRequest => {
       const issue = {
@@ -71,7 +70,6 @@ const PRChat: React.FC<PRChatProps> = ({
     [appMode.mode.name, bazRepoId, prId, fullRepoName, prNumber],
   );
 
-  // Send initial message on mount
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;

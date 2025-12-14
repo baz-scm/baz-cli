@@ -10,7 +10,6 @@ export enum IssueType {
   SPEC_REVIEW = "spec_review",
 }
 
-// Baz mode issue types (just ID, BE fetches the data)
 export interface IssueDiscussion {
   type: IssueType.DISCUSSION;
   data: {
@@ -34,7 +33,6 @@ export interface IssueSpecReview {
 
 export type ChatIssue = IssueDiscussion | IssuePullRequest | IssueSpecReview;
 
-// Tokens mode issue types (include full data since BE can't fetch it)
 export interface IssueDiscussionWithContext {
   type: IssueType.DISCUSSION;
   data: {
@@ -46,7 +44,6 @@ export interface IssueDiscussionWithContext {
 
 export type TokensChatIssue = IssueDiscussionWithContext | IssuePullRequest;
 
-// Baz mode request (current structure - BE fetches data using IDs)
 export interface BazChatRequest {
   mode: "baz";
   repoId: string;
@@ -56,7 +53,6 @@ export interface BazChatRequest {
   conversationId?: string;
 }
 
-// Tokens mode request (includes PR context, and for discussions includes full data)
 export interface TokensChatRequest {
   mode: "tokens";
   prContext: PRContext;

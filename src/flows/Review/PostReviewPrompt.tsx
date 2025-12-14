@@ -75,7 +75,18 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setActionError(null);
     try {
       await dataProvider.approvePR(prContext);
-      await pr.refetch();
+      if (user.data?.login) {
+        pr.updateData((prev) => {
+          if (!prev || !user.data?.login) return prev;
+          return {
+            ...prev,
+            reviews: [
+              ...prev.reviews,
+              { assignee: user.data.login, review_state: "approved" },
+            ],
+          };
+        });
+      }
       setIsSelected(false);
     } catch (_) {
       setActionError("Failed to approve PR. Please try again.");

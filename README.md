@@ -1,3 +1,5 @@
+<div style="text-align: center;">
+
 # Baz CLI
 
 ![Baz Logo](https://avatars.githubusercontent.com/u/140384842?s=200&v=4)
@@ -8,6 +10,8 @@
 ![NPM Downloads](https://img.shields.io/npm/dm/@baz-scm/cli) ![License](https://img.shields.io/github/license/baz-scm/baz-cli) ![Version](https://img.shields.io/npm/v/@baz-scm/cli) [![CI Status](https://img.shields.io/github/actions/workflow/status/baz-scm/baz-cli/release.yml?style=flat-square&logo=github)](https://github.com/baz-scm/baz-cli/actions)
 [![Node.js version](https://img.shields.io/node/v/@baz-scm/cli?style=flat-square&logo=node.js&color=339933)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
+</div>
 
 ---
 
@@ -199,7 +203,7 @@ Found a bug or have a feature request? [Open an issue](https://github.com/baz-sc
 
 ---
 
-<div align="center">
+<div style="text-align: center;">
 
 Made with ❤️ by the Baz team
 

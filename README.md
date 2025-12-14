@@ -67,6 +67,7 @@ Use your own GitHub Personal Access Token (PAT) and Anthropic API key to review 
 
 **Setup:**
 ```bash
+npm i -g @baz-scm/cli
 GH_TOKEN=your_github_pat ANTHROPIC_TOKEN=your_anthropic_api_key baz
 ```
 
@@ -83,6 +84,7 @@ Connect with [Baz](https://baz.co/login) to get the full experience: AI assistan
 
 **Setup:**
 ```bash
+npm i -g @baz-scm/cli
 baz
 ```
 

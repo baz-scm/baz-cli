@@ -23,7 +23,7 @@ While AI helps you write code at unprecedented speed, human reviewers still need
 
 ### ✨ How Baz CLI Changes That
 
-**Let AI guide you through reviews**, helping you focus on what matters while skimming through the rest. Get intelligent insights, automated analysis, and context-aware suggestions, thoughtful and logical ordering that lets you get through all those reviews fast—**all in your terminal!**
+**Let AI guide you through reviews**, helping you focus on what matters while skimming through the rest. Get intelligent insights, automated analysis, and context-aware suggestions, thoughtful and logical ordering that lets you get through all those reviews fast - **all in your terminal!**
 
 ## Table of Contents
 
@@ -41,14 +41,16 @@ While AI helps you write code at unprecedented speed, human reviewers still need
 
 ### Baz CLI in Action
 
-![PR Overview](.github/assets/PROverview.png)
 *Interactive CLI experience with real-time AI chat*
+![PR Overview](.github/assets/PROverview.png)
 
-![PR Walkthrough](.github/assets/PRWalkthrough.png)
+
 *Step-by-step review workflow*
+![PR Walkthrough](.github/assets/PRWalkthrough.png)
 
-![Spec Reviewer](.github/assets/SpecReviewer.png)
+
 *Understand the gist - does the PR fulfil its objectives?*
+![Spec Reviewer](.github/assets/SpecReviewer.png)
 
 
 ## Two Ways to Use Baz CLI

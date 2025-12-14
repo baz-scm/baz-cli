@@ -1,3 +1,9 @@
+import type {
+  Discussion,
+  FileDiff,
+  PRContext,
+} from "../lib/providers/types.js";
+
 export enum IssueType {
   DISCUSSION = "discussion",
   PULL_REQUEST = "pull_request",
@@ -27,13 +33,35 @@ export interface IssueSpecReview {
 
 export type ChatIssue = IssueDiscussion | IssuePullRequest | IssueSpecReview;
 
-export interface CheckoutChatRequest {
+export interface IssueDiscussionWithContext {
+  type: IssueType.DISCUSSION;
+  data: {
+    id: string;
+    discussion: Discussion;
+    diff: FileDiff[];
+  };
+}
+
+export type TokensChatIssue = IssueDiscussionWithContext | IssuePullRequest;
+
+export interface BazChatRequest {
+  mode: "baz";
   repoId: string;
   prId: string;
   issue: ChatIssue;
   freeText: string;
   conversationId?: string;
 }
+
+export interface TokensChatRequest {
+  mode: "tokens";
+  prContext: PRContext;
+  issue: TokensChatIssue;
+  freeText: string;
+  conversationId?: string;
+}
+
+export type CheckoutChatRequest = BazChatRequest | TokensChatRequest;
 
 export interface MessageStart {
   type: "message_start";

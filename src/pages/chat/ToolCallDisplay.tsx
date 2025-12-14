@@ -70,7 +70,7 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
               {!isExpanded && showExpandHint && (
                 <Text dimColor italic>
                   {" "}
-                  - Press Ctrl+O to expand
+                  - Press Tab to expand
                 </Text>
               )}
             </>

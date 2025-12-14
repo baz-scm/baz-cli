@@ -7,6 +7,7 @@ import { useFetchMergeStatus } from "../../hooks/useFetchMergeStatus.js";
 import LoadingSpinner from "../../components/LoadingSpinner.js";
 import { PRContext } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 
 export type PostReviewAction =
   | "approve"
@@ -74,7 +75,19 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setActionError(null);
     try {
       await dataProvider.approvePR(prContext);
-      await pr.refetch();
+      const userLogin = user.data?.login;
+      if (userLogin) {
+        pr.updateData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            reviews: [
+              ...prev.reviews,
+              { assignee: userLogin, review_state: "approved" },
+            ],
+          };
+        });
+      }
       setIsSelected(false);
     } catch (_) {
       setActionError("Failed to approve PR. Please try again.");
@@ -146,7 +159,7 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
           <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? "❯" : " "}
+            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (

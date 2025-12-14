@@ -19,10 +19,12 @@ import { useAppMode } from "../lib/config/index.js";
 import type { Requirement } from "../lib/providers/index.js";
 import { PRContext } from "../lib/providers/index.js";
 import { useRepoWriteAccess } from "../hooks/useRepoWriteAccess.js";
+import PRChat from "../pages/PRChat/PRChat.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
   metRequirements: Requirement[];
+  chatInput?: string;
   completedSteps: CompletedSteps;
 }
 
@@ -35,6 +37,7 @@ type State =
   | ({ step: "browseMetRequirements" } & MenuStateData)
   | ({ step: "showIssues" } & MenuStateData)
   | ({ step: "prWalkthrough" } & MenuStateData)
+  | ({ step: "prChat" } & MenuStateData)
   | { step: "complete" };
 
 interface PullRequestReviewProps {
@@ -188,7 +191,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   };
 
   // Handle menu action selection
-  const handleMenuAction = (action: ReviewMenuAction) => {
+  const handleMenuAction = (action: ReviewMenuAction, input?: string) => {
     if (state.step !== "menu") return;
 
     switch (action) {
@@ -214,6 +217,13 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         setState({
           ...state,
           step: "prWalkthrough",
+        });
+        break;
+      case "prChat":
+        setState({
+          ...state,
+          chatInput: input,
+          step: "prChat",
         });
         break;
       case "finish":
@@ -319,6 +329,16 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     });
   };
 
+  // Handle back from PR chat - go to menu
+  const handleBackFromPRChat = () => {
+    if (state.step !== "prChat") return;
+
+    setState({
+      ...state,
+      step: "menu",
+    });
+  };
+
   // Handle back from menu - go to prompt
   const handleBackFromMenu = () => {
     setState({ step: "prOverview" });
@@ -407,7 +427,20 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <PRWalkthrough
           prId={prId}
           bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
+          prNumber={prContext.prNumber}
           onBack={handleBackFromPRWalkthrough}
+        />
+      );
+    case "prChat":
+      return (
+        <PRChat
+          prId={prId}
+          bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
+          prNumber={prContext.prNumber}
+          chatInput={state.chatInput}
+          onBack={handleBackFromPRChat}
         />
       );
     case "complete":

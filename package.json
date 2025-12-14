@@ -1,6 +1,6 @@
 {
   "name": "@baz-scm/cli",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Baz CLI tool for managing pull requests",
   "main": "dist/index.js",
   "type": "module",
@@ -26,7 +26,7 @@
     "cli"
   ],
   "author": "Baz Technologies",
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "url": "https://github.com/baz-scm/baz-cli"
   },

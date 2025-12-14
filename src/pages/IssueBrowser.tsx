@@ -4,9 +4,10 @@ import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
 import ChatDisplay from "./chat/ChatDisplay.js";
 import { ChatMessage, CheckoutChatRequest, IssueType } from "../models/chat.js";
-import { processStream } from "../lib/chat-stream.js";
-import { useAppMode } from "../lib/config/AppModeContext.js";
 import type { Discussion } from "../lib/providers/types.js";
+import { RepoWriteAccess } from "../lib/providers/index.js";
+import { useAppMode } from "../lib/config/index.js";
+import { processStream } from "../lib/chat-stream.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -14,6 +15,7 @@ interface IssueBrowserProps {
   bazRepoId?: string;
   fullRepoName: string;
   prNumber: number;
+  writeAccess: RepoWriteAccess;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -24,6 +26,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   bazRepoId,
   fullRepoName,
   prNumber,
+  writeAccess,
   onComplete,
   onBack,
 }) => {
@@ -32,6 +35,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     undefined,
   );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [repoWriteAccess, setRepoWriteAccess] =
+    useState<RepoWriteAccess>(writeAccess);
   const [isLoading, setIsLoading] = useState(false);
   const appMode = useAppMode();
 
@@ -167,6 +172,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       totalIssues: issues.length,
       hasNext,
       conversationId,
+      repoWriteAccess,
+      appMode,
       moveToNext: () => {
         if (hasNext) {
           setCurrentIndex((prev) => prev + 1);
@@ -178,6 +185,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       },
       complete: onComplete,
       setConversationId,
+      setRepoWriteAccess,
       onChatSubmit: handleChatSubmit,
     }),
     [
@@ -188,6 +196,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       issues.length,
       hasNext,
       conversationId,
+      repoWriteAccess,
+      appMode,
       onComplete,
       handleChatSubmit,
     ],
@@ -208,7 +218,18 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           context,
         );
 
-        if (result.shouldMoveNext) {
+        if (result.errorMessage && result.errorMessage.length > 0) {
+          const content = result.errorMessage;
+          setChatMessages((prev) => {
+            return [
+              ...prev,
+              {
+                role: "error",
+                content,
+              },
+            ];
+          });
+        } else if (result.shouldMoveNext) {
           context.moveToNext();
         } else if (result.shouldComplete) {
           onComplete();

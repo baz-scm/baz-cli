@@ -13,7 +13,7 @@ import {
 import { OAuthFlow } from "./auth/oauth-flow.js";
 import { authConfig } from "./auth/config.js";
 
-const VERSION = "0.3.0"; // x-release-please-version
+const VERSION = "0.3.2"; // x-release-please-version
 
 const program = new Command();
 
@@ -33,17 +33,11 @@ program
       throw e;
     }
 
+    // Ensure user is registered with Baz and authenticated
     const oauthFlow = OAuthFlow.getInstance();
     if (!oauthFlow.isAuthenticated()) {
-      try {
-        await oauthFlow.authenticate(authConfig);
-      } catch (error) {
-        console.error(
-          "❌ Authentication failed:",
-          error instanceof Error ? error.message : "Unknown error",
-        );
-        process.exit(1);
-      }
+      console.log("📝 Registration required. Opening browser...");
+      await oauthFlow.authenticate(authConfig);
     }
 
     render(

@@ -10,22 +10,28 @@ import { processStream } from "../../lib/chat-stream.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
 
-const INITIAL_PROMPT =
-  "Please walk me through this pull request. Start by showing me a very short description on what the pull request do, followed by a brief summary of the sections. Do not include any section yet in your answer";
-
-interface NarratePRProps {
+interface PRChatProps {
   prId: string;
   bazRepoId?: string;
   fullRepoName: string;
   prNumber: number;
+  chatInput?: string;
+  chatTitle?: string;
+  chatDescription?: string;
+  outputInitialMessage?: boolean;
   onBack: () => void;
 }
 
-const NarratePR: React.FC<NarratePRProps> = ({
+
+const PRChat: React.FC<PRChatProps> = ({
   prId,
   bazRepoId,
   fullRepoName,
   prNumber,
+  chatInput,
+  chatTitle,
+  chatDescription,
+  outputInitialMessage = true,
   onBack,
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
@@ -69,8 +75,17 @@ const NarratePR: React.FC<NarratePRProps> = ({
     hasInitialized.current = true;
 
     const sendInitialMessage = async () => {
+      if (!chatInput) {
+        setIsLoading(false);
+        return;
+      }
+
+      if (outputInitialMessage && chatInput) {
+        setChatMessages([{ role: "user", content: chatInput }]);
+      }
+
       try {
-        await processStream(buildChatRequest(INITIAL_PROMPT, undefined), {
+        await processStream(buildChatRequest(chatInput, undefined), {
           onConversationId: setConversationId,
           onFirstTextContent: () => setIsLoading(false),
           onUpdate: (content, toolCalls, isFirst) => {
@@ -96,14 +111,14 @@ const NarratePR: React.FC<NarratePRProps> = ({
           {
             role: "assistant",
             content:
-              "Sorry, I encountered an error loading the PR walkthrough. Please try asking a question.",
+              "Sorry, I encountered an error loading the initial chat response. Please try asking again.",
           },
         ]);
       }
     };
 
     sendInitialMessage();
-  }, [buildChatRequest]);
+  }, [buildChatRequest, chatInput, outputInitialMessage]);
 
   const handleChatSubmit = useCallback(
     async (userInput: string) => {
@@ -155,12 +170,14 @@ const NarratePR: React.FC<NarratePRProps> = ({
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color={MAIN_COLOR} bold>
-          Narrate change request
+          {chatTitle ? chatTitle : "PR Chat"}
         </Text>
       </Box>
       <Box marginBottom={1}>
         <Text dimColor>
-          Walkthrough the pull request with Baz. Press ESC to go back.
+          {chatDescription
+            ? chatDescription
+            : "Chat about the pull request with Baz. Press ESC to go back."}
         </Text>
       </Box>
 
@@ -177,4 +194,4 @@ const NarratePR: React.FC<NarratePRProps> = ({
   );
 };
 
-export default NarratePR;
+export default PRChat;

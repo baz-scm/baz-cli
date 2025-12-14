@@ -1,5 +1,6 @@
-import type { Discussion } from "../lib/providers/index.js";
+import type { Discussion, RepoWriteAccess } from "../lib/providers/index.js";
 import { IssueType } from "../models/chat.js";
+import { AppConfig } from "../lib/config/index.js";
 
 export type Issue = {
   type: "discussion";
@@ -22,15 +23,19 @@ export interface IssueContext {
   totalIssues: number;
   hasNext: boolean;
   conversationId?: string;
+  repoWriteAccess: RepoWriteAccess;
+  appMode: AppConfig;
   moveToNext: () => void;
   complete: () => void;
   setConversationId: (id: string) => void;
+  setRepoWriteAccess: (writeAccess: RepoWriteAccess) => void;
   onChatSubmit: (message: string) => Promise<void>;
 }
 
 export interface CommandResult {
   shouldMoveNext?: boolean;
   shouldComplete?: boolean;
+  errorMessage?: string;
 }
 
 export interface IssueTypeHandler<T extends Issue = Issue> {

@@ -13,15 +13,18 @@ import ReviewMenu, {
 } from "../flows/Review/ReviewMenu.js";
 import TriggerSpecReviewPrompt from "../pages/SpecReview/TriggerSpecReviewPrompt.js";
 import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js";
-import NarratePR from "../pages/PRWalkthrough/NarratePR.js";
+import PRWalkthrough from "../pages/PRWalkthrough/PRWalkthrough.js";
 import { MAIN_COLOR } from "../theme/colors.js";
-import { useAppMode } from "../lib/config/AppModeContext.js";
+import { useAppMode } from "../lib/config/index.js";
 import type { Requirement } from "../lib/providers/index.js";
 import { PRContext } from "../lib/providers/index.js";
+import { useRepoWriteAccess } from "../hooks/useRepoWriteAccess.js";
+import PRChat from "../pages/PRChat/PRChat.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
   metRequirements: Requirement[];
+  chatInput?: string;
   completedSteps: CompletedSteps;
 }
 
@@ -33,7 +36,8 @@ type State =
   | ({ step: "browseUnmetRequirements" } & MenuStateData)
   | ({ step: "browseMetRequirements" } & MenuStateData)
   | ({ step: "showIssues" } & MenuStateData)
-  | ({ step: "narratePR" } & MenuStateData)
+  | ({ step: "prWalkthrough" } & MenuStateData)
+  | ({ step: "prChat" } & MenuStateData)
   | { step: "complete" };
 
 interface PullRequestReviewProps {
@@ -52,14 +56,20 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   const pr = usePullRequest(prContext);
   const issues = useIssues(prContext);
   const specReviews = useSpecReviews(prContext.prId);
+  const repoWriteAccess = useRepoWriteAccess(prContext);
 
   const prId = prContext.prId;
   const fullRepoName = prContext.fullRepoName;
   // bazRepoId is only available in baz mode, undefined in tokens mode
   const bazRepoId = pr.data?.repository_id;
 
-  const loading = pr.loading || issues.loading || specReviews.loading;
-  const error = pr.error || issues.error || specReviews.error;
+  const loading =
+    pr.loading ||
+    issues.loading ||
+    specReviews.loading ||
+    repoWriteAccess.loading;
+  const error =
+    pr.error || issues.error || specReviews.error || repoWriteAccess.error;
 
   if (loading) {
     return (
@@ -115,7 +125,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     unmetRequirements: false,
     metRequirements: false,
     comments: false,
-    narratePR: false,
+    prWalkthrough: false,
   };
 
   // Handle prompt selection - check spec review status and go to menu
@@ -181,7 +191,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   };
 
   // Handle menu action selection
-  const handleMenuAction = (action: ReviewMenuAction) => {
+  const handleMenuAction = (action: ReviewMenuAction, input?: string) => {
     if (state.step !== "menu") return;
 
     switch (action) {
@@ -203,10 +213,17 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
           step: "showIssues",
         });
         break;
-      case "narratePR":
+      case "prWalkthrough":
         setState({
           ...state,
-          step: "narratePR",
+          step: "prWalkthrough",
+        });
+        break;
+      case "prChat":
+        setState({
+          ...state,
+          chatInput: input,
+          step: "prChat",
         });
         break;
       case "finish":
@@ -297,9 +314,9 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     });
   };
 
-  // Handle back from narrate PR - go to menu and mark as complete (user interacted)
-  const handleBackFromNarratePR = () => {
-    if (state.step !== "narratePR") return;
+  // Handle back from PR walkthrough - go to menu and mark as complete (user interacted)
+  const handleBackFromPRWalkthrough = () => {
+    if (state.step !== "prWalkthrough") return;
 
     setState({
       step: "menu",
@@ -307,8 +324,18 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       metRequirements: state.metRequirements,
       completedSteps: {
         ...state.completedSteps,
-        narratePR: true,
+        prWalkthrough: true,
       },
+    });
+  };
+
+  // Handle back from PR chat - go to menu
+  const handleBackFromPRChat = () => {
+    if (state.step !== "prChat") return;
+
+    setState({
+      ...state,
+      step: "menu",
     });
   };
 
@@ -390,18 +417,30 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
           bazRepoId={bazRepoId}
           fullRepoName={fullRepoName}
           prNumber={prContext.prNumber}
+          writeAccess={repoWriteAccess.data}
           onComplete={handleIssuesComplete}
           onBack={handleBackFromIssues}
         />
       );
-    case "narratePR":
+    case "prWalkthrough":
       return (
-        <NarratePR
+        <PRWalkthrough
           prId={prId}
           bazRepoId={bazRepoId}
           fullRepoName={fullRepoName}
           prNumber={prContext.prNumber}
-          onBack={handleBackFromNarratePR}
+          onBack={handleBackFromPRWalkthrough}
+        />
+      );
+    case "prChat":
+      return (
+        <PRChat
+          prId={prId}
+          bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
+          prNumber={prContext.prNumber}
+          chatInput={state.chatInput}
+          onBack={handleBackFromPRChat}
         />
       );
     case "complete":

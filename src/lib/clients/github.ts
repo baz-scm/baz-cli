@@ -308,6 +308,34 @@ export async function fetchUnresolvedReviewThreads(
   }
 }
 
+export async function postReviewThreadReply(
+  fullRepoName: string,
+  prNumber: number,
+  threadId: string,
+  body: string,
+) {
+  const octokit = getOctokitClient();
+  const { owner, repo } = parseRepoId(fullRepoName);
+
+  try {
+    await octokit.rest.pulls.createReviewComment({
+      owner,
+      repo,
+      pull_number: prNumber,
+      body,
+      in_reply_to: Number(threadId),
+      commit_id: "", // values are required but ignored
+      path: "", // values are required but ignored
+    });
+  } catch (error) {
+    logger.error(
+      { error, fullRepoName, prNumber },
+      "Error replying to review comment on GitHub",
+    );
+    throw error;
+  }
+}
+
 export async function approvePullRequest(
   fullRepoName: string,
   prNumber: number,

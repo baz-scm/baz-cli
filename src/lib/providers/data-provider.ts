@@ -9,6 +9,7 @@ import type {
   FileDiff,
   ChangeReviewer,
   PRContext,
+  RepoWriteAccess,
 } from "./types.js";
 
 export interface IDataProvider {
@@ -21,6 +22,12 @@ export interface IDataProvider {
   fetchPRDetails(ctx: PRContext): Promise<PullRequestDetails>;
 
   fetchDiscussions(ctx: PRContext): Promise<Discussion[]>;
+
+  postDiscussionReply(
+    ctx: PRContext,
+    discussionId: string,
+    body: string,
+  ): Promise<void>;
 
   approvePR(ctx: PRContext): Promise<void>;
 
@@ -37,4 +44,6 @@ export interface IDataProvider {
   ): Promise<FileDiff[]>;
 
   fetchEligibleReviewers(ctx: PRContext): Promise<ChangeReviewer[]>;
+
+  fetchRepoWriteAccess(ctx: PRContext): Promise<RepoWriteAccess>;
 }

@@ -142,3 +142,14 @@ export interface PRContext {
   fullRepoName: string;
   prNumber: number;
 }
+
+export enum RepoWriteAccessReason {
+  MISSING_USER_INSTALLATION = "missing-user-installation",
+  MISSING_ORG_INSTALLATION = "missing-org-installation",
+  REPO_NOT_CONFIGURED = "repo-not-configured",
+}
+
+export interface RepoWriteAccess {
+  hasAccess: boolean;
+  reason: RepoWriteAccessReason | null;
+}

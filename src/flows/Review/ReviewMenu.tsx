@@ -2,19 +2,24 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import { MAIN_COLOR } from "../../theme/colors.js";
+import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import TextInput from "ink-text-input";
+
+const CHAT_ITEM_LABEL = "Chat with PR";
 
 export type ReviewMenuAction =
   | "viewUnmetRequirements"
   | "viewMetRequirements"
   | "viewComments"
-  | "narratePR"
+  | "prWalkthrough"
+  | "prChat"
   | "finish";
 
 export interface CompletedSteps {
   unmetRequirements: boolean;
   metRequirements: boolean;
   comments: boolean;
-  narratePR: boolean;
+  prWalkthrough: boolean;
 }
 
 interface ReviewMenuProps {
@@ -22,7 +27,7 @@ interface ReviewMenuProps {
   metRequirementsCount: number;
   unresolvedCommentsCount: number;
   completedSteps: CompletedSteps;
-  onSelect: (action: ReviewMenuAction) => void;
+  onSelect: (action: ReviewMenuAction, input?: string) => void;
   onBack: () => void;
 }
 
@@ -41,8 +46,19 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   onBack,
 }) => {
   const [isSelected, setIsSelected] = useState(false);
+  const [chatMode, setChatMode] = useState(false);
+  const [chatInput, setChatInput] = useState("");
 
   useInput((_input, key) => {
+    // ignore input in chat mode
+    if (chatMode) {
+      if (key.escape) {
+        setChatMode(false);
+        setChatInput("");
+      }
+      return;
+    }
+
     if (key.escape && !isSelected) {
       onBack();
     }
@@ -82,9 +98,9 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   // Build menu items - only show options with data, plus always show Narrate PR
   const items: SelectItem[] = [
     {
-      label: "Narrate change request",
-      value: "narratePR",
-      completed: completedSteps.narratePR,
+      label: "PR Walkthrough",
+      value: "prWalkthrough",
+      completed: completedSteps.prWalkthrough,
     },
   ];
 
@@ -112,15 +128,46 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
     });
   }
 
-  items.push({
-    label: "Finish review",
-    value: "finish",
-    completed: false,
-  });
+  items.push(
+    {
+      label: CHAT_ITEM_LABEL,
+      value: "prChat",
+      completed: false,
+    },
+    {
+      label: "Finish review",
+      value: "finish",
+      completed: false,
+    },
+  );
 
   const handleSelect = (item: { label: string; value: ReviewMenuAction }) => {
+    if (item.value === "prChat") {
+      // handled by `handleChatSubmit()`
+      return;
+    }
     setIsSelected(true);
     onSelect(item.value);
+  };
+
+  const handleHighlight = (item: {
+    label: string;
+    value: ReviewMenuAction;
+  }) => {
+    if (item.value === "prChat") {
+      setChatMode(true);
+    } else if (chatMode) {
+      setChatMode(false);
+      setChatInput("");
+    }
+  };
+
+  const handleChatSubmit = (value: string) => {
+    const inputValue = value.trim();
+    if (inputValue) {
+      setIsSelected(true);
+      onSelect("prChat", inputValue);
+    }
   };
 
   if (isSelected) {
@@ -164,14 +211,32 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
 
       <SelectInput
         items={items}
+        isFocused={!(chatMode && chatInput)} // override the built-in input handler
         onSelect={handleSelect}
+        onHighlight={handleHighlight}
         indicatorComponent={({ isSelected: isHighlighted }) => (
           <Text color={isHighlighted ? "green" : "gray"}>
-            {isHighlighted ? "→" : " "}
+            {isHighlighted ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected: isHighlighted, label }) => {
           const completed = completionByLabel.get(label) ?? false;
+
+          // inline chat box
+          if (label === CHAT_ITEM_LABEL && chatMode) {
+            return (
+              <Box>
+                <TextInput
+                  value={chatInput}
+                  onChange={setChatInput}
+                  onSubmit={handleChatSubmit}
+                  placeholder={CHAT_ITEM_LABEL}
+                  focus={true}
+                />
+              </Box>
+            );
+          }
+
           if (completed) {
             return (
               <Text
@@ -189,7 +254,9 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
 
       <Box marginTop={1}>
         <Text dimColor>
-          ↕ to navigate{"    "}↵ to choose{"    "}↺ skip
+          ↕ to navigate{"    "}↵ to {chatMode ? "submit" : "choose"}
+          {"    "}
+          {chatMode ? "↺ exit chat" : "↺ skip"}
         </Text>
       </Box>
     </Box>

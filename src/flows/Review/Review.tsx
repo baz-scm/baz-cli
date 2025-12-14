@@ -9,7 +9,7 @@ import { logger } from "../../lib/logger.js";
 import PullRequestReview from "../../components/PullRequestReview.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { REVIEW_COMPLETE_TEXT } from "../../theme/banners.js";
-import { useAppMode } from "../../lib/config/AppModeContext.js";
+import { useAppMode } from "../../lib/config/index.js";
 
 const SelectedPRHeader: React.FC<{ pullRequest: PullRequest }> = ({
   pullRequest,
@@ -226,7 +226,7 @@ const CompleteMessage: React.FC<{
       <SelectedPRHeader pullRequest={flowState.selectedPR} />
       <Box flexDirection="column" marginBottom={1}>
         <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
-        <Text>CR Review completed</Text>
+        <Text>PR Review completed</Text>
       </Box>
       {onSelect && (
         <PostReviewPrompt

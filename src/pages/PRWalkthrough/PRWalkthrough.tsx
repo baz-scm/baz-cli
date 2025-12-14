@@ -7,12 +7,16 @@ const INITIAL_PROMPT =
 interface PRWalkthroughProps {
   prId: string;
   bazRepoId?: string;
+  fullRepoName: string;
+  prNumber: number;
   onBack: () => void;
 }
 
 const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
   prId,
   bazRepoId,
+  fullRepoName,
+  prNumber,
   onBack,
 }) => {
   return (
@@ -20,6 +24,8 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
       prId={prId}
       bazRepoId={bazRepoId}
       chatInput={INITIAL_PROMPT}
+      fullRepoName={fullRepoName}
+      prNumber={prNumber}
       chatTitle="PR Walkthrough"
       chatDescription="Walkthrough the pull request with Baz. Press ESC to go back."
       outputInitialMessage={false}

@@ -3,10 +3,11 @@ import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
 import ChatDisplay from "./chat/ChatDisplay.js";
-import { ChatMessage } from "../models/chat.js";
-import { streamChatResponse } from "../lib/clients/baz.js";
+import { ChatMessage, CheckoutChatRequest, IssueType } from "../models/chat.js";
+import type { Discussion } from "../lib/providers/types.js";
 import { RepoWriteAccess } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/index.js";
+import { processStream } from "../lib/chat-stream.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -46,75 +47,115 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const ExplainComponent = handler.displayExplainComponent;
   const DisplayComponent = handler.displayComponent;
 
-  const handleChatSubmit = useCallback(
-    async (message: string) => {
-      const userMessage: ChatMessage = {
-        role: "user",
-        content: message,
-      };
+  const buildChatRequest = useCallback(
+    async (
+      message: string,
+      issue: Issue,
+      convId?: string,
+    ): Promise<CheckoutChatRequest> => {
+      const issueType = handler.getApiIssueType(issue);
+      const prContext = { prId, fullRepoName, prNumber };
 
-      setChatMessages((prev) => [...prev, userMessage]);
-      setIsLoading(true);
-
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: "",
-      };
-
-      setChatMessages((prev) => [...prev, assistantMessage]);
-
-      try {
-        let accumulatedResponse = "";
-        let firstChunk = true;
-
-        for await (const chunk of streamChatResponse({
-          repoId: bazRepoId ?? fullRepoName,
+      if (appMode.mode.name === "baz" && bazRepoId) {
+        return {
+          mode: "baz",
+          repoId: bazRepoId,
           prId,
           issue: {
-            type: handler.getApiIssueType(currentIssue),
+            type: issueType,
+            data: { id: issue.data.id },
+          },
+          freeText: message,
+          conversationId: convId,
+        };
+      }
+
+      if (issue.type === "discussion") {
+        const discussion = issue.data as Discussion;
+        const files = discussion.file ? [discussion.file] : [];
+
+        const diffData = await appMode.mode.dataProvider.fetchFileDiffs(
+          prContext,
+          discussion.commit_sha,
+          files,
+        );
+
+        return {
+          mode: "tokens",
+          prContext,
+          issue: {
+            type: IssueType.DISCUSSION,
             data: {
-              id: currentIssue.data.id,
+              id: discussion.id,
+              discussion,
+              diff: diffData,
             },
           },
           freeText: message,
+          conversationId: convId,
+        };
+      }
+
+      return {
+        mode: "tokens",
+        prContext,
+        issue: {
+          type: IssueType.PULL_REQUEST,
+          data: { id: issue.data.id },
+        },
+        freeText: message,
+        conversationId: convId,
+      };
+    },
+    [appMode.mode, bazRepoId, prId, fullRepoName, prNumber, handler],
+  );
+
+  const handleChatSubmit = useCallback(
+    async (message: string) => {
+      setChatMessages((prev) => [...prev, { role: "user", content: message }]);
+      setIsLoading(true);
+
+      try {
+        const request = await buildChatRequest(
+          message,
+          currentIssue,
           conversationId,
-        })) {
-          if (chunk.conversationId) {
-            setConversationId(chunk.conversationId);
-          }
-
-          if (chunk.content) {
-            if (firstChunk) {
-              setIsLoading(false);
-              firstChunk = false;
+        );
+        await processStream(request, {
+          onConversationId: setConversationId,
+          onFirstTextContent: () => setIsLoading(false),
+          onUpdate: (content, toolCalls, isFirst) => {
+            if (isFirst) {
+              setChatMessages((prev) => [
+                ...prev,
+                { role: "assistant", content, toolCalls },
+              ]);
+            } else {
+              setChatMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content,
+                  toolCalls,
+                };
+                return updated;
+              });
             }
-
-            accumulatedResponse += chunk.content;
-
-            setChatMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                role: "assistant",
-                content: accumulatedResponse,
-              };
-              return updated;
-            });
-          }
-        }
+          },
+        });
       } catch (error) {
         console.error("Failed to get chat response:", error);
         setIsLoading(false);
-        setChatMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
+        setChatMessages((prev) => [
+          ...prev,
+          {
             role: "assistant",
             content: "Sorry, I encountered an error. Please try again.",
-          };
-          return updated;
-        });
+          },
+        ]);
       }
     },
-    [bazRepoId, fullRepoName, prId, handler, currentIssue, conversationId],
+    [buildChatRequest, currentIssue, conversationId],
   );
 
   const context: IssueContext = useMemo(

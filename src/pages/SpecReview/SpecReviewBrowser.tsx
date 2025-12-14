@@ -73,6 +73,7 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
     try {
       await processStream(
         {
+          mode: "baz",
           repoId: bazRepoId,
           prId,
           issue: {

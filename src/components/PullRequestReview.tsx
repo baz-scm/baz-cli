@@ -427,6 +427,8 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <PRWalkthrough
           prId={prId}
           bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
+          prNumber={prContext.prNumber}
           onBack={handleBackFromPRWalkthrough}
         />
       );
@@ -435,6 +437,8 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
         <PRChat
           prId={prId}
           bazRepoId={bazRepoId}
+          fullRepoName={fullRepoName}
+          prNumber={prContext.prNumber}
           chatInput={state.chatInput}
           onBack={handleBackFromPRChat}
         />

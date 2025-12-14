@@ -155,14 +155,14 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
 
   const availableCommands: IssueCommand[] = [
     {
-      command: "next",
+      command: "/next",
       description:
         currentIndex + 1 >= unmetRequirements.length
           ? "Complete requirement review"
           : "Move to next requirement",
     },
     {
-      command: "explain",
+      command: "/explain",
       description: "Show evidence for this requirement",
     },
   ];

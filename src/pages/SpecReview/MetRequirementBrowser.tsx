@@ -154,14 +154,14 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
 
   const availableCommands: IssueCommand[] = [
     {
-      command: "next",
+      command: "/next",
       description:
         currentIndex + 1 < metRequirements.length
           ? "Move to next requirement"
           : "Complete requirement review",
     },
     {
-      command: "explain",
+      command: "/explain",
       description: "Show evidence for this requirement",
     },
   ];

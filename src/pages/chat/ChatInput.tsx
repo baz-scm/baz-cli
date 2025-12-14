@@ -1,6 +1,5 @@
 import React, { useState, useEffect, memo, useMemo, useRef } from "react";
 import { Box, Text, useInput } from "ink";
-import TextInput from "ink-text-input";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
 import type { ChangeReviewer } from "../../lib/providers/index.js";
@@ -35,22 +34,48 @@ const ChatInput = memo<ChatInputProps>(
     onToggleToolCallExpansion,
     terminalWidth,
   }) => {
-    const [inputValue, setInputValue] = useState("");
+    const [displayValue, setDisplayValue] = useState("");
     const [showFullHelp, setShowFullHelp] = useState(false);
     const [reviewers, setReviewers] = useState<ChangeReviewer[]>([]);
-    const [showMentionAutocomplete, setShowMentionAutocomplete] =
-      useState(false);
+    const [showMentionAutocomplete, setShowMentionAutocomplete] = useState(false);
     const [mentionSearchQuery, setMentionSearchQuery] = useState("");
     const [mentionStartIndex, setMentionStartIndex] = useState(-1);
     const appMode = useAppMode();
     const dataProvider = appMode.mode.dataProvider;
 
-    // Use ref to track input value for useInput callback to avoid stale closures
-    const inputValueRef = useRef(inputValue);
-    inputValueRef.current = inputValue;
+    const inputRef = useRef("");
+    const cursorPosRef = useRef(0);
 
-    // Track when a Ctrl shortcut was pressed to skip the character in TextInput
-    const skipNextInputRef = useRef(false);
+    // Sync display with ref - immediate update
+    const syncDisplay = () => {
+      setDisplayValue(inputRef.current);
+      const value = inputRef.current;
+      if (value.startsWith("/") && !value.includes(" ")) {
+        setShowFullHelp(true);
+      } else if (!value.startsWith("/")) {
+        setShowFullHelp(false);
+      }
+
+      if (enableMentions) {
+        const lastAtIndex = value.lastIndexOf("@");
+        if (lastAtIndex !== -1) {
+          const textAfterAt = value.slice(lastAtIndex + 1);
+          if (!textAfterAt.includes(" ")) {
+            setShowMentionAutocomplete(true);
+            setMentionSearchQuery(textAfterAt);
+            setMentionStartIndex(lastAtIndex);
+          } else {
+            setShowMentionAutocomplete(false);
+            setMentionSearchQuery("");
+            setMentionStartIndex(-1);
+          }
+        } else {
+          setShowMentionAutocomplete(false);
+          setMentionSearchQuery("");
+          setMentionStartIndex(-1);
+        }
+      }
+    };
 
     useEffect(() => {
       if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
@@ -63,7 +88,6 @@ const ChatInput = memo<ChatInputProps>(
       }
     }, [enableMentions, prId, fullRepoName, prNumber]);
 
-    // Only handle escape key in useInput - let TextInput handle all other input
     useInput(
       (input, key) => {
         if (key.escape) {
@@ -74,69 +98,82 @@ const ChatInput = memo<ChatInputProps>(
           } else {
             onBack();
           }
-        } else if (toolsExist && key.ctrl && input.toLowerCase() === "o") {
-          skipNextInputRef.current = true; // Skip the "o" that TextInput will add
+          return;
+        }
+
+        if (toolsExist && key.ctrl && input.toLowerCase() === "o") {
           onToggleToolCallExpansion();
+          return;
+        }
+
+        if (key.return) {
+          const value = inputRef.current.trim();
+          if (value && !showMentionAutocomplete) {
+            onSubmit(value);
+            inputRef.current = "";
+            cursorPosRef.current = 0;
+            setDisplayValue("");
+            setShowFullHelp(false);
+          }
+          return;
+        }
+
+        if (key.backspace || key.delete) {
+          if (cursorPosRef.current > 0) {
+            const before = inputRef.current.slice(0, cursorPosRef.current - 1);
+            const after = inputRef.current.slice(cursorPosRef.current);
+            inputRef.current = before + after;
+            cursorPosRef.current--;
+            syncDisplay();
+          }
+          return;
+        }
+
+        if (key.leftArrow) {
+          if (cursorPosRef.current > 0) {
+            cursorPosRef.current--;
+            syncDisplay();
+          }
+          return;
+        }
+
+        if (key.rightArrow) {
+          if (cursorPosRef.current < inputRef.current.length) {
+            cursorPosRef.current++;
+            syncDisplay();
+          }
+          return;
+        }
+
+        if (inputRef.current === "" && input === "?") {
+          setShowFullHelp((prev) => !prev);
+          return;
+        }
+
+        if (input && !key.ctrl && !key.meta) {
+          const before = inputRef.current.slice(0, cursorPosRef.current);
+          const after = inputRef.current.slice(cursorPosRef.current);
+          inputRef.current = before + input + after;
+          cursorPosRef.current += input.length;
+          syncDisplay();
         }
       },
       { isActive: !showMentionAutocomplete },
     );
 
-    const handleInputChange = (value: string) => {
-      // Skip input if a Ctrl shortcut was just pressed (e.g., Ctrl+O adds stray "o")
-      if (skipNextInputRef.current) {
-        skipNextInputRef.current = false;
-        return;
-      }
-
-      // Handle "?" for help toggle when input is empty
-      if (inputValueRef.current === "" && value === "?") {
-        setShowFullHelp((prev) => !prev);
-        return;
-      }
-
-      setInputValue(value);
-
-      if (value.startsWith("/") && !value.includes(" ")) {
-        setShowFullHelp(true);
-      } else if (showFullHelp && !value.startsWith("/")) {
-        setShowFullHelp(false);
-      }
-
-      if (!enableMentions) {
-        return;
-      }
-
-      const lastAtIndex = value.lastIndexOf("@");
-      if (lastAtIndex !== -1) {
-        const textAfterAt = value.slice(lastAtIndex + 1);
-        if (!textAfterAt.includes(" ")) {
-          setShowMentionAutocomplete(true);
-          setMentionSearchQuery(textAfterAt);
-          setMentionStartIndex(lastAtIndex);
-        } else {
-          setShowMentionAutocomplete(false);
-          setMentionSearchQuery("");
-          setMentionStartIndex(-1);
-        }
-      } else {
-        setShowMentionAutocomplete(false);
-        setMentionSearchQuery("");
-        setMentionStartIndex(-1);
-      }
-    };
-
     const handleMentionSelect = (reviewer: MentionableUser) => {
       const lastSlashIndex = reviewer.login.lastIndexOf("/");
       const login = reviewer.login.substring(lastSlashIndex + 1);
 
-      const beforeMention = inputValue.slice(0, mentionStartIndex);
-      const afterMention = inputValue.slice(
+      const beforeMention = inputRef.current.slice(0, mentionStartIndex);
+      const afterMention = inputRef.current.slice(
         mentionStartIndex + mentionSearchQuery.length + 1,
       );
       const newValue = `${beforeMention}@${login} ${afterMention}`.trimEnd();
 
-      setInputValue(newValue);
+      inputRef.current = newValue;
+      cursorPosRef.current = newValue.length;
+      setDisplayValue(newValue);
       setShowMentionAutocomplete(false);
       setMentionSearchQuery("");
       setMentionStartIndex(-1);
@@ -146,14 +183,6 @@ const ChatInput = memo<ChatInputProps>(
       setShowMentionAutocomplete(false);
       setMentionSearchQuery("");
       setMentionStartIndex(-1);
-    };
-
-    const handleSubmit = () => {
-      if (inputValue.trim() && !showMentionAutocomplete) {
-        onSubmit(inputValue);
-        setInputValue("");
-        setShowFullHelp(false);
-      }
     };
 
     const defaultHints = useMemo(() => {
@@ -200,11 +229,11 @@ const ChatInput = memo<ChatInputProps>(
       let commandsToShow = availableCommands;
 
       if (
-        inputValue.startsWith("/") &&
-        inputValue.length > 1 &&
-        !inputValue.includes(" ")
+        displayValue.startsWith("/") &&
+        displayValue.length > 1 &&
+        !displayValue.includes(" ")
       ) {
-        const searchTerm = inputValue.slice(1).toLowerCase();
+        const searchTerm = displayValue.slice(1).toLowerCase();
         commandsToShow = availableCommands.filter((cmd) => {
           const commandName = cmd.command.split(" ")[0].slice(1).toLowerCase();
           return commandName.startsWith(searchTerm);
@@ -215,14 +244,31 @@ const ChatInput = memo<ChatInputProps>(
         hints.push(`${cmd.command} - ${cmd.description}`);
       });
 
-      if (commandsToShow.length === 0 && inputValue.startsWith("/")) {
+      if (commandsToShow.length === 0 && displayValue.startsWith("/")) {
         hints.push("No matching commands");
       }
 
       hints.push("? to hide help");
       hints.push("ESC to go back");
       return hints;
-    }, [availableCommands, inputValue]);
+    }, [availableCommands, displayValue]);
+
+    // Build the display with cursor
+    const displayWithCursor = useMemo(() => {
+      if (displayValue === "") {
+        return <Text dimColor>{placeholder}</Text>;
+      }
+      // Show text with cursor indicator
+      const before = displayValue.slice(0, cursorPosRef.current);
+      const after = displayValue.slice(cursorPosRef.current);
+      return (
+        <Text>
+          {before}
+          <Text inverse> </Text>
+          {after}
+        </Text>
+      );
+    }, [displayValue, placeholder]);
 
     return (
       <Box flexDirection="column">
@@ -233,12 +279,7 @@ const ChatInput = memo<ChatInputProps>(
           width={terminalWidth}
           flexShrink={1}
         >
-          <TextInput
-            value={inputValue}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
-            placeholder={placeholder}
-          />
+          {displayWithCursor}
         </Box>
         {enableMentions && showMentionAutocomplete && reviewers.length > 0 && (
           <MentionAutocomplete

@@ -72,6 +72,7 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
     try {
       await processStream(
         {
+          mode: "baz",
           repoId: bazRepoId,
           prId,
           issue: {

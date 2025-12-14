@@ -9,13 +9,29 @@ export function usePullRequests() {
   const appMode = useAppMode();
 
   useEffect(() => {
+    let cancelled = false;
+    
     appMode.mode.dataProvider
       .fetchPRs()
       .then((prs) => {
-        setData(prs.sort((a, b) => b.prNumber - a.prNumber));
+        if (!cancelled) {
+          setData(prs.sort((a, b) => b.prNumber - a.prNumber));
+        }
       })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err: Error) => {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+      
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return { data, loading, error };

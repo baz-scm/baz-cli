@@ -9,13 +9,29 @@ export function useSpecReviews(prId: string) {
   const appMode = useAppMode();
 
   useEffect(() => {
+    let cancelled = false;
+    
     appMode.mode.dataProvider
       .fetchSpecReviews(prId)
       .then((specReviews) => {
-        setData(specReviews);
+        if (!cancelled) {
+          setData(specReviews);
+        }
       })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err: Error) => {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+      
+    return () => {
+      cancelled = true;
+    };
   }, [prId]);
 
   return { data, loading, error };

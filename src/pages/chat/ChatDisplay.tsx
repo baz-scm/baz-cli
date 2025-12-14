@@ -128,7 +128,6 @@ const ChatDisplay = memo<ChatDisplayProps>(
     prNumber,
     enableMentions = false,
     onBack,
-    // onToggleToolCallExpansion,
   }) => {
     const { stdout } = useStdout();
     const [terminalWidth, setTerminalWidth] = useState(stdout?.columns || 80);
@@ -215,6 +214,21 @@ const ChatDisplay = memo<ChatDisplayProps>(
           />
         )}
       </Box>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.messages === nextProps.messages &&
+      prevProps.isLoading === nextProps.isLoading &&
+      prevProps.disabled === nextProps.disabled &&
+      prevProps.placeholder === nextProps.placeholder &&
+      prevProps.availableCommands === nextProps.availableCommands &&
+      prevProps.enableMentions === nextProps.enableMentions &&
+      prevProps.prId === nextProps.prId &&
+      prevProps.fullRepoName === nextProps.fullRepoName &&
+      prevProps.prNumber === nextProps.prNumber &&
+      prevProps.onSubmit === nextProps.onSubmit &&
+      prevProps.onBack === nextProps.onBack
     );
   },
 );

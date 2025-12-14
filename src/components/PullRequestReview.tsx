@@ -109,10 +109,10 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
 
     return {
       unmetRequirements: latestSpecReview.requirements.filter(
-        (req) => req.verdict !== "met",
+        (req) => req.verdict !== "met"
       ),
       metRequirements: latestSpecReview.requirements.filter(
-        (req) => req.verdict === "met",
+        (req) => req.verdict === "met"
       ),
     };
   };

@@ -16,14 +16,30 @@ export function useRepoWriteAccess(ctx: PRContext) {
   const appMode = useAppMode();
 
   useEffect(() => {
+    let cancelled = false;
+
     appMode.mode.dataProvider
       .fetchRepoWriteAccess(ctx)
       .then((access) => {
-        setData(access);
+        if (!cancelled) {
+          setData(access);
+        }
       })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch((err: Error) => {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ctx.fullRepoName]);
 
   return { data, loading, error };
 }

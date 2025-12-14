@@ -9,11 +9,29 @@ export function useFetchMergeStatus(ctx: PRContext) {
   const appMode = useAppMode();
 
   useEffect(() => {
+    let cancelled = false;
+    
     appMode.mode.dataProvider
       .fetchMergeStatus(ctx)
-      .then(setData)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .then((status) => {
+        if (!cancelled) {
+          setData(status);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+      
+    return () => {
+      cancelled = true;
+    };
   }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
 
   return { data, loading, error };

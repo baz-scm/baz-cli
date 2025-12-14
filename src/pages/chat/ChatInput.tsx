@@ -49,9 +49,6 @@ const ChatInput = memo<ChatInputProps>(
     const inputValueRef = useRef(inputValue);
     inputValueRef.current = inputValue;
 
-    // Track when a Ctrl shortcut was pressed to skip the character in TextInput
-    const skipNextInputRef = useRef(false);
-
     useEffect(() => {
       if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
         dataProvider
@@ -63,9 +60,9 @@ const ChatInput = memo<ChatInputProps>(
       }
     }, [enableMentions, prId, fullRepoName, prNumber]);
 
-    // Only handle escape key in useInput - let TextInput handle all other input
+    // Handle special keys - let TextInput handle regular text input
     useInput(
-      (input, key) => {
+      (_input, key) => {
         if (key.escape) {
           if (showMentionAutocomplete) {
             setShowMentionAutocomplete(false);
@@ -74,8 +71,8 @@ const ChatInput = memo<ChatInputProps>(
           } else {
             onBack();
           }
-        } else if (toolsExist && key.ctrl && input.toLowerCase() === "o") {
-          skipNextInputRef.current = true; // Skip the "o" that TextInput will add
+        } else if (key.tab && toolsExist) {
+          // Tab toggles tool call expansion
           onToggleToolCallExpansion();
         }
       },
@@ -83,12 +80,6 @@ const ChatInput = memo<ChatInputProps>(
     );
 
     const handleInputChange = (value: string) => {
-      // Skip input if a Ctrl shortcut was just pressed (e.g., Ctrl+O adds stray "o")
-      if (skipNextInputRef.current) {
-        skipNextInputRef.current = false;
-        return;
-      }
-
       // Handle "?" for help toggle when input is empty
       if (inputValueRef.current === "" && value === "?") {
         setShowFullHelp((prev) => !prev);

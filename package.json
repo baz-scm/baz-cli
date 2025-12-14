@@ -25,7 +25,7 @@
     "cli"
   ],
   "author": "Baz Technologies",
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "url": "https://github.com/baz-scm/baz-cli"
   },

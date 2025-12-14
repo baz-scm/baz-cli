@@ -110,7 +110,7 @@ baz
 - **Node.js** 22 or later (see `engines` in `package.json`)
 - **Standalone Mode**: GitHub PAT and Anthropic API key
 - **Integrated Mode**: Account in [Baz](https://baz.co/login)
-- **Optional**: Jira, Linear, YouTrack etc integrated in baz for ticket context
+- **Optional**: Jira, Linear, YouTrack, etc. integrated in baz for ticket context
 
 
 #### Review Flow

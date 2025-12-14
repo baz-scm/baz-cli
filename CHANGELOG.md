@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/baz-scm/baz-cli/compare/v0.3.1...v0.3.2) (2025-12-14)
+
+
+### ✨ New Features
+
+* add option to Chat with PR ([#67](https://github.com/baz-scm/baz-cli/issues/67)) ([b794e7c](https://github.com/baz-scm/baz-cli/commit/b794e7c95fc5a57ea78a3a45778e7d4c3440d3e2))
+
 ## [0.3.1](https://github.com/baz-scm/baz-cli/compare/v0.3.0...v0.3.1) (2025-12-11)
 
 

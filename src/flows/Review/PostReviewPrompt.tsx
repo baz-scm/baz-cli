@@ -75,14 +75,15 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setActionError(null);
     try {
       await dataProvider.approvePR(prContext);
-      if (user.data?.login) {
+      const userLogin = user.data?.login;
+      if (userLogin) {
         pr.updateData((prev) => {
-          if (!prev || !user.data?.login) return prev;
+          if (!prev) return prev;
           return {
             ...prev,
             reviews: [
               ...prev.reviews,
-              { assignee: user.data.login, review_state: "approved" },
+              { assignee: userLogin, review_state: "approved" },
             ],
           };
         });

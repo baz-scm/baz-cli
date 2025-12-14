@@ -21,7 +21,7 @@ AI has revolutionized software development. With AI assistants, developers can w
 
 While AI helps you write code at unprecedented speed, human reviewers still need to review every change, understand context, catch edge cases, and ensure quality. This creates a frustrating mismatch: you can ship tons of code, but reviews take hours or days.
 
-### ✨ Baz CLI Changes That
+### ✨ How Baz CLI Changes That
 
 **Let AI guide you through reviews**, helping you focus on what matters while skimming through the rest. Get intelligent insights, automated analysis, and context-aware suggestions, thoughtful and logical ordering that lets you get through all those reviews fast—**all in your terminal!**
 

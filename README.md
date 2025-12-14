@@ -1,4 +1,4 @@
-<div style="text-align: center;">
+<div align="center">
 
 # Baz CLI
 
@@ -203,7 +203,7 @@ Found a bug or have a feature request? [Open an issue](https://github.com/baz-sc
 
 ---
 
-<div style="text-align: center;">
+<div align="center">
 
 Made with ❤️ by the Baz team
 

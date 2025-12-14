@@ -22,7 +22,6 @@ interface PRChatProps {
   onBack: () => void;
 }
 
-
 const PRChat: React.FC<PRChatProps> = ({
   prId,
   bazRepoId,
@@ -45,7 +44,10 @@ const PRChat: React.FC<PRChatProps> = ({
   // Build the chat request based on app mode
   const buildChatRequest = useCallback(
     (freeText: string, convId?: string): CheckoutChatRequest => {
-      const issue = { type: IssueType.PULL_REQUEST, data: { id: prId } } as const;
+      const issue = {
+        type: IssueType.PULL_REQUEST,
+        data: { id: prId },
+      } as const;
 
       if (appMode.mode.name === "baz" && bazRepoId) {
         return {

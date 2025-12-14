@@ -29,5 +29,14 @@ export function usePullRequest(ctx: PRContext) {
     await fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refetch };
+  const updateData = useCallback(
+    (
+      updater: (prev: PullRequestDetails | null) => PullRequestDetails | null,
+    ) => {
+      setData(updater);
+    },
+    [],
+  );
+
+  return { data, loading, error, refetch, updateData };
 }

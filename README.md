@@ -30,7 +30,6 @@ While AI helps you write code at unprecedented speed, human reviewers still need
 - [Two Ways to Use Baz CLI](#two-ways-to-use-baz-cli)
   - [Standalone Mode (Bring your own keys)](#-standalone-mode-bring-your-own-keys)
   - [Integrated Mode (Baz Experience)](#-integrated-mode-baz-experience)
-- [Quick Start](#-quick-start)
 - [Features](#-features)
 - [Requirements](#requirements)
 - [Review Flow](#review-flow)
@@ -85,21 +84,6 @@ Connect with [Baz](https://baz.co/login) to get the full experience: AI assistan
 **Setup:**
 ```bash
 npm i -g @baz-scm/cli
-baz
-```
-
-
-## 🚀 Quick Start
-
-```bash
-# 1. Install globally
-npm i -g @baz-scm/cli
-
-# 2. Optional - Run using your keys. If you have a baz account, skip this step
-export GH_TOKEN=your_github_pat
-export ANTHROPIC_TOKEN=your_anthropic_api_key
-
-# 3. Run a review
 baz
 ```
 

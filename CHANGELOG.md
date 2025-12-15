@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.4](https://github.com/baz-scm/baz-cli/compare/v0.3.3...v0.3.4) (2025-12-15)
+
+
+### 🐛 Bug Fixes
+
+* fix merge actions ([#77](https://github.com/baz-scm/baz-cli/issues/77)) ([4dfcead](https://github.com/baz-scm/baz-cli/commit/4dfcead5b8188af03d44993e8f8bff553b1af14b))
+* implement resolve and comment ([#79](https://github.com/baz-scm/baz-cli/issues/79)) ([cd25f58](https://github.com/baz-scm/baz-cli/commit/cd25f58a0620fa98d59aa8a01386b933848b2579))
+* rerendering issue  ([#78](https://github.com/baz-scm/baz-cli/issues/78)) ([49c66b9](https://github.com/baz-scm/baz-cli/commit/49c66b91d2b9171f1b95d6b8876f336372d3e97c))
+
+
+### 📚 Documentation
+
+* Improve GH PAT permissions documentation ([#75](https://github.com/baz-scm/baz-cli/issues/75)) ([7df6769](https://github.com/baz-scm/baz-cli/commit/7df6769e29c2338f44f5a2971841559410e2b848))
+
 ## [0.3.3](https://github.com/baz-scm/baz-cli/compare/v0.3.2...v0.3.3) (2025-12-15)
 
 

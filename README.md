@@ -58,7 +58,7 @@ Baz CLI offers two modes to fit your workflow:
 
 ### 🔑 Standalone Mode (Bring your own keys)
 
-Use your own GitHub Personal Access Token (PAT) and Anthropic API key to review any pull request directly.
+Use your own GitHub Personal Access Token (PAT) and Anthropic token to review any pull request directly.
 
 **Perfect for:**
 - Reviewing PRs without Baz service integration

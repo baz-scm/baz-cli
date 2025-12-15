@@ -102,14 +102,32 @@ const ChatInput = memo<ChatInputProps>((props) => {
     }
     const query = text.slice(lastAt + 1);
     setMention({ show: true, query, startIndex: lastAt });
-  }, [enableMentions, mention.show]);
+
+    // Auto-cancel if no reviewers available after a brief delay
+    if (reviewers.length === 0) {
+      setTimeout(() => {
+        if (reviewers.length === 0) {
+          setMention({ show: false, query: "", startIndex: -1 });
+        }
+      }, 500); // give fetch a chance
+    }
+  }, [enableMentions, mention.show, reviewers.length]);
 
   useEffect(() => {
     if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
       dataProvider
         .fetchEligibleReviewers({ prId, fullRepoName, prNumber })
         .then(setReviewers)
-        .catch(() => {});
+        .catch((error) => {
+          console.error("Failed to fetch eligible reviewers:", error);
+          // Clear mention state if fetch fails
+          setMention((prev) => {
+            if (prev.show) {
+              return { show: false, query: "", startIndex: -1 };
+            }
+            return prev;
+          });
+        });
     }
   }, [enableMentions, prId, fullRepoName, prNumber, dataProvider]);
 
@@ -136,79 +154,85 @@ const ChatInput = memo<ChatInputProps>((props) => {
     syncDisplay(true);
   }, [mention, syncDisplay]);
 
-  useInput(
-    (input, key) => {
-      if (key.escape) {
-        if (mention.show) {
-          textRef.current = textRef.current.slice(0, mention.startIndex);
-          cursorRef.current = mention.startIndex;
-          setMention({ show: false, query: "", startIndex: -1 });
-          syncDisplay(true);
-        } else onBack();
-        return;
-      }
+  useInput((input, key) => {
+    if (key.escape) {
+      if (mention.show) {
+        textRef.current = textRef.current.slice(0, mention.startIndex);
+        cursorRef.current = mention.startIndex;
+        setMention({ show: false, query: "", startIndex: -1 });
+        syncDisplay(true);
+      } else onBack();
+      return;
+    }
 
-      if (key.tab && toolsExist) {
-        onToggleToolCallExpansion();
-        return;
-      }
+    if (key.tab && toolsExist) {
+      onToggleToolCallExpansion();
+      return;
+    }
 
-      if (key.return) {
-        const val = textRef.current.trim();
-        if (val && !mention.show) {
-          onSubmit(val);
-          textRef.current = "";
-          cursorRef.current = 0;
-          setShowFullHelp(false);
-          syncDisplay(true);
-        }
-        return;
+    if (key.return) {
+      const val = textRef.current.trim();
+      if (val && !mention.show) {
+        onSubmit(val);
+        textRef.current = "";
+        cursorRef.current = 0;
+        setShowFullHelp(false);
+        syncDisplay(true);
       }
+      return;
+    }
 
-      if (textRef.current === "" && input === "?") {
-        setShowFullHelp((prev) => !prev);
-        return;
-      }
+    if (textRef.current === "" && input === "?") {
+      setShowFullHelp((prev) => !prev);
+      return;
+    }
 
-      if (key.backspace || key.delete) {
-        if (cursorRef.current > 0) {
-          textRef.current =
-            textRef.current.slice(0, cursorRef.current - 1) +
-            textRef.current.slice(cursorRef.current);
-          cursorRef.current--;
-          syncDisplay();
-          checkMention();
-        }
-        return;
-      }
-      if (key.leftArrow && cursorRef.current > 0) {
-        cursorRef.current--;
-        syncDisplay();
-        return;
-      }
-      if (key.rightArrow && cursorRef.current < textRef.current.length) {
-        cursorRef.current++;
-        syncDisplay();
-        return;
-      }
-
-      if (input && !key.ctrl && !key.meta) {
+    if (key.backspace || key.delete) {
+      if (cursorRef.current > 0) {
         textRef.current =
-          textRef.current.slice(0, cursorRef.current) +
-          input +
+          textRef.current.slice(0, cursorRef.current - 1) +
           textRef.current.slice(cursorRef.current);
-        cursorRef.current += input.length;
-
-        if (textRef.current.startsWith("/") && !textRef.current.includes(" "))
-          setShowFullHelp(true);
-        else if (!textRef.current.startsWith("/")) setShowFullHelp(false);
-
+        cursorRef.current--;
         syncDisplay();
         checkMention();
       }
-    },
-    { isActive: !mention.show },
-  );
+      return;
+    }
+
+    // Skip up/down arrows when mention autocomplete is active
+    if (key.upArrow || key.downArrow) {
+      if (mention.show && reviewers.length > 0) {
+        return; // let MentionAutocomplete handle
+      }
+    }
+
+    // Left/right arrows always work
+    if (key.leftArrow && cursorRef.current > 0) {
+      cursorRef.current--;
+      syncDisplay();
+      return;
+    }
+    if (key.rightArrow && cursorRef.current < textRef.current.length) {
+      cursorRef.current++;
+      syncDisplay();
+      return;
+    }
+
+    if (input && !key.ctrl && !key.meta) {
+      textRef.current =
+        textRef.current.slice(0, cursorRef.current) +
+        input +
+        textRef.current.slice(cursorRef.current);
+      cursorRef.current += input.length;
+
+      if (textRef.current.startsWith("/") && !textRef.current.includes(" "))
+        setShowFullHelp(true);
+      else if (!textRef.current.startsWith("/")) setShowFullHelp(false);
+
+      syncDisplay();
+      checkMention();
+    }
+  });
 
   const defaultHints = useMemo(() => {
     const hints: string[] = [];

@@ -154,7 +154,43 @@ const ChatInput = memo<ChatInputProps>((props) => {
     syncDisplay(true);
   }, [mention, syncDisplay]);
 
+  const findNextWordBoundary = (
+    text: string,
+    pos: number,
+    forward: boolean,
+  ) => {
+    if (forward) {
+      while (pos < text.length && /\s/.test(text[pos])) pos++;
+      while (pos < text.length && !/\s/.test(text[pos])) pos++;
+      return pos;
+    } else {
+      while (pos > 0 && /\s/.test(text[pos - 1])) pos--;
+      while (pos > 0 && !/\s/.test(text[pos - 1])) pos--;
+      return pos;
+    }
+  };
+
+  
   useInput((input, key) => {
+    if (input === "b" && (key.meta || key.ctrl)) {
+      cursorRef.current = findNextWordBoundary(
+        textRef.current,
+        cursorRef.current,
+        false,
+      );
+      syncDisplay();
+      return;
+    }
+    if (input === "f" && (key.meta || key.ctrl)) {
+      cursorRef.current = findNextWordBoundary(
+        textRef.current,
+        cursorRef.current,
+        true,
+      );
+      syncDisplay();
+      return;
+    }
+
     if (key.escape) {
       if (mention.show) {
         textRef.current = textRef.current.slice(0, mention.startIndex);

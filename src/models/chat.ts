@@ -142,7 +142,7 @@ export interface ChatToolCall {
 
 export interface ChatMessage {
   role: "user" | "assistant" | "error";
-  id: string;
+  id?: string;
   content: string;
   toolCalls?: ChatToolCall[];
 }

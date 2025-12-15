@@ -83,9 +83,9 @@ export interface Requirement {
   evidence: string;
 }
 
-export type Verdict = "met" | "partially met" | "not met";
+export type Verdict = "Met" | "Partially Met" | "Not Met";
 
-export type IntegrationType = "jira" | "linear" | "youtrack";
+export type IntegrationType = "jira" | "linear" | "youtrack" | "azure_dev_ops";
 
 export interface Integration {
   id: string;

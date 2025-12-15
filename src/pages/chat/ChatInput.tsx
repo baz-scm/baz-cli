@@ -1,6 +1,12 @@
-import React, { useState, useEffect, memo, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import { Box, Text, useInput } from "ink";
-import TextInput from "ink-text-input";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
 import type { ChangeReviewer } from "../../lib/providers/index.js";
@@ -21,8 +27,11 @@ interface ChatInputProps {
   terminalWidth: number;
 }
 
-const ChatInput = memo<ChatInputProps>(
-  ({
+// Throttle updates ~60fps
+const THROTTLE_MS = 16;
+
+const ChatInput = memo<ChatInputProps>((props) => {
+  const {
     onSubmit,
     placeholder,
     availableCommands,
@@ -34,223 +43,380 @@ const ChatInput = memo<ChatInputProps>(
     toolsExist,
     onToggleToolCallExpansion,
     terminalWidth,
-  }) => {
-    const [inputValue, setInputValue] = useState("");
-    const [showFullHelp, setShowFullHelp] = useState(false);
-    const [reviewers, setReviewers] = useState<ChangeReviewer[]>([]);
-    const [showMentionAutocomplete, setShowMentionAutocomplete] =
-      useState(false);
-    const [mentionSearchQuery, setMentionSearchQuery] = useState("");
-    const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-    const appMode = useAppMode();
-    const dataProvider = appMode.mode.dataProvider;
+  } = props;
 
-    // Use ref to track input value for useInput callback to avoid stale closures
-    const inputValueRef = useRef(inputValue);
-    inputValueRef.current = inputValue;
+  const appMode = useAppMode();
+  const dataProvider = appMode.mode.dataProvider;
 
-    useEffect(() => {
-      if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
-        dataProvider
-          .fetchEligibleReviewers({ prId, fullRepoName, prNumber })
-          .then(setReviewers)
-          .catch((error) => {
-            console.error("Failed to fetch eligible reviewers:", error);
-          });
+  const visibleWidth = Math.max(10, terminalWidth - 6);
+
+  const textRef = useRef("");
+  const cursorRef = useRef(0);
+  const throttleRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingRef = useRef(false);
+  const mentionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [display, setDisplay] = useState({ text: "", cursor: 0 });
+
+  const [showFullHelp, setShowFullHelp] = useState(false);
+  const [reviewers, setReviewers] = useState<ChangeReviewer[]>([]);
+  const [mention, setMention] = useState({
+    show: false,
+    query: "",
+    startIndex: -1,
+  });
+
+  const syncDisplay = useCallback((immediate = false) => {
+    if (immediate) {
+      if (throttleRef.current) clearTimeout(throttleRef.current);
+      throttleRef.current = null;
+      setDisplay({ text: textRef.current, cursor: cursorRef.current });
+      pendingRef.current = false;
+      return;
+    }
+
+    pendingRef.current = true;
+    if (!throttleRef.current) {
+      throttleRef.current = setTimeout(() => {
+        throttleRef.current = null;
+        if (pendingRef.current) {
+          setDisplay({ text: textRef.current, cursor: cursorRef.current });
+          pendingRef.current = false;
+        }
+      }, THROTTLE_MS);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (throttleRef.current) clearTimeout(throttleRef.current);
+      if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
+    };
+  }, []);
+
+  const checkMention = useCallback(() => {
+    if (!enableMentions) return;
+    const text = textRef.current;
+    const lastAt = text.lastIndexOf("@");
+    if (lastAt === -1 || text.slice(lastAt + 1).includes(" ")) {
+      if (mention.show) setMention({ show: false, query: "", startIndex: -1 });
+      // Clear any pending auto-cancel timeout
+      if (mentionTimeoutRef.current) {
+        clearTimeout(mentionTimeoutRef.current);
+        mentionTimeoutRef.current = null;
       }
-    }, [enableMentions, prId, fullRepoName, prNumber]);
+      return;
+    }
+    const query = text.slice(lastAt + 1);
+    setMention({ show: true, query, startIndex: lastAt });
 
-    // Handle special keys - let TextInput handle regular text input
-    useInput(
-      (_input, key) => {
-        if (key.escape) {
-          if (showMentionAutocomplete) {
-            setShowMentionAutocomplete(false);
-            setMentionSearchQuery("");
-            setMentionStartIndex(-1);
-          } else {
-            onBack();
+    // Auto-cancel if no reviewers available after a brief delay
+    if (reviewers.length === 0) {
+      // Clear any existing timeout
+      if (mentionTimeoutRef.current) {
+        clearTimeout(mentionTimeoutRef.current);
+      }
+      mentionTimeoutRef.current = setTimeout(() => {
+        // Re-check reviewers at execution time, not capture time
+        if (reviewers.length === 0) {
+          setMention({ show: false, query: "", startIndex: -1 });
+        }
+        mentionTimeoutRef.current = null;
+      }, 500); // give fetch a chance
+    }
+  }, [enableMentions, mention.show, reviewers.length]);
+
+  useEffect(() => {
+    if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
+      dataProvider
+        .fetchEligibleReviewers({ prId, fullRepoName, prNumber })
+        .then((loadedReviewers) => {
+          setReviewers(loadedReviewers);
+          // Clear auto-cancel timeout if reviewers loaded successfully
+          if (loadedReviewers.length > 0 && mentionTimeoutRef.current) {
+            clearTimeout(mentionTimeoutRef.current);
+            mentionTimeoutRef.current = null;
           }
-        } else if (key.tab && toolsExist) {
-          // Tab toggles tool call expansion
-          onToggleToolCallExpansion();
-        }
-      },
-      { isActive: !showMentionAutocomplete },
-    );
-
-    const handleInputChange = (value: string) => {
-      // Handle "?" for help toggle when input is empty
-      if (inputValueRef.current === "" && value === "?") {
-        setShowFullHelp((prev) => !prev);
-        return;
-      }
-
-      setInputValue(value);
-
-      if (value.startsWith("/") && !value.includes(" ")) {
-        setShowFullHelp(true);
-      } else if (showFullHelp && !value.startsWith("/")) {
-        setShowFullHelp(false);
-      }
-
-      if (!enableMentions) {
-        return;
-      }
-
-      const lastAtIndex = value.lastIndexOf("@");
-      if (lastAtIndex !== -1) {
-        const textAfterAt = value.slice(lastAtIndex + 1);
-        if (!textAfterAt.includes(" ")) {
-          setShowMentionAutocomplete(true);
-          setMentionSearchQuery(textAfterAt);
-          setMentionStartIndex(lastAtIndex);
-        } else {
-          setShowMentionAutocomplete(false);
-          setMentionSearchQuery("");
-          setMentionStartIndex(-1);
-        }
-      } else {
-        setShowMentionAutocomplete(false);
-        setMentionSearchQuery("");
-        setMentionStartIndex(-1);
-      }
-    };
-
-    const handleMentionSelect = (reviewer: MentionableUser) => {
-      const lastSlashIndex = reviewer.login.lastIndexOf("/");
-      const login = reviewer.login.substring(lastSlashIndex + 1);
-
-      const beforeMention = inputValue.slice(0, mentionStartIndex);
-      const afterMention = inputValue.slice(
-        mentionStartIndex + mentionSearchQuery.length + 1,
-      );
-      const newValue = `${beforeMention}@${login} ${afterMention}`.trimEnd();
-
-      setInputValue(newValue);
-      setShowMentionAutocomplete(false);
-      setMentionSearchQuery("");
-      setMentionStartIndex(-1);
-    };
-
-    const handleMentionCancel = () => {
-      setShowMentionAutocomplete(false);
-      setMentionSearchQuery("");
-      setMentionStartIndex(-1);
-    };
-
-    const handleSubmit = () => {
-      if (inputValue.trim() && !showMentionAutocomplete) {
-        onSubmit(inputValue);
-        setInputValue("");
-        setShowFullHelp(false);
-      }
-    };
-
-    const defaultHints = useMemo(() => {
-      const hints: string[] = [];
-
-      if (availableCommands.length > 0) {
-        const nextCmd = availableCommands.find(
-          (cmd) =>
-            cmd.command.includes("next") || cmd.aliases?.includes("/next"),
-        );
-        if (nextCmd) {
-          const cmdDisplay = nextCmd.command.startsWith("/")
-            ? nextCmd.command
-            : `/${nextCmd.command}`;
-          hints.push(`Ask questions or use ${cmdDisplay} to continue`);
-        }
-
-        const explainCmd = availableCommands.find(
-          (cmd) =>
-            cmd.command.includes("explain") ||
-            cmd.aliases?.includes("/explain"),
-        );
-        if (explainCmd) {
-          const cmdDisplay = explainCmd.command.startsWith("/")
-            ? explainCmd.command
-            : `/${explainCmd.command}`;
-          hints.push(`${cmdDisplay} for additional information`);
-        }
-      }
-
-      if (availableCommands.length > 0) {
-        hints.push("? for help");
-      }
-
-      hints.push("ESC to go back");
-      hints.push("Ctrl + C to quit");
-      return hints;
-    }, [availableCommands]);
-
-    const allCommandHints = useMemo(() => {
-      if (availableCommands.length === 0) return [];
-
-      const hints: string[] = [];
-      let commandsToShow = availableCommands;
-
-      if (
-        inputValue.startsWith("/") &&
-        inputValue.length > 1 &&
-        !inputValue.includes(" ")
-      ) {
-        const searchTerm = inputValue.slice(1).toLowerCase();
-        commandsToShow = availableCommands.filter((cmd) => {
-          const commandName = cmd.command.split(" ")[0].slice(1).toLowerCase();
-          return commandName.startsWith(searchTerm);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch eligible reviewers:", error);
+          // Clear mention state if fetch fails
+          setMention((prev) => {
+            if (prev.show) {
+              return { show: false, query: "", startIndex: -1 };
+            }
+            return prev;
+          });
         });
+    }
+  }, [enableMentions, prId, fullRepoName, prNumber, dataProvider]);
+
+  const handleMentionSelect = useCallback(
+    (reviewer: MentionableUser) => {
+      const login = reviewer.login.split("/").pop() || reviewer.login;
+      const before = textRef.current.slice(0, mention.startIndex);
+      const after = textRef.current.slice(
+        mention.startIndex + mention.query.length + 1,
+      );
+      const newValue = `${before}@${login} ${after}`.trimEnd();
+      textRef.current = newValue;
+      cursorRef.current = newValue.length;
+      setMention({ show: false, query: "", startIndex: -1 });
+      syncDisplay(true);
+    },
+    [mention, syncDisplay],
+  );
+
+  const handleMentionCancel = useCallback(() => {
+    textRef.current = textRef.current.slice(0, mention.startIndex);
+    cursorRef.current = mention.startIndex;
+    setMention({ show: false, query: "", startIndex: -1 });
+    syncDisplay(true);
+  }, [mention, syncDisplay]);
+
+  const findNextWordBoundary = (
+    text: string,
+    pos: number,
+    forward: boolean,
+  ) => {
+    if (forward) {
+      while (pos < text.length && /\s/.test(text[pos])) pos++;
+      while (pos < text.length && !/\s/.test(text[pos])) pos++;
+      return pos;
+    } else {
+      while (pos > 0 && /\s/.test(text[pos - 1])) pos--;
+      while (pos > 0 && !/\s/.test(text[pos - 1])) pos--;
+      return pos;
+    }
+  };
+
+  useInput((input, key) => {
+    if (input === "b" && (key.meta || key.ctrl)) {
+      cursorRef.current = findNextWordBoundary(
+        textRef.current,
+        cursorRef.current,
+        false,
+      );
+      syncDisplay();
+      return;
+    }
+    if (input === "f" && (key.meta || key.ctrl)) {
+      cursorRef.current = findNextWordBoundary(
+        textRef.current,
+        cursorRef.current,
+        true,
+      );
+      syncDisplay();
+      return;
+    }
+
+    if (key.escape) {
+      if (mention.show) {
+        textRef.current = textRef.current.slice(0, mention.startIndex);
+        cursorRef.current = mention.startIndex;
+        setMention({ show: false, query: "", startIndex: -1 });
+        syncDisplay(true);
+      } else onBack();
+      return;
+    }
+
+    if (key.tab && toolsExist) {
+      onToggleToolCallExpansion();
+      return;
+    }
+
+    if (key.return) {
+      const val = textRef.current;
+      if (val && !mention.show) {
+        onSubmit(val);
+        textRef.current = "";
+        cursorRef.current = 0;
+        setShowFullHelp(false);
+        syncDisplay(true);
       }
+      return;
+    }
 
-      commandsToShow.forEach((cmd) => {
-        hints.push(`${cmd.command} - ${cmd.description}`);
-      });
+    if (textRef.current === "" && input === "?") {
+      setShowFullHelp((prev) => !prev);
+      return;
+    }
 
-      if (commandsToShow.length === 0 && inputValue.startsWith("/")) {
-        hints.push("No matching commands");
+    if (key.backspace || key.delete) {
+      if (cursorRef.current > 0) {
+        textRef.current =
+          textRef.current.slice(0, cursorRef.current - 1) +
+          textRef.current.slice(cursorRef.current);
+        cursorRef.current--;
+        syncDisplay();
+        checkMention();
       }
+      return;
+    }
 
-      hints.push("? to hide help");
-      hints.push("ESC to go back");
-      return hints;
-    }, [availableCommands, inputValue]);
+    // Skip up/down arrows when mention autocomplete is active
+    if (key.upArrow || key.downArrow) {
+      if (mention.show && reviewers.length > 0) {
+        return; // let MentionAutocomplete handle
+      }
+    }
+
+    // Left/right arrows always work
+    if (key.leftArrow && cursorRef.current > 0) {
+      cursorRef.current--;
+      syncDisplay();
+      return;
+    }
+    if (key.rightArrow && cursorRef.current < textRef.current.length) {
+      cursorRef.current++;
+      syncDisplay();
+      return;
+    }
+
+    if (input && !key.ctrl && !key.meta) {
+      textRef.current =
+        textRef.current.slice(0, cursorRef.current) +
+        input +
+        textRef.current.slice(cursorRef.current);
+      cursorRef.current += input.length;
+
+      if (textRef.current.startsWith("/") && !textRef.current.includes(" "))
+        setShowFullHelp(true);
+      else if (!textRef.current.startsWith("/")) setShowFullHelp(false);
+
+      syncDisplay();
+      checkMention();
+    }
+  });
+
+  const defaultHints = useMemo(() => {
+    const hints: string[] = [];
+    if (availableCommands.length > 0) {
+      const nextCmd = availableCommands.find(
+        (c) => c.command.includes("next") || c.aliases?.includes("/next"),
+      );
+      if (nextCmd) {
+        const cmdDisplay = nextCmd.command.startsWith("/")
+          ? nextCmd.command
+          : `/${nextCmd.command}`;
+        hints.push(`Ask questions or use ${cmdDisplay} to continue`);
+      }
+      const explainCmd = availableCommands.find(
+        (c) => c.command.includes("explain") || c.aliases?.includes("/explain"),
+      );
+      if (explainCmd) {
+        const cmdDisplay = explainCmd.command.startsWith("/")
+          ? explainCmd.command
+          : `/${explainCmd.command}`;
+        hints.push(`${cmdDisplay} for additional info`);
+      }
+      hints.push("? for help");
+    }
+    hints.push("ESC to go back");
+    hints.push("Ctrl + C to quit");
+    return hints;
+  }, [availableCommands]);
+
+  const commandHints = useMemo(() => {
+    if (!availableCommands.length) return [];
+    const hints: string[] = [];
+    let cmds = availableCommands;
+    if (
+      display.text.startsWith("/") &&
+      display.text.length > 1 &&
+      !display.text.includes(" ")
+    ) {
+      const search = display.text.slice(1).toLowerCase();
+      cmds = availableCommands.filter((c) =>
+        c.command.split(" ")[0].slice(1).toLowerCase().startsWith(search),
+      );
+    }
+    cmds.forEach((c) => hints.push(`${c.command} - ${c.description}`));
+    if (!cmds.length && display.text.startsWith("/"))
+      hints.push("No matching commands");
+    hints.push("", "? - Hide help", "ESC - Go back", "Ctrl+C - Quit");
+    return hints;
+  }, [availableCommands, display.text]);
+
+  const renderInput = useMemo(() => {
+    if (!display.text) return <Text dimColor>{placeholder}</Text>;
+
+    const { text, cursor } = display;
+    const textLen = text.length;
+
+    // If text fits, render all
+    if (textLen <= visibleWidth) {
+      const before = text.slice(0, cursor);
+      const cursorChar = text[cursor] ?? " ";
+      const after = text.slice(cursor + 1);
+      return (
+        <Text>
+          {before}
+          <Text inverse>{cursorChar}</Text>
+          {after}
+        </Text>
+      );
+    }
+
+    // Sliding window around cursor
+    const halfWidth = Math.floor(visibleWidth / 2);
+    let start = Math.max(0, cursor - halfWidth);
+    const end = Math.min(textLen, start + visibleWidth);
+
+    if (end === textLen && end - start < visibleWidth) {
+      start = Math.max(0, end - visibleWidth);
+    }
+
+    const visibleText = text.slice(start, end);
+    const visibleCursor = cursor - start;
+    const before = visibleText.slice(0, visibleCursor);
+    const cursorChar = visibleText[visibleCursor] ?? " ";
+    const after = visibleText.slice(visibleCursor + 1);
+
+    const leftEllipsis = start > 0 ? "…" : "";
+    const rightEllipsis = end < textLen ? "…" : "";
 
     return (
-      <Box flexDirection="column">
-        <Box
-          borderStyle="round"
-          borderColor="cyan"
-          paddingX={1}
-          width={terminalWidth}
-          flexShrink={1}
-        >
-          <TextInput
-            value={inputValue}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
-            placeholder={placeholder}
-          />
-        </Box>
-        {enableMentions && showMentionAutocomplete && reviewers.length > 0 && (
-          <MentionAutocomplete
-            reviewers={reviewers}
-            searchQuery={mentionSearchQuery}
-            onSelect={handleMentionSelect}
-            onCancel={handleMentionCancel}
-          />
-        )}
-        {!showMentionAutocomplete && (
-          <Box marginTop={1}>
-            <Text dimColor>
-              {showFullHelp
-                ? allCommandHints.join("\n")
-                : defaultHints.join("\n")}
-            </Text>
-          </Box>
-        )}
-      </Box>
+      <Text>
+        {leftEllipsis}
+        {before}
+        <Text inverse>{cursorChar}</Text>
+        {after}
+        {rightEllipsis}
+      </Text>
     );
-  },
-);
+  }, [display, visibleWidth, placeholder]);
+
+  return (
+    <Box flexDirection="column">
+      <Box
+        borderStyle="round"
+        borderColor="cyan"
+        paddingX={1}
+        width={terminalWidth}
+        flexShrink={1}
+      >
+        {renderInput}
+      </Box>
+
+      {enableMentions && mention.show && reviewers.length > 0 && (
+        <MentionAutocomplete
+          reviewers={reviewers}
+          searchQuery={mention.query}
+          onSelect={handleMentionSelect}
+          onCancel={handleMentionCancel}
+        />
+      )}
+
+      {!mention.show && (
+        <Box marginTop={1}>
+          <Text dimColor>
+            {showFullHelp ? commandHints.join("\n") : defaultHints.join("\n")}
+          </Text>
+        </Box>
+      )}
+    </Box>
+  );
+});
 
 export default ChatInput;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Box, Text } from "ink";
 import type { FileDiff } from "../lib/providers/index.js";
 import { FileSelectionLines } from "../models/Diff.js";
@@ -13,13 +13,81 @@ const MAX_ADDED_VIEW_LINES = 3;
 const ADDED_LINE_PREFIX = "+";
 const DELETED_LINE_PREFIX = "-";
 
+// Memoized diff row component
+interface DiffRowProps {
+  leftNumber?: number;
+  leftPrefix?: string;
+  leftLine: string;
+  leftColor?: string;
+  rightNumber?: number;
+  rightPrefix?: string;
+  rightLine: string;
+  rightColor?: string;
+}
+
+const DiffRow = memo<DiffRowProps>(
+  ({
+    leftNumber,
+    leftPrefix,
+    leftLine,
+    leftColor,
+    rightNumber,
+    rightPrefix,
+    rightLine,
+    rightColor,
+  }) => {
+    const leftNum = (leftNumber ?? "").toString().padStart(5);
+    const rightNum = (rightNumber ?? "").toString().padStart(5);
+
+    return (
+      <Box>
+        <Box width="50%" backgroundColor={leftColor}>
+          <Text>
+            {leftNum}
+            {leftPrefix ? ` ${leftPrefix} ` : "   "}
+          </Text>
+          <Box>
+            <Text>{leftLine}</Text>
+          </Box>
+        </Box>
+        <Box width="50%" backgroundColor={rightColor}>
+          <Text>
+            {rightNum}
+            {rightPrefix ? ` ${rightPrefix} ` : "   "}
+          </Text>
+          <Box>
+            <Text>{rightLine}</Text>
+          </Box>
+        </Box>
+      </Box>
+    );
+  },
+);
+
+// Memoized file header
+interface FileHeaderProps {
+  filePath: string;
+  outdated: boolean;
+}
+
+const FileHeader = memo<FileHeaderProps>(({ filePath, outdated }) => (
+  <Box paddingX={1} backgroundColor={TABLE_HEADER_COLOR}>
+    <Text>{`☰ ${filePath}`}</Text>
+    {outdated && (
+      <Text bold color="red">
+        outdated
+      </Text>
+    )}
+  </Box>
+));
+
 interface DiffDisplayProps {
   fileDiffs: FileDiff[];
   fileLines: FileSelectionLines;
   outdated: boolean;
 }
 
-const DiffDisplay: React.FC<DiffDisplayProps> = ({
+const DiffDisplayInternal: React.FC<DiffDisplayProps> = ({
   fileDiffs,
   fileLines,
   outdated,
@@ -51,16 +119,10 @@ const DiffDisplay: React.FC<DiffDisplayProps> = ({
             marginBottom={1}
           >
             {/* File header */}
-            <Box
-              key={`${file.diff.file_relative_path}-header`}
-              paddingX={1}
-              backgroundColor={TABLE_HEADER_COLOR}
-            >
-              <Text>{`☰ ${file.diff.file_relative_path}`}</Text>
-              <Text bold color="red">
-                {outdated ? " outdated" : ""}
-              </Text>
-            </Box>
+            <FileHeader
+              filePath={file.diff.file_relative_path}
+              outdated={outdated}
+            />
 
             {/* Diff block */}
             {file.diff.chunks.map((chunk, idx) => (
@@ -173,54 +235,6 @@ const DiffDisplay: React.FC<DiffDisplayProps> = ({
   );
 };
 
-interface DiffRowProps {
-  leftNumber?: number;
-  leftPrefix?: string;
-  leftLine: string;
-  leftColor?: string;
-  rightNumber?: number;
-  rightPrefix?: string;
-  rightLine: string;
-  rightColor?: string;
-}
-
-const DiffRow: React.FC<DiffRowProps> = ({
-  leftNumber,
-  leftPrefix,
-  leftLine,
-  leftColor,
-  rightNumber,
-  rightPrefix,
-  rightLine,
-  rightColor,
-}) => {
-  const leftNum = (leftNumber ?? "").toString().padStart(5);
-  const rightNum = (rightNumber ?? "").toString().padStart(5);
-
-  return (
-    <Box>
-      <Box width="50%" backgroundColor={leftColor}>
-        {/* a simple space works better than margin/padding */}
-        <Text>
-          {leftNum}
-          {leftPrefix ? ` ${leftPrefix} ` : "   "}
-        </Text>
-        {/* the `Box` is needed, otherwise the automatic line wrap cuts off a character */}
-        <Box>
-          <Text>{leftLine}</Text>
-        </Box>
-      </Box>
-      <Box width="50%" backgroundColor={rightColor}>
-        <Text>
-          {rightNum}
-          {rightPrefix ? ` ${rightPrefix} ` : "   "}
-        </Text>
-        <Box>
-          <Text>{rightLine}</Text>
-        </Box>
-      </Box>
-    </Box>
-  );
-};
+const DiffDisplay = memo(DiffDisplayInternal);
 
 export default DiffDisplay;

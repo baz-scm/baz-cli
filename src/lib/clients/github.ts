@@ -278,7 +278,7 @@ interface GraphQLReviewThreadLastCommentDatabaseIdResponse {
   };
 }
 
-async function fetchReviewThreadLastCommentDatabaseId(
+async function fetchReviewThreadFirstCommentDatabaseId(
   fullRepoName: string,
   threadNodeId: string,
 ): Promise<number> {
@@ -306,7 +306,7 @@ async function fetchReviewThreadLastCommentDatabaseId(
     const databaseId = response.node.comments?.nodes[0]?.databaseId ?? null;
     if (typeof databaseId !== "number") {
       throw new Error(
-        `Could not determine databaseId for last comment in thread ${threadNodeId}`,
+        `Could not determine databaseId for first comment in thread ${threadNodeId}`,
       );
     }
 
@@ -314,7 +314,7 @@ async function fetchReviewThreadLastCommentDatabaseId(
   } catch (error) {
     logger.error(
       { error, fullRepoName, threadNodeId },
-      "Error fetching last review thread comment databaseId from GitHub",
+      "Error fetching first review thread comment databaseId from GitHub",
     );
     throw error;
   }
@@ -347,17 +347,10 @@ export async function resolveReviewThread(
   const octokit = getOctokitClient();
 
   try {
-    const response = await octokit.graphql<GraphQLResolveReviewThreadResponse>(
+    await octokit.graphql<GraphQLResolveReviewThreadResponse>(
       RESOLVE_REVIEW_THREAD_MUTATION,
       { threadId: threadNodeId },
     );
-
-    const resolved = response.resolveReviewThread?.thread?.isResolved ?? null;
-    if (resolved !== true) {
-      throw new Error(
-        `GitHub did not confirm thread resolved for id: ${threadNodeId}`,
-      );
-    }
   } catch (error) {
     logger.error(
       { error, fullRepoName, threadNodeId },
@@ -440,7 +433,7 @@ export async function postReviewThreadReply(
   const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
-    const replyToDatabaseId = await fetchReviewThreadLastCommentDatabaseId(
+    const replyToDatabaseId = await fetchReviewThreadFirstCommentDatabaseId(
       fullRepoName,
       threadId,
     );

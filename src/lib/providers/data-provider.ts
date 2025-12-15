@@ -10,6 +10,7 @@ import type {
   ChangeReviewer,
   PRContext,
   RepoWriteAccess,
+  MergeMethod,
 } from "./types.js";
 
 export interface IDataProvider {
@@ -31,7 +32,7 @@ export interface IDataProvider {
 
   approvePR(ctx: PRContext): Promise<void>;
 
-  mergePR(ctx: PRContext): Promise<void>;
+  mergePR(ctx: PRContext, mergeStrategy: MergeMethod): Promise<void>;
 
   fetchMergeStatus(ctx: PRContext): Promise<MergeStatus>;
 

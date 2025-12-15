@@ -12,6 +12,7 @@ import {
   FileDiff,
   Integration,
   IntegrationType,
+  MergeMethod,
   MergeStatus,
   PullRequest,
   PullRequestDetails,
@@ -44,7 +45,7 @@ const getApprovalUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/approve`;
 
 const getMergeUrl = (prId: string) =>
-  `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/merge`;
+  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/merge`;
 const getRepoWriteAccessUrl = (fullRepoName: string) =>
   `${env.BAZ_BASE_URL}/api/v2/installations/write-access/${encodeURIComponent(fullRepoName)}`;
 
@@ -284,11 +285,13 @@ export async function approvePR(prId: string) {
     });
 }
 
-export async function mergePR(prId: string) {
+export async function mergePR(prId: string, mergeStrategy: MergeMethod) {
   await axiosClient
     .post(
       getMergeUrl(prId),
-      {},
+      {
+        merge_strategy: mergeStrategy,
+      },
       {
         headers: {
           "Content-Type": "application/json",

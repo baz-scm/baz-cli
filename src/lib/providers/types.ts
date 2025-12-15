@@ -108,8 +108,11 @@ export interface ChangeReviewer {
   group_members_count?: number;
 }
 
+export type MergeMethod = "merge" | "squash" | "rebase";
+
 export interface MergeStatus {
   is_mergeable: boolean;
+  merge_strategy: MergeMethod;
 }
 
 export interface Line {

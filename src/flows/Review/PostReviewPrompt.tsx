@@ -101,8 +101,12 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
     setIsMerging(true);
     setActionError(null);
     try {
-      await dataProvider.mergePR(prContext);
-      await pr.refetch();
+      const mergeStrategy = mergeStatus.data?.merge_strategy ?? "merge";
+      await dataProvider.mergePR(prContext, mergeStrategy);
+      mergeStatus.updateData(() => ({
+        is_mergeable: false,
+        merge_strategy: mergeStrategy,
+      }));
       setIsSelected(false);
     } catch (_) {
       setActionError("Failed to merge PR. Please try again.");

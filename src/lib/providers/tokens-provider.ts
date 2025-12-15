@@ -10,6 +10,7 @@ import type {
   FileDiff,
   ChangeReviewer,
   RepoWriteAccess,
+  MergeMethod,
 } from "./types.js";
 import {
   fetchOpenPullRequests,
@@ -118,15 +119,12 @@ export class TokensDataProvider implements IDataProvider {
     await approvePullRequest(ctx.fullRepoName, ctx.prNumber);
   }
 
-  async mergePR(ctx: PRContext): Promise<void> {
-    await mergePullRequest(ctx.fullRepoName, ctx.prNumber);
+  async mergePR(ctx: PRContext, mergeStrategy: MergeMethod): Promise<void> {
+    await mergePullRequest(ctx.fullRepoName, ctx.prNumber, mergeStrategy);
   }
 
   async fetchMergeStatus(ctx: PRContext): Promise<MergeStatus> {
-    const ghStatus = await ghFetchMergeStatus(ctx.fullRepoName, ctx.prNumber);
-    return {
-      is_mergeable: ghStatus.mergeable ?? false,
-    };
+    return await ghFetchMergeStatus(ctx.fullRepoName, ctx.prNumber);
   }
 
   async fetchUser(): Promise<User> {

@@ -1,7 +1,14 @@
 import { Octokit } from "octokit";
 import { env } from "../env-schema.js";
 import { logger } from "../logger.js";
-import type { PullRequest, Line, Chunk, FileDiff } from "../providers/types.js";
+import type {
+  PullRequest,
+  Line,
+  Chunk,
+  FileDiff,
+  MergeMethod,
+  MergeStatus,
+} from "../providers/types.js";
 
 let octokitClient: Octokit | null = null;
 
@@ -359,9 +366,32 @@ export async function approvePullRequest(
   }
 }
 
+async function getRepoAllowedMergeMethod(
+  owner: string,
+  repo: string,
+): Promise<MergeMethod> {
+  const octokit = getOctokitClient();
+
+  const response = await octokit.rest.repos.get({ owner, repo });
+  const repoData = response.data;
+
+  if (repoData.allow_squash_merge) {
+    return "squash";
+  }
+  if (repoData.allow_merge_commit) {
+    return "merge";
+  }
+  if (repoData.allow_rebase_merge) {
+    return "rebase";
+  }
+
+  return "merge";
+}
+
 export async function mergePullRequest(
   fullRepoName: string,
   prNumber: number,
+  mergeStrategy: MergeMethod,
 ): Promise<void> {
   const octokit = getOctokitClient();
   const { owner, repo } = parseRepoId(fullRepoName);
@@ -371,6 +401,7 @@ export async function mergePullRequest(
       owner,
       repo,
       pull_number: prNumber,
+      merge_method: mergeStrategy,
     });
   } catch (error) {
     logger.error(
@@ -381,28 +412,26 @@ export async function mergePullRequest(
   }
 }
 
-export interface GitHubMergeStatus {
-  mergeable: boolean | null;
-  mergeable_state: string;
-}
-
 export async function fetchMergeStatus(
   fullRepoName: string,
   prNumber: number,
-): Promise<GitHubMergeStatus> {
+): Promise<MergeStatus> {
   const octokit = getOctokitClient();
   const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
-    const response = await octokit.rest.pulls.get({
-      owner,
-      repo,
-      pull_number: prNumber,
-    });
+    const [prResponse, mergeStrategy] = await Promise.all([
+      octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: prNumber,
+      }),
+      getRepoAllowedMergeMethod(owner, repo),
+    ]);
 
     return {
-      mergeable: response.data.mergeable,
-      mergeable_state: response.data.mergeable_state,
+      is_mergeable: prResponse.data.mergeable ?? false,
+      merge_strategy: mergeStrategy,
     };
   } catch (error) {
     logger.error(

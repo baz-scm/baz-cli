@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PRContext, MergeStatus } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
 
@@ -16,5 +16,12 @@ export function useFetchMergeStatus(ctx: PRContext) {
       .finally(() => setLoading(false));
   }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
 
-  return { data, loading, error };
+  const updateData = useCallback(
+    (updater: (prev: MergeStatus | undefined) => MergeStatus | undefined) => {
+      setData(updater);
+    },
+    [],
+  );
+
+  return { data, loading, error, updateData };
 }

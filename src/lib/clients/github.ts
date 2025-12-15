@@ -252,6 +252,121 @@ const REVIEW_THREADS_QUERY = `
   }
 `;
 
+const REVIEW_THREAD_FIRST_COMMENT_DATABASE_ID_QUERY = `
+  query($threadId: ID!) {
+    node(id: $threadId) {
+      __typename
+      ... on PullRequestReviewThread {
+        comments(first: 1) {
+          nodes {
+            databaseId
+          }
+        }
+      }
+    }
+  }
+`;
+
+interface GraphQLReviewThreadLastCommentDatabaseIdResponse {
+  node: null | {
+    __typename: string;
+    comments?: {
+      nodes: Array<{
+        databaseId: number | null;
+      }>;
+    };
+  };
+}
+
+async function fetchReviewThreadLastCommentDatabaseId(
+  fullRepoName: string,
+  threadNodeId: string,
+): Promise<number> {
+  const octokit = getOctokitClient();
+
+  try {
+    const response =
+      await octokit.graphql<GraphQLReviewThreadLastCommentDatabaseIdResponse>(
+        REVIEW_THREAD_FIRST_COMMENT_DATABASE_ID_QUERY,
+        { threadId: threadNodeId },
+      );
+
+    if (!response.node) {
+      throw new Error(
+        `GitHub did not return a node for thread id: ${threadNodeId}`,
+      );
+    }
+
+    if (response.node.__typename !== "PullRequestReviewThread") {
+      throw new Error(
+        `Expected PullRequestReviewThread for id ${threadNodeId}, got: ${response.node.__typename}`,
+      );
+    }
+
+    const databaseId = response.node.comments?.nodes[0]?.databaseId ?? null;
+    if (typeof databaseId !== "number") {
+      throw new Error(
+        `Could not determine databaseId for last comment in thread ${threadNodeId}`,
+      );
+    }
+
+    return databaseId;
+  } catch (error) {
+    logger.error(
+      { error, fullRepoName, threadNodeId },
+      "Error fetching last review thread comment databaseId from GitHub",
+    );
+    throw error;
+  }
+}
+
+const RESOLVE_REVIEW_THREAD_MUTATION = `
+  mutation($threadId: ID!) {
+    resolveReviewThread(input: { threadId: $threadId }) {
+      thread {
+        id
+        isResolved
+      }
+    }
+  }
+`;
+
+interface GraphQLResolveReviewThreadResponse {
+  resolveReviewThread: null | {
+    thread: null | {
+      id: string;
+      isResolved: boolean;
+    };
+  };
+}
+
+export async function resolveReviewThread(
+  fullRepoName: string,
+  threadNodeId: string,
+): Promise<void> {
+  const octokit = getOctokitClient();
+
+  try {
+    const response = await octokit.graphql<GraphQLResolveReviewThreadResponse>(
+      RESOLVE_REVIEW_THREAD_MUTATION,
+      { threadId: threadNodeId },
+    );
+
+    const resolved = response.resolveReviewThread?.thread?.isResolved ?? null;
+    if (resolved !== true) {
+      throw new Error(
+        `GitHub did not confirm thread resolved for id: ${threadNodeId}`,
+      );
+    }
+  } catch (error) {
+    logger.error(
+      { error, fullRepoName, threadNodeId },
+      "Error resolving review thread on GitHub",
+    );
+    throw error;
+  }
+}
+
 export async function fetchUnresolvedReviewThreads(
   fullRepoName: string,
   prNumber: number,
@@ -325,14 +440,17 @@ export async function postReviewThreadReply(
   const { owner, repo } = parseRepoId(fullRepoName);
 
   try {
-    await octokit.rest.pulls.createReviewComment({
+    const replyToDatabaseId = await fetchReviewThreadLastCommentDatabaseId(
+      fullRepoName,
+      threadId,
+    );
+
+    await octokit.rest.pulls.createReplyForReviewComment({
       owner,
       repo,
       pull_number: prNumber,
+      comment_id: replyToDatabaseId,
       body,
-      in_reply_to: Number(threadId),
-      commit_id: "", // values are required but ignored
-      path: "", // values are required but ignored
     });
   } catch (error) {
     logger.error(

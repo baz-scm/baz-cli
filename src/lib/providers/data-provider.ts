@@ -30,6 +30,8 @@ export interface IDataProvider {
     body: string,
   ): Promise<void>;
 
+  resolveDiscussion(ctx: PRContext, discussionId: string): Promise<void>;
+
   approvePR(ctx: PRContext): Promise<void>;
 
   mergePR(ctx: PRContext, mergeStrategy: MergeMethod): Promise<void>;

@@ -54,6 +54,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
   const cursorRef = useRef(0);
   const throttleRef = useRef<NodeJS.Timeout | null>(null);
   const pendingRef = useRef(false);
+  const mentionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [display, setDisplay] = useState({ text: "", cursor: 0 });
 
@@ -89,6 +90,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
   useEffect(() => {
     return () => {
       if (throttleRef.current) clearTimeout(throttleRef.current);
+      if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
     };
   }, []);
 
@@ -98,6 +100,11 @@ const ChatInput = memo<ChatInputProps>((props) => {
     const lastAt = text.lastIndexOf("@");
     if (lastAt === -1 || text.slice(lastAt + 1).includes(" ")) {
       if (mention.show) setMention({ show: false, query: "", startIndex: -1 });
+      // Clear any pending auto-cancel timeout
+      if (mentionTimeoutRef.current) {
+        clearTimeout(mentionTimeoutRef.current);
+        mentionTimeoutRef.current = null;
+      }
       return;
     }
     const query = text.slice(lastAt + 1);
@@ -105,10 +112,16 @@ const ChatInput = memo<ChatInputProps>((props) => {
 
     // Auto-cancel if no reviewers available after a brief delay
     if (reviewers.length === 0) {
-      setTimeout(() => {
+      // Clear any existing timeout
+      if (mentionTimeoutRef.current) {
+        clearTimeout(mentionTimeoutRef.current);
+      }
+      mentionTimeoutRef.current = setTimeout(() => {
+        // Re-check reviewers at execution time, not capture time
         if (reviewers.length === 0) {
           setMention({ show: false, query: "", startIndex: -1 });
         }
+        mentionTimeoutRef.current = null;
       }, 500); // give fetch a chance
     }
   }, [enableMentions, mention.show, reviewers.length]);
@@ -117,7 +130,14 @@ const ChatInput = memo<ChatInputProps>((props) => {
     if (enableMentions && prId && fullRepoName && prNumber !== undefined) {
       dataProvider
         .fetchEligibleReviewers({ prId, fullRepoName, prNumber })
-        .then(setReviewers)
+        .then((loadedReviewers) => {
+          setReviewers(loadedReviewers);
+          // Clear auto-cancel timeout if reviewers loaded successfully
+          if (loadedReviewers.length > 0 && mentionTimeoutRef.current) {
+            clearTimeout(mentionTimeoutRef.current);
+            mentionTimeoutRef.current = null;
+          }
+        })
         .catch((error) => {
           console.error("Failed to fetch eligible reviewers:", error);
           // Clear mention state if fetch fails
@@ -206,7 +226,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
     }
 
     if (key.return) {
-      const val = textRef.current.trim();
+      const val = textRef.current;
       if (val && !mention.show) {
         onSubmit(val);
         textRef.current = "";

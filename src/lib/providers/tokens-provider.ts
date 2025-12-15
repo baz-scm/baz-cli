@@ -23,6 +23,7 @@ import {
   fetchFileDiffs as ghFetchFileDiffs,
   fetchAssignees,
   postReviewThreadReply,
+  resolveReviewThread,
 } from "../clients/github.js";
 
 export class TokensDataProvider implements IDataProvider {
@@ -113,6 +114,10 @@ export class TokensDataProvider implements IDataProvider {
       discussionId,
       body,
     );
+  }
+
+  async resolveDiscussion(ctx: PRContext, discussionId: string): Promise<void> {
+    await resolveReviewThread(ctx.fullRepoName, discussionId);
   }
 
   async approvePR(ctx: PRContext): Promise<void> {

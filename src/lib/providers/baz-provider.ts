@@ -12,6 +12,7 @@ import {
   fetchEligibleReviewers as bazFetchEligibleReviewers,
   fetchRepoWriteAccess as bazFetchRepoWriteAccess,
   postDiscussionReply as bazPostDiscussionReply,
+  updateDiscussionState as bazUpdateDiscussionState,
 } from "../clients/baz.js";
 import type {
   PRContext,
@@ -56,6 +57,13 @@ export class BazDataProvider implements IDataProvider {
     body: string,
   ): Promise<void> {
     await bazPostDiscussionReply(discussionId, body, ctx.prId);
+  }
+
+  async resolveDiscussion(
+    _ctx: PRContext,
+    discussionId: string,
+  ): Promise<void> {
+    await bazUpdateDiscussionState(discussionId);
   }
 
   async approvePR(ctx: PRContext): Promise<void> {

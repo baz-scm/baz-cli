@@ -1,7 +1,6 @@
 import React from "react";
 import { Issue, IssueTypeHandler, IssueCommand } from "../types.js";
 import DiscussionIssueDisplay from "./DiscussionIssueDisplay.js";
-import { updateDiscussionState } from "../../lib/clients/baz.js";
 import IssueExplanationDisplay from "../common/IssueExplanationDisplay.js";
 import { parseHtmlToMarkdown } from "../../lib/parser.js";
 import { Box, Text } from "ink";
@@ -116,7 +115,10 @@ export const discussionIssueHandler: IssueTypeHandler<
 
       case "resolve":
         try {
-          await updateDiscussionState(issue.data.id);
+          await context.appMode.mode.dataProvider.resolveDiscussion(
+            prContext,
+            issue.data.id,
+          );
           return {
             shouldMoveNext: context.hasNext,
             shouldComplete: !context.hasNext,

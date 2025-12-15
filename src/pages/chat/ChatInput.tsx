@@ -170,7 +170,6 @@ const ChatInput = memo<ChatInputProps>((props) => {
     }
   };
 
-  
   useInput((input, key) => {
     if (input === "b" && (key.meta || key.ctrl)) {
       cursorRef.current = findNextWordBoundary(

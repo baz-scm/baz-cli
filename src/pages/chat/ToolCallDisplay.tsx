@@ -56,7 +56,6 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
                 <Spinner type="arrow3" />
               </Text>
               <Text color="cyan" bold>
-                {" "}
                 {formattedToolName}
               </Text>
               {message && <Text color="gray"> ({message})</Text>}

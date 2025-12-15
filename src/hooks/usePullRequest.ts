@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PRContext, PullRequestDetails } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
 
@@ -8,36 +8,7 @@ export function usePullRequest(ctx: PRContext) {
   const [error, setError] = useState<string | null>(null);
   const appMode = useAppMode();
 
-  useEffect(() => {
-    let cancelled = false;
-    
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const pr = await appMode.mode.dataProvider.fetchPRDetails(ctx);
-        if (!cancelled) {
-          setData(pr);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unknown error");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-    
-    return () => {
-      cancelled = true;
-    };
-  }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
-
-  const refetch = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -48,7 +19,15 @@ export function usePullRequest(ctx: PRContext) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const refetch = useCallback(async () => {
+    await fetchData();
+  }, [fetchData]);
 
   const updateData = useCallback(
     (

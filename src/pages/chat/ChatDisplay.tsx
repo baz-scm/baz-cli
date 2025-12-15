@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, memo, useCallback } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Text, useStdout } from "ink";
 import Spinner from "ink-spinner";
 import { ChatMessage } from "../../models/chat.js";
@@ -7,59 +7,45 @@ import { renderMarkdown } from "../../lib/markdown.js";
 import ChatInput from "./ChatInput.js";
 import ToolCallDisplay from "./ToolCallDisplay.js";
 
-const MemoizedMessageAuthor = memo(({ message }: { message: ChatMessage }) => {
-  switch (message.role) {
-    case "user":
-      return (
-        <Text bold color="cyan">
-          You:
-        </Text>
-      );
-    case "assistant":
-      return (
-        <Text bold color="yellow">
-          Baz:
-        </Text>
-      );
-    case "error":
-      return (
-        <Text bold color="red">
-          Error:
-        </Text>
-      );
-  }
+const MessageAuthor = memo(({ role }: { role: ChatMessage["role"] }) => {
+  if (role === "user") return <Text bold color="cyan">You:</Text>;
+  if (role === "assistant") return <Text bold color="yellow">Baz:</Text>;
+  return <Text bold color="red">Error:</Text>;
 });
 
-interface MemoizedMessageProps {
-  message: ChatMessage;
-  isToolExpanded: boolean;
-  showExpandHint: boolean;
-}
-
-const MemoizedMessage = memo<MemoizedMessageProps>(
-  ({ message, isToolExpanded, showExpandHint }) => {
-    const renderedContent = useMemo(
-      () => renderMarkdown(message.content),
-      [message.content],
-    );
+const MessageRow = memo(
+  ({
+    message,
+    isToolExpanded,
+    showExpandHint,
+  }: {
+    message: ChatMessage;
+    isToolExpanded: boolean;
+    showExpandHint: boolean;
+  }) => {
+    // Split content into lines
+    const lines = useMemo(() => {
+      if (!message.content) return [];
+      return renderMarkdown(message.content)
+        .split("\n")
+        .map((line, i) => ({ line, key: i }));
+    }, [message.content]);
 
     return (
       <Box flexDirection="column" marginBottom={1}>
-        <MemoizedMessageAuthor message={message} />
+        <MessageAuthor role={message.role} />
         <Box paddingLeft={2} flexDirection="column">
-          {message.toolCalls && message.toolCalls.length > 0 && (
-            <Box flexDirection="column">
-              {message.toolCalls.map((toolCall) => (
-                <ToolCallDisplay
-                  key={toolCall.id}
-                  toolCall={toolCall}
-                  isExpanded={isToolExpanded}
-                  showExpandHint={showExpandHint}
-                />
-              ))}
-            </Box>
-          )}
-          {message.content && <Text>{renderedContent}</Text>}
+          {message.toolCalls?.map((toolCall) => (
+            <ToolCallDisplay
+              key={toolCall.id}
+              toolCall={toolCall}
+              isExpanded={isToolExpanded}
+              showExpandHint={showExpandHint}
+            />
+          ))}
+          {lines.map(({ line, key }) => (
+            <Text key={key}>{line}</Text>
+          ))}
         </Box>
       </Box>
     );
@@ -112,7 +98,6 @@ interface ChatDisplayProps {
   prNumber?: number;
   enableMentions?: boolean;
   onBack: () => void;
-  // onToggleToolCallExpansion?: (toolCallId: string) => void;
 }
 
 const ChatDisplay = memo<ChatDisplayProps>(
@@ -130,71 +115,61 @@ const ChatDisplay = memo<ChatDisplayProps>(
     onBack,
   }) => {
     const { stdout } = useStdout();
-    const [terminalWidth, setTerminalWidth] = useState(stdout?.columns || 80);
+    const [terminalWidth, setTerminalWidth] = useState(stdout?.columns ?? 80);
     const [toolsExpanded, setToolsExpanded] = useState(false);
 
-    // Get tool calls from the latest assistant message only
-    const latestAssistantMessage = useMemo(() => {
+    useEffect(() => {
+      if (!stdout) return;
+      const onResize = () => {
+        setTerminalWidth(stdout.columns ?? 80);
+      };
+      stdout.on("resize", onResize);
+      return () => {
+        stdout.off("resize", onResize);
+      };
+    }, [stdout]);
+
+    /* tool calls */
+    const latestAssistant = useMemo(() => {
       for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].role === "assistant") {
-          return messages[i];
-        }
+        if (messages[i].role === "assistant") return messages[i];
       }
       return null;
     }, [messages]);
 
-    const activeToolCalls = latestAssistantMessage?.toolCalls ?? [];
-    const hasPendingToolCalls = activeToolCalls.some((tc) => !tc.result);
+    const activeToolCalls = latestAssistant?.toolCalls ?? [];
+    const hasPendingToolCalls = activeToolCalls.some((t) => !t.result);
 
-    useEffect(() => {
-      const handleResize = () => {
-        if (stdout?.columns) {
-          setTerminalWidth(stdout.columns);
-        }
-      };
-
-      if (stdout) {
-        stdout.on("resize", handleResize);
-
-        return () => {
-          stdout.off("resize", handleResize);
-        };
-      }
-    }, [stdout]);
-
-    const onToggleToolCallExpansion = useCallback(() => {
-      setToolsExpanded((prev) => !prev);
+    const toggleTools = useCallback(() => {
+      setToolsExpanded((v) => !v);
     }, []);
 
     const handleSubmit = useCallback(
-      (message: string) => {
-        setToolsExpanded(false); // Collapse tools when submitting new question
-        onSubmit(message);
+      (value: string) => {
+        setToolsExpanded(false);
+        onSubmit(value);
       },
       [onSubmit],
     );
 
     return (
       <Box flexDirection="column">
-        {messages.length > 0 && (
-          <Box flexDirection="column" marginBottom={0}>
-            {messages.map((message, index) => (
-              <MemoizedMessage
-                key={index}
-                message={message}
-                isToolExpanded={toolsExpanded}
-                showExpandHint={!isLoading && !hasPendingToolCalls}
-              />
-            ))}
-          </Box>
-        )}
+        <Box flexDirection="column">
+          {messages.map((msg, i) => (
+            <MessageRow
+              key={i}
+              message={msg}
+              isToolExpanded={toolsExpanded}
+              showExpandHint={!isLoading && !hasPendingToolCalls}
+            />
+          ))}
+        </Box>
 
         {(isLoading || hasPendingToolCalls) && (
           <Box marginBottom={1}>
             <Text color="magenta">
-              <Spinner type="dots" />
+              <Spinner type="dots" /> Thinking...
             </Text>
-            <Text color="magenta"> Thinking...</Text>
           </Box>
         )}
 
@@ -209,26 +184,11 @@ const ChatDisplay = memo<ChatDisplayProps>(
             prNumber={prNumber}
             onBack={onBack}
             terminalWidth={terminalWidth}
-            onToggleToolCallExpansion={onToggleToolCallExpansion}
             toolsExist={activeToolCalls.length > 0}
+            onToggleToolCallExpansion={toggleTools}
           />
         )}
       </Box>
-    );
-  },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.messages === nextProps.messages &&
-      prevProps.isLoading === nextProps.isLoading &&
-      prevProps.disabled === nextProps.disabled &&
-      prevProps.placeholder === nextProps.placeholder &&
-      prevProps.availableCommands === nextProps.availableCommands &&
-      prevProps.enableMentions === nextProps.enableMentions &&
-      prevProps.prId === nextProps.prId &&
-      prevProps.fullRepoName === nextProps.fullRepoName &&
-      prevProps.prNumber === nextProps.prNumber &&
-      prevProps.onSubmit === nextProps.onSubmit &&
-      prevProps.onBack === nextProps.onBack
     );
   },
 );

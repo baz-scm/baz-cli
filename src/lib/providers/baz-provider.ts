@@ -25,6 +25,7 @@ import type {
   FileDiff,
   ChangeReviewer,
   RepoWriteAccess,
+  MergeMethod,
 } from "./types.js";
 import { IDataProvider } from "./data-provider.js";
 
@@ -61,8 +62,8 @@ export class BazDataProvider implements IDataProvider {
     return bazApprovePR(ctx.prId);
   }
 
-  async mergePR(ctx: PRContext): Promise<void> {
-    return bazMergePR(ctx.prId);
+  async mergePR(ctx: PRContext, mergeStrategy: MergeMethod): Promise<void> {
+    return bazMergePR(ctx.prId, mergeStrategy);
   }
 
   async fetchMergeStatus(ctx: PRContext): Promise<MergeStatus> {

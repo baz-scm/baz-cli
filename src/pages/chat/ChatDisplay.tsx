@@ -8,9 +8,23 @@ import ChatInput from "./ChatInput.js";
 import ToolCallDisplay from "./ToolCallDisplay.js";
 
 const MessageAuthor = memo(({ role }: { role: ChatMessage["role"] }) => {
-  if (role === "user") return <Text bold color="cyan">You:</Text>;
-  if (role === "assistant") return <Text bold color="yellow">Baz:</Text>;
-  return <Text bold color="red">Error:</Text>;
+  if (role === "user")
+    return (
+      <Text bold color="cyan">
+        You:
+      </Text>
+    );
+  if (role === "assistant")
+    return (
+      <Text bold color="yellow">
+        Baz:
+      </Text>
+    );
+  return (
+    <Text bold color="red">
+      Error:
+    </Text>
+  );
 });
 
 const MessageRow = memo(

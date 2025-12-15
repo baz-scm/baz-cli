@@ -1,4 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import { Box, Text, useInput } from "ink";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
@@ -52,7 +59,11 @@ const ChatInput = memo<ChatInputProps>((props) => {
 
   const [showFullHelp, setShowFullHelp] = useState(false);
   const [reviewers, setReviewers] = useState<ChangeReviewer[]>([]);
-  const [mention, setMention] = useState({ show: false, query: "", startIndex: -1 });
+  const [mention, setMention] = useState({
+    show: false,
+    query: "",
+    startIndex: -1,
+  });
 
   const syncDisplay = useCallback((immediate = false) => {
     if (immediate) {
@@ -106,14 +117,16 @@ const ChatInput = memo<ChatInputProps>((props) => {
     (reviewer: MentionableUser) => {
       const login = reviewer.login.split("/").pop() || reviewer.login;
       const before = textRef.current.slice(0, mention.startIndex);
-      const after = textRef.current.slice(mention.startIndex + mention.query.length + 1);
+      const after = textRef.current.slice(
+        mention.startIndex + mention.query.length + 1,
+      );
       const newValue = `${before}@${login} ${after}`.trimEnd();
       textRef.current = newValue;
       cursorRef.current = newValue.length;
       setMention({ show: false, query: "", startIndex: -1 });
       syncDisplay(true);
     },
-    [mention, syncDisplay]
+    [mention, syncDisplay],
   );
 
   const handleMentionCancel = useCallback(() => {
@@ -160,7 +173,8 @@ const ChatInput = memo<ChatInputProps>((props) => {
       if (key.backspace || key.delete) {
         if (cursorRef.current > 0) {
           textRef.current =
-            textRef.current.slice(0, cursorRef.current - 1) + textRef.current.slice(cursorRef.current);
+            textRef.current.slice(0, cursorRef.current - 1) +
+            textRef.current.slice(cursorRef.current);
           cursorRef.current--;
           syncDisplay();
           checkMention();
@@ -180,34 +194,41 @@ const ChatInput = memo<ChatInputProps>((props) => {
 
       if (input && !key.ctrl && !key.meta) {
         textRef.current =
-          textRef.current.slice(0, cursorRef.current) + input + textRef.current.slice(cursorRef.current);
+          textRef.current.slice(0, cursorRef.current) +
+          input +
+          textRef.current.slice(cursorRef.current);
         cursorRef.current += input.length;
 
-        if (textRef.current.startsWith("/") && !textRef.current.includes(" ")) setShowFullHelp(true);
+        if (textRef.current.startsWith("/") && !textRef.current.includes(" "))
+          setShowFullHelp(true);
         else if (!textRef.current.startsWith("/")) setShowFullHelp(false);
 
         syncDisplay();
         checkMention();
       }
     },
-    { isActive: !mention.show }
+    { isActive: !mention.show },
   );
 
   const defaultHints = useMemo(() => {
     const hints: string[] = [];
     if (availableCommands.length > 0) {
       const nextCmd = availableCommands.find(
-        (c) => c.command.includes("next") || c.aliases?.includes("/next")
+        (c) => c.command.includes("next") || c.aliases?.includes("/next"),
       );
       if (nextCmd) {
-        const cmdDisplay = nextCmd.command.startsWith("/") ? nextCmd.command : `/${nextCmd.command}`;
+        const cmdDisplay = nextCmd.command.startsWith("/")
+          ? nextCmd.command
+          : `/${nextCmd.command}`;
         hints.push(`Ask questions or use ${cmdDisplay} to continue`);
       }
       const explainCmd = availableCommands.find(
-        (c) => c.command.includes("explain") || c.aliases?.includes("/explain")
+        (c) => c.command.includes("explain") || c.aliases?.includes("/explain"),
       );
       if (explainCmd) {
-        const cmdDisplay = explainCmd.command.startsWith("/") ? explainCmd.command : `/${explainCmd.command}`;
+        const cmdDisplay = explainCmd.command.startsWith("/")
+          ? explainCmd.command
+          : `/${explainCmd.command}`;
         hints.push(`${cmdDisplay} for additional info`);
       }
       hints.push("? for help");
@@ -221,22 +242,29 @@ const ChatInput = memo<ChatInputProps>((props) => {
     if (!availableCommands.length) return [];
     const hints: string[] = [];
     let cmds = availableCommands;
-    if (display.text.startsWith("/") && display.text.length > 1 && !display.text.includes(" ")) {
+    if (
+      display.text.startsWith("/") &&
+      display.text.length > 1 &&
+      !display.text.includes(" ")
+    ) {
       const search = display.text.slice(1).toLowerCase();
-      cmds = availableCommands.filter((c) => c.command.split(" ")[0].slice(1).toLowerCase().startsWith(search));
+      cmds = availableCommands.filter((c) =>
+        c.command.split(" ")[0].slice(1).toLowerCase().startsWith(search),
+      );
     }
     cmds.forEach((c) => hints.push(`${c.command} - ${c.description}`));
-    if (!cmds.length && display.text.startsWith("/")) hints.push("No matching commands");
+    if (!cmds.length && display.text.startsWith("/"))
+      hints.push("No matching commands");
     hints.push("", "? - Hide help", "ESC - Go back", "Ctrl+C - Quit");
     return hints;
   }, [availableCommands, display.text]);
 
   const renderInput = useMemo(() => {
     if (!display.text) return <Text dimColor>{placeholder}</Text>;
-  
+
     const { text, cursor } = display;
     const textLen = text.length;
-  
+
     // If text fits, render all
     if (textLen <= visibleWidth) {
       const before = text.slice(0, cursor);
@@ -250,25 +278,25 @@ const ChatInput = memo<ChatInputProps>((props) => {
         </Text>
       );
     }
-  
+
     // Sliding window around cursor
     const halfWidth = Math.floor(visibleWidth / 2);
     let start = Math.max(0, cursor - halfWidth);
     const end = Math.min(textLen, start + visibleWidth);
-  
+
     if (end === textLen && end - start < visibleWidth) {
       start = Math.max(0, end - visibleWidth);
     }
-  
+
     const visibleText = text.slice(start, end);
     const visibleCursor = cursor - start;
     const before = visibleText.slice(0, visibleCursor);
     const cursorChar = visibleText[visibleCursor] ?? " ";
     const after = visibleText.slice(visibleCursor + 1);
-  
+
     const leftEllipsis = start > 0 ? "…" : "";
     const rightEllipsis = end < textLen ? "…" : "";
-  
+
     return (
       <Text>
         {leftEllipsis}
@@ -279,11 +307,16 @@ const ChatInput = memo<ChatInputProps>((props) => {
       </Text>
     );
   }, [display, visibleWidth, placeholder]);
-  
 
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor="cyan" paddingX={1} width={terminalWidth} flexShrink={1}>
+      <Box
+        borderStyle="round"
+        borderColor="cyan"
+        paddingX={1}
+        width={terminalWidth}
+        flexShrink={1}
+      >
         {renderInput}
       </Box>
 
@@ -298,7 +331,9 @@ const ChatInput = memo<ChatInputProps>((props) => {
 
       {!mention.show && (
         <Box marginTop={1}>
-          <Text dimColor>{showFullHelp ? commandHints.join("\n") : defaultHints.join("\n")}</Text>
+          <Text dimColor>
+            {showFullHelp ? commandHints.join("\n") : defaultHints.join("\n")}
+          </Text>
         </Box>
       )}
     </Box>

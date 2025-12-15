@@ -58,7 +58,7 @@ Baz CLI offers two modes to fit your workflow:
 
 ### 🔑 Standalone Mode (Bring your own keys)
 
-Use your own GitHub Personal Access Token (PAT) and Anthropic API key to review any pull request directly.
+Use your own GitHub Personal Access Token (PAT) and Anthropic token to review any pull request directly.
 
 **Perfect for:**
 - Reviewing PRs without Baz service integration
@@ -108,7 +108,9 @@ baz
 ### Requirements
 
 - **Node.js** 22 or later (see `engines` in `package.json`)
-- **Standalone Mode**: GitHub PAT and Anthropic API key
+- **Standalone Mode**: GitHub PAT and Anthropic token. For GitHub, make sure your fine-grained personal access token has the following scopes:
+  - Contents - `Read and write` - to allow merging PRs and resolving comments. If you only want to review and approve, `Read` is enough.
+  - Pull Requests - `Read and write` - to allow creating comments and approving the PR. If you only want to read PR content, `Read` is enough.
 - **Integrated Mode**: Account in [Baz](https://baz.co/login)
 - **Optional**: Jira, Linear, YouTrack, etc. integrated in baz for ticket context
 

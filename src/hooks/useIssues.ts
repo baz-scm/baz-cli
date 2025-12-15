@@ -10,33 +10,17 @@ export function useIssues(ctx: PRContext) {
   const appMode = useAppMode();
 
   useEffect(() => {
-    let cancelled = false;
-    
     appMode.mode.dataProvider
       .fetchDiscussions(ctx)
       .then((discussions) => {
-        if (!cancelled) {
-          const issues: Issue[] = discussions.map((discussion) => ({
-            type: "discussion" as const,
-            data: discussion,
-          }));
-          setData(issues);
-        }
+        const issues: Issue[] = discussions.map((discussion) => ({
+          type: "discussion" as const,
+          data: discussion,
+        }));
+        setData(issues);
       })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.message);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-      
-    return () => {
-      cancelled = true;
-    };
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [ctx.prId, ctx.fullRepoName, ctx.prNumber]);
 
   return { data, loading, error };

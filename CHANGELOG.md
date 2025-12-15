@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.3](https://github.com/baz-scm/baz-cli/compare/v0.3.2...v0.3.3) (2025-12-15)
+
+
+### 🐛 Bug Fixes
+
+* Correct verdict values and ADO ([#73](https://github.com/baz-scm/baz-cli/issues/73)) ([c00810f](https://github.com/baz-scm/baz-cli/commit/c00810fb10db3ea8c5fc8868ae997a14d5b48946))
+* optimistically update pr data after approval ([#72](https://github.com/baz-scm/baz-cli/issues/72)) ([2b6433d](https://github.com/baz-scm/baz-cli/commit/2b6433d523ddf7b9dcf277dd6592033f3fa079bf))
+
+
+### ✨ New Features
+
+* replace ctrl with tab ([#70](https://github.com/baz-scm/baz-cli/issues/70)) ([11e4859](https://github.com/baz-scm/baz-cli/commit/11e485966f4fdeb5a2afd2265e6013783516ccba))
+* Send pr context for tokens ([#69](https://github.com/baz-scm/baz-cli/issues/69)) ([3b0f9ab](https://github.com/baz-scm/baz-cli/commit/3b0f9ab7afd57a9c2217987e23785987c0b17c36))
+
+
+### 📚 Documentation
+
+* README update and assets ([#74](https://github.com/baz-scm/baz-cli/issues/74)) ([7afdd89](https://github.com/baz-scm/baz-cli/commit/7afdd89a01e85c2decfe9b64a9f39f98fb673cf6))
+
 ## [0.3.2](https://github.com/baz-scm/baz-cli/compare/v0.3.1...v0.3.2) (2025-12-14)
 
 

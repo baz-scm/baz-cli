@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.5](https://github.com/baz-scm/baz-cli/compare/v0.3.4...v0.3.5) (2025-12-16)
+
+
+### 🐛 Bug Fixes
+
+* fix discussion tokens request ([#80](https://github.com/baz-scm/baz-cli/issues/80)) ([68bb7ba](https://github.com/baz-scm/baz-cli/commit/68bb7ba59ee8b3ec2cefbceb8ae49287b9cdeb3c))
+
+
+### ✨ New Features
+
+* support pagination for PRs ([#82](https://github.com/baz-scm/baz-cli/issues/82)) ([5e3dbbd](https://github.com/baz-scm/baz-cli/commit/5e3dbbd872fcc9630ff1effca940347ec8cba2fe))
+
 ## [0.3.4](https://github.com/baz-scm/baz-cli/compare/v0.3.3...v0.3.4) (2025-12-15)
 
 

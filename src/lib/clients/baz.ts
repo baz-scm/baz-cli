@@ -126,10 +126,19 @@ export async function fetchRepositories(): Promise<Repository[]> {
 
 export interface PullRequestsResponse {
   changes: PullRequest[];
+  hasMore: boolean;
+  page: number;
 }
 
 export async function fetchPRs(): Promise<PullRequest[]> {
-  const repos = await axiosClient
+  const changes: PullRequest[] = []
+  let resp: PullRequestsResponse = {
+    changes: [],
+    hasMore: false,
+    page: 1,
+  }
+  do {
+  resp = await axiosClient
     .get<PullRequestsResponse>(PULL_REQUESTS_URL, {
       headers: {
         "Content-Type": "application/json",
@@ -146,8 +155,10 @@ export async function fetchPRs(): Promise<PullRequest[]> {
       logger.debug(`Axios error while fetching pull requests: ${error}`);
       throw error;
     });
+    changes.push(...resp.changes)
+  } while (resp.hasMore)
 
-  return repos.changes;
+  return changes;
 }
 
 // API Response wrapper types

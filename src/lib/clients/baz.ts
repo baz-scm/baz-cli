@@ -131,33 +131,33 @@ export interface PullRequestsResponse {
 }
 
 export async function fetchPRs(): Promise<PullRequest[]> {
-  const changes: PullRequest[] = []
+  const changes: PullRequest[] = [];
   let resp: PullRequestsResponse = {
     changes: [],
     hasMore: false,
     page: 0,
-  }
+  };
   do {
-  resp = await axiosClient
-    .get<PullRequestsResponse>(PULL_REQUESTS_URL, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      params: {
-        state: "open",
-        page: resp.page + 1
-      },
-      paramsSerializer: {
-        indexes: null,
-      },
-    })
-    .then((value) => value.data)
-    .catch((error: unknown) => {
-      logger.debug(`Axios error while fetching pull requests: ${error}`);
-      throw error;
-    });
-    changes.push(...resp.changes)
-  } while (resp.hasMore)
+    resp = await axiosClient
+      .get<PullRequestsResponse>(PULL_REQUESTS_URL, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        params: {
+          state: "open",
+          page: resp.page + 1,
+        },
+        paramsSerializer: {
+          indexes: null,
+        },
+      })
+      .then((value) => value.data)
+      .catch((error: unknown) => {
+        logger.debug(`Axios error while fetching pull requests: ${error}`);
+        throw error;
+      });
+    changes.push(...resp.changes);
+  } while (resp.hasMore);
 
   return changes;
 }

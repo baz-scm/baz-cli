@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, memo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
@@ -13,46 +13,6 @@ import type { Discussion } from "../lib/providers/types.js";
 import { RepoWriteAccess } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/index.js";
 import { processStream } from "../lib/chat-stream.js";
-
-const MemoizedIssueDisplay = memo<{
-  issue: Issue;
-  prId: string;
-  fullRepoName: string;
-  prNumber: number;
-  currentIndex: number;
-  totalIssues: number;
-  hasNext: boolean;
-}>(
-  ({
-    issue,
-    prId,
-    fullRepoName,
-    prNumber,
-    currentIndex,
-    totalIssues,
-    hasNext,
-  }) => {
-    const handler = getIssueHandler(issue.type);
-    const ExplainComponent = handler.displayExplainComponent;
-    const DisplayComponent = handler.displayComponent;
-
-    const partialContext = {
-      prId,
-      fullRepoName,
-      prNumber,
-      currentIndex,
-      totalIssues,
-      hasNext,
-    } as IssueContext;
-
-    return (
-      <>
-        <ExplainComponent issue={issue} />
-        <DisplayComponent issue={issue} context={partialContext} />
-      </>
-    );
-  },
-);
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -89,6 +49,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const hasNext = currentIndex < issues.length - 1;
 
   const handler = getIssueHandler(currentIssue.type);
+  const ExplainComponent = handler.displayExplainComponent;
+  const DisplayComponent = handler.displayComponent;
 
   const buildChatRequest = useCallback(
     async (
@@ -289,15 +251,9 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
 
   return (
     <Box flexDirection="column">
-      <MemoizedIssueDisplay
-        issue={currentIssue}
-        prId={prId}
-        fullRepoName={fullRepoName}
-        prNumber={prNumber}
-        currentIndex={currentIndex}
-        totalIssues={issues.length}
-        hasNext={hasNext}
-      />
+      <ExplainComponent issue={currentIssue} />
+
+      <DisplayComponent issue={currentIssue} context={context} />
 
       <Box marginTop={1}>
         <ChatDisplay

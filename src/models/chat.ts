@@ -33,16 +33,42 @@ export interface IssueSpecReview {
 
 export type ChatIssue = IssueDiscussion | IssuePullRequest | IssueSpecReview;
 
+export interface TokensDiscussion
+  extends Omit<Discussion, "author_user" | "comments"> {
+  author_user?: { name: string; login?: string; avatarUrl?: string };
+  comments: Array<{
+    id: string;
+    author: string;
+    body: string;
+    createdAt: string;
+  }>;
+}
+
 export interface IssueDiscussionWithContext {
   type: IssueType.DISCUSSION;
   data: {
     id: string;
-    discussion: Discussion;
+    discussion: TokensDiscussion;
     diff: FileDiff[];
   };
 }
 
 export type TokensChatIssue = IssueDiscussionWithContext | IssuePullRequest;
+
+export function toTokensDiscussion(discussion: Discussion): TokensDiscussion {
+  return {
+    ...discussion,
+    author_user: discussion.author_user
+      ? { name: discussion.author_user.display_name }
+      : undefined,
+    comments: discussion.comments.map((c) => ({
+      id: c.id,
+      author: c.author,
+      body: c.comment_body,
+      createdAt: c.createdAt ?? new Date().toISOString(),
+    })),
+  };
+}
 
 export interface BazChatRequest {
   mode: "baz";

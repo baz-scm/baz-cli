@@ -3,7 +3,12 @@ import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
 import ChatDisplay from "./chat/ChatDisplay.js";
-import { ChatMessage, CheckoutChatRequest, IssueType } from "../models/chat.js";
+import {
+  ChatMessage,
+  CheckoutChatRequest,
+  IssueType,
+  toTokensDiscussion,
+} from "../models/chat.js";
 import type { Discussion } from "../lib/providers/types.js";
 import { RepoWriteAccess } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/index.js";
@@ -80,6 +85,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           files,
         );
 
+        const tokensDiscussion = toTokensDiscussion(discussion);
+
         return {
           mode: "tokens",
           prContext,
@@ -87,7 +94,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
             type: IssueType.DISCUSSION,
             data: {
               id: discussion.id,
-              discussion,
+              discussion: tokensDiscussion,
               diff: diffData,
             },
           },

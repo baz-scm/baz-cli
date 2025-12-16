@@ -135,7 +135,7 @@ export async function fetchPRs(): Promise<PullRequest[]> {
   let resp: PullRequestsResponse = {
     changes: [],
     hasMore: false,
-    page: 1,
+    page: 0,
   }
   do {
   resp = await axiosClient
@@ -145,6 +145,7 @@ export async function fetchPRs(): Promise<PullRequest[]> {
       },
       params: {
         state: "open",
+        page: resp.page + 1
       },
       paramsSerializer: {
         indexes: null,

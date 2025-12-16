@@ -60,6 +60,7 @@ export interface Comment {
   body_content_type: "html" | "markdown";
   author: string;
   author_user?: AuthorUser;
+  createdAt?: string;
 }
 
 export interface SpecReview {

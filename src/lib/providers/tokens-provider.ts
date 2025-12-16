@@ -97,6 +97,7 @@ export class TokensDataProvider implements IDataProvider {
           body_content_type: "markdown" as const,
           author: c.author ?? "",
           author_user: c.author ? { display_name: c.author } : undefined,
+          createdAt: c.createdAt,
         })),
       };
     });

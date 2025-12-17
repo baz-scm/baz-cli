@@ -28,17 +28,12 @@ export function createInstrctlCommand(): Command {
   cmd
     .command("plan")
     .description("Compute a plan to align documents with desired principles")
-    .action(() => {
       try {
-        const conflicts = readConflicts();
-        if (conflicts?.conflicts.some((c) => c.blocking)) {
+        const repoRoot = getRepoRoot();
+        const state = readState(repoRoot);
+        const conflicts = buildConflicts(state.repo.head_commit, state.principles);
+        if (conflicts.conflicts.some((c) => c.blocking)) {
           console.error("Blocking conflicts detected; resolve before planning.");
-          process.exit(2);
-          return;
-        }
-        const plan = buildPlan();
-        if (plan.conflicts.some((c) => c.blocking)) {
-          console.error("Blocking conflicts detected in plan output.");
           process.exit(2);
           return;
         }

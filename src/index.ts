@@ -5,6 +5,7 @@ import { render } from "ink";
 import React from "react";
 import ReviewFlow from "./flows/Review/Review.js";
 import { createAuthCommand } from "./commands/auth.js";
+import { createInstrctlCommand } from "./commands/instrctl.js";
 import {
   AppModeProvider,
   getAppConfig,
@@ -50,5 +51,6 @@ program
   });
 
 program.addCommand(createAuthCommand());
+program.addCommand(createInstrctlCommand());
 
 program.parseAsync();

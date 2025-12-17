@@ -168,6 +168,25 @@ npm install
 | `npm run format:check` | Verify source files with Prettier |
 | `npm run format:fix` | Format source files with Prettier |
 
+### Instruction document sync with `instrctl`
+
+The CLI now ships with an experimental `instrctl` command group that mirrors the execution design in `docs/instrctl-execution-spec.md`:
+
+- `baz instrctl init` — scans the repository for instruction documents (CLAUDE, agents, cursor rules, etc.), extracts principles, and writes `.instrctl/state.json` plus conflict reports.
+- `baz instrctl plan` — compares the desired principles (from `.instrctl/instrctl.hcl` when present) with discovered documents and produces `.instrctl/plan.json` alongside unified diffs to inject a managed principles section.
+- `baz instrctl apply` — applies the generated plan using `git apply`, letting you iterate on instruction alignment without touching source files.
+
+instrctl will opportunistically call an Anthropic LLM for principle extraction when `ANTHROPIC_TOKEN` is set (or provided through Baz tokens mode) and silently fall back to the deterministic parser when unavailable.
+
+Managed sections are appended with the heading `## Managed Principles` and fenced with `<!-- instrctl:begin managed -->`/`<!-- instrctl:end managed -->` markers to keep edits deterministic.
+
+> ⚠️ Current instrctl limitations
+>
+> - LLM usage is extraction-only. Plan/apply does not yet enforce patch bounding, PR creation, or override semantics from the execution spec.
+> - Git automation is minimal: `instrctl apply` simply runs `git apply` against generated diffs and expects you to commit/PR changes yourself.
+> - Tokens: Anthropic keys are read from `ANTHROPIC_TOKEN`, `BAZ_LLM_TOKEN`, or `BAZ_TOKEN`. If none are set, instrctl always falls back to the heuristic parser.
+> - State/config drift detection is basic. The plan currently rewrites the managed section wholesale and does not honor `.instrctl/instrctl.hcl` deletes or overrides.
+
 ### Development Workflow
 
 1. Create a `.env` file with your local configuration

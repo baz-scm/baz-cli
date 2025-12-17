@@ -21,6 +21,8 @@ const envSchema = z.object({
   LINEAR_CLIENT_ID: z.string().default("a20b70eadc1cce2121089f70402351d6"),
   GH_TOKEN: z.string().optional(),
   ANTHROPIC_TOKEN: z.string().optional(),
+  BAZ_LLM_TOKEN: z.string().optional(),
+  BAZ_TOKEN: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

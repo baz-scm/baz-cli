@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/baz-scm/baz-cli/compare/v0.3.5...v0.3.6) (2025-12-17)
+
+
+### ✨ New Features
+
+* add author name and updated time to PR selection ([#85](https://github.com/baz-scm/baz-cli/issues/85)) ([6175ddd](https://github.com/baz-scm/baz-cli/commit/6175ddda010bcef83bb310fd72154d5d8ef976a8))
+
 ## [0.3.5](https://github.com/baz-scm/baz-cli/compare/v0.3.4...v0.3.5) (2025-12-16)
 
 

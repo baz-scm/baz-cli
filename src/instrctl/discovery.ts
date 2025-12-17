@@ -10,15 +10,16 @@ export interface DiscoveryOptions {
   exclude?: string[];
 }
 
-export function discoverDocuments(repoRoot: string, opts: DiscoveryOptions = {}): DocumentDescriptor[] {
-  const include = opts.include ?? DEFAULT_INCLUDE;
-  const exclude = opts.exclude ?? DEFAULT_EXCLUDE;
-  const files = repoEntries(repoRoot, exclude);
-  const docs: DocumentDescriptor[] = [];
-
   for (const file of files) {
     const rel = relativePath(repoRoot, file);
-    if (!pathMatches(rel, include, exclude)) continue;
+    const segments = rel.split(/[/\\]/);
+    const hasExcludedSegment = segments.some(seg => 
+      exclude.some(pattern => {
+        const base = pattern.replace(/\/?\*\*\/?/g, '');
+        return seg === base || seg.startsWith(base + '/');
+      })
+    );
+    if (hasExcludedSegment || !pathMatches(rel, include, exclude)) continue;
     const stat = fs.statSync(file);
     if (!stat.isFile()) continue;
     const content = fs.readFileSync(file, "utf8");

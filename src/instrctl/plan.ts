@@ -31,8 +31,9 @@ function replaceManagedSection(original: string, rendered: string): string {
     return original.slice(0, start) + rendered + original.slice(end);
   }
   if (original.includes(MANAGED_SECTION_HEADING)) {
-    const [before] = original.split(MANAGED_SECTION_HEADING);
-    return `${before}${rendered}`;
+    const [before, ...afterParts] = original.split(MANAGED_SECTION_HEADING);
+    const after = afterParts.join(MANAGED_SECTION_HEADING);
+    return `${before}${rendered}${after}`;
   }
   return `${original.trim()}\n\n${rendered}`;
 }

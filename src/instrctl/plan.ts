@@ -88,7 +88,10 @@ export function buildPlan(): PlanFile {
   }
 
   const conflicts: PlanFile["conflicts"] = (conflictsFile?.conflicts ?? []).map((conflict) => ({
-    conflict_id: conflict.conflict_id,
+  const conflicts: PlanFile["conflicts"] = (conflictsFile?.conflicts ?? []).map((conflict) => ({
+    conflict_id: conflict.conflictId,
+    blocking: Boolean(conflict.blocking),
+  }));
     blocking: Boolean(conflict.blocking),
   }));
   const plan: PlanFile = {

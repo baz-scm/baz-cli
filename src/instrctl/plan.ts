@@ -6,7 +6,7 @@ import { MANAGED_BEGIN, MANAGED_END, MANAGED_SECTION_HEADING } from "./constants
 import { readConfig } from "./config.js";
 import { scopeIntersects } from "./scope.js";
 import { readState } from "./state.js";
-import { ensureDir, getRepoRoot, writeFileSafe } from "./utils.js";
+import { ensureDir, getRepoRoot, readConflicts, writeFileSafe } from "./utils.js";
 import type { FilePatch, PlanFile, Principle, StateFile } from "./types.js";
 
 function renderPrinciple(principle: Principle): string {
@@ -65,6 +65,7 @@ function readDesiredPrinciples(state: StateFile): Principle[] {
 export function buildPlan(): PlanFile {
   const repoRoot = getRepoRoot();
   const state = readState(repoRoot);
+  const conflictsFile = readConflicts(repoRoot);
   const desired = readDesiredPrinciples(state);
   const principle_changes = desired.map((p) => ({
     action: "update" as const,
@@ -85,7 +86,7 @@ export function buildPlan(): PlanFile {
     }
   }
 
-  const conflicts: PlanFile["conflicts"] = [];
+  const conflicts: PlanFile["conflicts"] = conflictsFile?.conflicts ?? [];
   const plan: PlanFile = {
     version: 1,
     base_commit: state.repo.head_commit,

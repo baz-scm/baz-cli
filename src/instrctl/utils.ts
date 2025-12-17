@@ -2,6 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import type { ConflictsFile } from "./types.js";
 
 export function sha256(content: string): string {
   return crypto.createHash("sha256").update(content).digest("hex");
@@ -82,4 +83,11 @@ export function repoEntries(root: string, exclude: string[] = []): string[] {
     }
   }
   return entries;
+}
+
+export function readConflicts(repoRoot: string = getRepoRoot()): ConflictsFile | null {
+  const conflictPath = path.join(repoRoot, ".instrctl", "conflicts.json");
+  if (!fs.existsSync(conflictPath)) return null;
+  const content = fs.readFileSync(conflictPath, "utf8");
+  return JSON.parse(content) as ConflictsFile;
 }

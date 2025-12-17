@@ -27,7 +27,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     initialIndex >= 0 ? initialIndex : 0,
   );
 
-  const sanitizedPRs = pullRequests
+  const sanitizedPRs = [...pullRequests]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .map((pr) => ({
       ...pr,

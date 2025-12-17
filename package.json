@@ -15,6 +15,7 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "watch": "tsc --watch",
+    "test": "node --test --import tsx --test-reporter spec test/**/*.test.ts",
     "lint": "eslint src --cache",
     "lint:fix": "eslint src --fix",
     "format:fix": "prettier --write \"**/*.{ts,tsx}\"",

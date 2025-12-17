@@ -5,7 +5,7 @@ export function globToRegex(pattern: string): RegExp {
   const specials = new Set([".", "+", "^", "$", "{", "}", "(", ")", "|", "[", "]", "\\"]);
   let body = "";
   let i = 0;
-  let prefix = "^(?:.*/)?";
+  const prefix = "^(?:.*/)?";
   if (normalized.startsWith("**/")) {
     i = 3;
   }

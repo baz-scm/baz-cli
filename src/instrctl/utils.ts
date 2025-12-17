@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import type { ConflictsFile } from "./types.js";
-import { matchAny, pathMatches } from "./matcher.js";
+import { matchAny } from "./matcher.js";
 
 export function sha256(content: string): string {
   return crypto.createHash("sha256").update(content).digest("hex");

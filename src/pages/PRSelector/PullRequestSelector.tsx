@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import type { PullRequest } from "../../lib/providers/index.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { MAIN_COLOR } from "../../theme/colors.js";
+import { updatedTimeAgo } from "../../lib/date.js";
 
 interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
@@ -25,12 +27,24 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     initialIndex >= 0 ? initialIndex : 0,
   );
 
-  const filteredPRs = pullRequests.filter((pr) => {
+  const sanitizedPRs = pullRequests
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .map((pr) => ({
+      ...pr,
+      authorName:
+        pr.authorName.lastIndexOf("/") > 0
+          ? pr.authorName.substring(pr.authorName.lastIndexOf("/") + 1)
+          : pr.authorName,
+      updatedAt: updatedTimeAgo(pr.updatedAt),
+    }));
+
+  const filteredPRs = sanitizedPRs.filter((pr) => {
     const query = searchQuery.toLowerCase();
     return (
       pr.title.toLowerCase().includes(query) ||
       pr.prNumber.toString().includes(query) ||
-      pr.repositoryName.toLowerCase().includes(query)
+      pr.repositoryName.toLowerCase().includes(query) ||
+      pr.authorName.toLowerCase().includes(query)
     );
   });
 
@@ -108,7 +122,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                     {visiblePRs.map((pr, index) => {
                       const actualIndex = startIndex + index;
                       return (
-                        <Box key={pr.id}>
+                        <Box key={pr.id} flexDirection="column">
                           <Text
                             color={
                               actualIndex === selectedIndex ? "cyan" : "white"
@@ -119,6 +133,15 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                               : ITEM_SELECTION_GAP}
                             #{pr.prNumber} {pr.title}
                             <Text color="gray"> [{pr.repositoryName}]</Text>
+                          </Text>
+                          <Text
+                            color={
+                              actualIndex === selectedIndex
+                                ? MAIN_COLOR
+                                : "white"
+                            }
+                          >
+                            {`${ITEM_SELECTION_GAP}  by ${pr.authorName} ⏺ ${pr.updatedAt}`}
                           </Text>
                         </Box>
                       );

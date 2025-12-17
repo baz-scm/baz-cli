@@ -58,6 +58,7 @@ export async function fetchOpenPullRequests(): Promise<PullRequest[]> {
             description: pr.body ?? "",
             repoId: `${repo.owner.login}/${repo.name}`,
             repositoryName: repo.full_name,
+            authorName: pr.user?.login ?? "",
             updatedAt: pr.updated_at,
           });
         }

@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import { DEFAULT_EXCLUDE, DEFAULT_INCLUDE } from "./constants.js";
 import { docDialect, pathMatches } from "./matcher.js";
 import { repoEntries, relativePath, sha256 } from "./utils.js";

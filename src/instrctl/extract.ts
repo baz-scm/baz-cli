@@ -12,7 +12,7 @@ export interface ExtractResult {
 
 interface LlmPrinciplePayload {
   title?: string;
-  strength: "MUST" | "MUST_NOT" | "SHOULD" | "MAY";
+  strength: "MUST" | "MUST_NOT" | "MUST NOT" | "SHOULD" | "MAY";
   statement: string;
   tags?: string[];
   rationale?: string;
@@ -80,7 +80,7 @@ async function extractPrinciplesWithLlm(
     const occurrences: Occurrence[] = [];
 
     for (const principle of parsed.principles) {
-      const strength = principle.strength === "MUST NOT" ? "MUST_NOT" : principle.strength;
+      const strength = principle.strength.replace(/\s+/g, "_").toUpperCase() as Principle["strength"];
       const statement = principle.statement.trim();
       const normalized = normalizeStatement(statement);
       if (!normalized) continue;

@@ -115,7 +115,7 @@ async function extractPrinciplesWithLlm(
     }
 
     return { principles, occurrences };
-  } catch (error) {
+  } catch {
     console.warn("LLM extraction failed; falling back to heuristic parser");
     return null;
   }

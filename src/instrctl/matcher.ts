@@ -5,9 +5,8 @@ export function globToRegex(pattern: string): RegExp {
   const specials = new Set([".", "+", "^", "$", "{", "}", "(", ")", "|", "[", "]", "\\"]);
   let body = "";
   let i = 0;
-  let prefix = "";
+  let prefix = "^(?:.*/)?";
   if (normalized.startsWith("**/")) {
-    prefix = "(?:.*/)?";
     i = 3;
   }
   for (; i < normalized.length; i += 1) {
@@ -24,7 +23,7 @@ export function globToRegex(pattern: string): RegExp {
     }
     body += specials.has(ch) ? `\\${ch}` : ch;
   }
-  return new RegExp(`^${prefix}${body}$`);
+  return new RegExp(`${prefix}${body}$`);
 }
 
 export function matchAny(file: string, patterns: string[]): boolean {

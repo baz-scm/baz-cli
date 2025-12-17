@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import type { ConflictsFile } from "./types.js";
+import { matchAny, pathMatches } from "./matcher.js";
 
 export function sha256(content: string): string {
   return crypto.createHash("sha256").update(content).digest("hex");
@@ -72,7 +73,7 @@ export function repoEntries(root: string, exclude: string[] = []): string[] {
     const stat = fs.statSync(current);
     if (stat.isDirectory()) {
       const relative = path.relative(root, current).replace(/\\/g, "/");
-      if (relative && exclude.some((pattern) => relative.startsWith(pattern.replace("/**", "")))) {
+      if (relative && matchAny(`${relative}/`, exclude)) {
         continue;
       }
       for (const child of fs.readdirSync(current)) {

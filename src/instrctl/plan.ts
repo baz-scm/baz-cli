@@ -86,7 +86,10 @@ export function buildPlan(): PlanFile {
     }
   }
 
-  const conflicts: PlanFile["conflicts"] = conflictsFile?.conflicts ?? [];
+  const conflicts: PlanFile["conflicts"] = (conflictsFile?.conflicts ?? []).map((conflict) => ({
+    conflict_id: conflict.conflict_id,
+    blocking: Boolean(conflict.blocking),
+  }));
   const plan: PlanFile = {
     version: 1,
     base_commit: state.repo.head_commit,

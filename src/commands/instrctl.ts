@@ -48,9 +48,10 @@ export function createInstrctlCommand(): Command {
           return;
         }
         console.log(`Generated plan with ${plan.file_patches.length} file patches.`);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { exitCode?: number };
         console.error(String(error));
-        process.exit(error?.exitCode ?? 1);
+        process.exit(err?.exitCode ?? 1);
       }
     });
 
@@ -61,9 +62,10 @@ export function createInstrctlCommand(): Command {
       try {
         const plan = await applyPlan();
         console.log(`Applied ${plan.file_patches.length} patches.`);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { exitCode?: number };
         console.error(String(error));
-        process.exit(error?.exitCode ?? 1);
+        process.exit(err?.exitCode ?? 1);
       }
     });
 

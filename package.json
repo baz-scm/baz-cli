@@ -1,6 +1,6 @@
 {
   "name": "@baz-scm/cli",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Baz CLI tool for managing pull requests",
   "main": "dist/index.js",
   "type": "module",

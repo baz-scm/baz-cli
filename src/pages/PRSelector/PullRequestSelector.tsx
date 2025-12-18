@@ -5,6 +5,14 @@ import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { updatedTimeAgo } from "../../lib/date.js";
 
+interface PullRequestSearchKeywords {
+  author?: string;
+  authorNot?: string;
+  repo?: string;
+  repoNot?: string;
+  freetext: string;
+}
+
 interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
   onSelect: (pr: PullRequest) => void;
@@ -38,14 +46,32 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
       updatedAt: updatedTimeAgo(pr.updatedAt),
     }));
 
+  const searchKeywords = extractSearchKeywords(searchQuery.toLowerCase());
   const filteredPRs = sanitizedPRs.filter((pr) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      pr.title.toLowerCase().includes(query) ||
-      pr.prNumber.toString().includes(query) ||
-      pr.repositoryName.toLowerCase().includes(query) ||
-      pr.authorName.toLowerCase().includes(query)
-    );
+    const authorName = pr.authorName.toLowerCase();
+    const repositoryName = pr.repositoryName.toLowerCase();
+
+    const keywordFilter =
+      (searchKeywords.author
+        ? authorName.includes(searchKeywords.author)
+        : true) &&
+      (searchKeywords.authorNot
+        ? !authorName.includes(searchKeywords.authorNot)
+        : true) &&
+      (searchKeywords.repo
+        ? repositoryName.includes(searchKeywords.repo)
+        : true) &&
+      (searchKeywords.repoNot
+        ? !repositoryName.includes(searchKeywords.repoNot)
+        : true);
+
+    const freeTextFilter =
+      pr.title.toLowerCase().includes(searchKeywords.freetext) ||
+      pr.prNumber.toString().includes(searchKeywords.freetext) ||
+      repositoryName.includes(searchKeywords.freetext) ||
+      authorName.includes(searchKeywords.freetext);
+
+    return keywordFilter && freeTextFilter;
   });
 
   useEffect(() => {
@@ -167,5 +193,53 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     </Box>
   );
 };
+
+function extractSearchKeywords(query: string): PullRequestSearchKeywords {
+  const q = query.trim();
+  if (!q) return { freetext: "" };
+
+  let author: string | undefined = undefined;
+  let repo: string | undefined = undefined;
+  let authorNot: string | undefined;
+  let repoNot: string | undefined;
+  const freeText: string[] = [];
+
+  for (const part of q.split(/\s+/)) {
+    let colonIndex = part.indexOf(":");
+    if (colonIndex === -1) {
+      freeText.push(part);
+      continue;
+    }
+
+    const isNegative = part.startsWith("-");
+    colonIndex = isNegative ? colonIndex - 1 : colonIndex;
+
+    const searchKeyword = isNegative ? part.slice(1) : part;
+    const key = searchKeyword.slice(0, colonIndex);
+    const value = searchKeyword.slice(colonIndex + 1).trim();
+
+    if (!value) {
+      freeText.push(part);
+      continue;
+    }
+
+    if (key === "author") {
+      if (isNegative) authorNot = value.toLowerCase();
+      else author = value.toLowerCase();
+      continue;
+    }
+
+    if (key === "repo" || key === "repository") {
+      if (isNegative) repoNot = value.toLowerCase();
+      else repo = value.toLowerCase();
+      continue;
+    }
+
+    // Unknown keyword treat as freetext
+    freeText.push(part);
+  }
+
+  return { author, authorNot, repo, repoNot, freetext: freeText.join(" ") };
+}
 
 export default PullRequestSelector;

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/baz-scm/baz-cli/compare/v0.3.6...v0.3.7) (2025-12-18)
+
+
+### ✨ New Features
+
+* add include and exclude keyword search to PR selection ([#88](https://github.com/baz-scm/baz-cli/issues/88)) ([17a51be](https://github.com/baz-scm/baz-cli/commit/17a51beea726b0e830352f47a2b7527050b9ebce))
+
 ## [0.3.6](https://github.com/baz-scm/baz-cli/compare/v0.3.5...v0.3.6) (2025-12-17)
 
 

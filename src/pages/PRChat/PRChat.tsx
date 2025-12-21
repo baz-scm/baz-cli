@@ -19,6 +19,7 @@ interface PRChatProps {
   chatTitle?: string;
   chatDescription?: string;
   outputInitialMessage?: boolean;
+  issueType: IssueType.PR_CHAT | IssueType.PR_WALKTHROUGH;
   onBack: () => void;
 }
 
@@ -31,6 +32,7 @@ const PRChat: React.FC<PRChatProps> = ({
   chatTitle,
   chatDescription,
   outputInitialMessage = true,
+  issueType,
   onBack,
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
@@ -44,7 +46,7 @@ const PRChat: React.FC<PRChatProps> = ({
   const buildChatRequest = useCallback(
     (freeText: string, convId?: string): CheckoutChatRequest => {
       const issue = {
-        type: IssueType.PULL_REQUEST,
+        type: issueType,
         data: { id: prId },
       } as const;
 

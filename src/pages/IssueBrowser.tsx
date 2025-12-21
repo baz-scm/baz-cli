@@ -107,7 +107,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
         mode: "tokens",
         prContext,
         issue: {
-          type: IssueType.PULL_REQUEST,
+          type: IssueType.PR_CHAT,
           data: { id: issue.data.id },
         },
         freeText: message,

@@ -1,5 +1,6 @@
 import React from "react";
 import PRChat from "../PRChat/PRChat.js";
+import { IssueType } from "../../models/chat.js";
 
 const INITIAL_PROMPT =
   "Please walk me through this pull request. Start by showing me a very short description on what the pull request do, followed by a brief summary of the sections. Do not include any section yet in your answer";
@@ -21,6 +22,7 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
 }) => {
   return (
     <PRChat
+      issueType={IssueType.PR_WALKTHROUGH}
       prId={prId}
       bazRepoId={bazRepoId}
       chatInput={INITIAL_PROMPT}

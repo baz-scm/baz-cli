@@ -6,8 +6,9 @@ import type {
 
 export enum IssueType {
   DISCUSSION = "discussion",
-  PULL_REQUEST = "pull_request",
   SPEC_REVIEW = "spec_review",
+  PR_CHAT = "pr_chat",
+  PR_WALKTHROUGH = "pr_walkthrough",
 }
 
 export interface IssueDiscussion {
@@ -17,8 +18,15 @@ export interface IssueDiscussion {
   };
 }
 
-export interface IssuePullRequest {
-  type: IssueType.PULL_REQUEST;
+export interface IssuePRChat {
+  type: IssueType.PR_CHAT;
+  data: {
+    id: string;
+  };
+}
+
+export interface IssuePRWalkthrough {
+  type: IssueType.PR_WALKTHROUGH;
   data: {
     id: string;
   };
@@ -31,7 +39,11 @@ export interface IssueSpecReview {
   };
 }
 
-export type ChatIssue = IssueDiscussion | IssuePullRequest | IssueSpecReview;
+export type ChatIssue =
+  | IssueDiscussion
+  | IssueSpecReview
+  | IssuePRChat
+  | IssuePRWalkthrough;
 
 export interface TokensDiscussion
   extends Omit<Discussion, "author_user" | "comments"> {
@@ -53,7 +65,10 @@ export interface IssueDiscussionWithContext {
   };
 }
 
-export type TokensChatIssue = IssueDiscussionWithContext | IssuePullRequest;
+export type TokensChatIssue =
+  | IssueDiscussionWithContext
+  | IssuePRChat
+  | IssuePRWalkthrough;
 
 export function toTokensDiscussion(discussion: Discussion): TokensDiscussion {
   return {

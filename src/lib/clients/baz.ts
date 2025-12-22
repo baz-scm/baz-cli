@@ -20,6 +20,7 @@ import {
   Requirement,
   SpecReview,
 } from "../providers/types.js";
+import { StreamAbortError } from "../chat-stream.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
@@ -503,7 +504,7 @@ export async function* streamChatResponse(
     for await (const chunk of response.data) {
       // Check if aborted before processing chunk
       if (abortSignal?.aborted) {
-        throw new Error("StreamAbortError");
+        throw new StreamAbortError();
       }
 
       buffer += chunk.toString();

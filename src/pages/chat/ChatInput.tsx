@@ -25,6 +25,8 @@ interface ChatInputProps {
   toolsExist: boolean;
   onToggleToolCallExpansion: () => void;
   terminalWidth: number;
+  onInterrupt?: () => void;
+  isResponseActive?: boolean;
 }
 
 // Throttle updates ~60fps
@@ -43,6 +45,8 @@ const ChatInput = memo<ChatInputProps>((props) => {
     toolsExist,
     onToggleToolCallExpansion,
     terminalWidth,
+    onInterrupt,
+    isResponseActive = false,
   } = props;
 
   const appMode = useAppMode();
@@ -216,7 +220,11 @@ const ChatInput = memo<ChatInputProps>((props) => {
         cursorRef.current = mention.startIndex;
         setMention({ show: false, query: "", startIndex: -1 });
         syncDisplay(true);
-      } else onBack();
+      } else if (isResponseActive && onInterrupt) {
+        onInterrupt();
+      } else {
+        onBack();
+      }
       return;
     }
 

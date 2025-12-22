@@ -6,7 +6,7 @@ import {
   IssueType,
   CheckoutChatRequest,
 } from "../../models/chat.js";
-import { processStream } from "../../lib/chat-stream.js";
+import { processStream, StreamAbortError } from "../../lib/chat-stream.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
 
@@ -38,7 +38,9 @@ const PRChat: React.FC<PRChatProps> = ({
   );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isResponseActive, setIsResponseActive] = useState(false);
   const hasInitialized = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const appMode = useAppMode();
 
   const buildChatRequest = useCallback(
@@ -84,29 +86,62 @@ const PRChat: React.FC<PRChatProps> = ({
         setChatMessages([{ role: "user", content: chatInput }]);
       }
 
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      setIsResponseActive(true);
+
       try {
-        await processStream(buildChatRequest(chatInput, undefined), {
-          onConversationId: setConversationId,
-          onFirstTextContent: () => setIsLoading(false),
-          onUpdate: (content, toolCalls, isFirst) => {
-            if (isFirst) {
-              setChatMessages([{ role: "assistant", content, toolCalls }]);
-            } else {
-              setChatMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: "assistant",
-                  content,
-                  toolCalls,
-                };
-                return updated;
-              });
-            }
+        await processStream(
+          buildChatRequest(chatInput, undefined),
+          {
+            onConversationId: setConversationId,
+            onFirstTextContent: () => setIsLoading(false),
+            onUpdate: (content, toolCalls, isFirst) => {
+              if (isFirst) {
+                setChatMessages([{ role: "assistant", content, toolCalls }]);
+              } else {
+                setChatMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content,
+                    toolCalls,
+                  };
+                  return updated;
+                });
+              }
+            },
+            onAbort: () => {
+              setIsLoading(false);
+              setIsResponseActive(false);
+            },
           },
-        });
+          abortController.signal,
+        );
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
       } catch (error) {
+        if (error instanceof StreamAbortError) {
+          // User aborted - clear partial response
+          setChatMessages((prev) => {
+            const updated = [...prev];
+            if (
+              updated.length > 0 &&
+              updated[updated.length - 1].role === "assistant"
+            ) {
+              updated.pop();
+            }
+            return updated;
+          });
+          setIsLoading(false);
+          setIsResponseActive(false);
+          abortControllerRef.current = null;
+          return;
+        }
         console.error("Failed to get initial chat response:", error);
         setIsLoading(false);
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
         setChatMessages([
           {
             role: "assistant",
@@ -128,32 +163,65 @@ const PRChat: React.FC<PRChatProps> = ({
       ]);
       setIsLoading(true);
 
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      setIsResponseActive(true);
+
       try {
-        await processStream(buildChatRequest(userInput, conversationId), {
-          onConversationId: setConversationId,
-          onFirstTextContent: () => setIsLoading(false),
-          onUpdate: (content, toolCalls, isFirst) => {
-            if (isFirst) {
-              setChatMessages((prev) => [
-                ...prev,
-                { role: "assistant", content, toolCalls },
-              ]);
-            } else {
-              setChatMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: "assistant",
-                  content,
-                  toolCalls,
-                };
-                return updated;
-              });
-            }
+        await processStream(
+          buildChatRequest(userInput, conversationId),
+          {
+            onConversationId: setConversationId,
+            onFirstTextContent: () => setIsLoading(false),
+            onUpdate: (content, toolCalls, isFirst) => {
+              if (isFirst) {
+                setChatMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content, toolCalls },
+                ]);
+              } else {
+                setChatMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content,
+                    toolCalls,
+                  };
+                  return updated;
+                });
+              }
+            },
+            onAbort: () => {
+              setIsLoading(false);
+              setIsResponseActive(false);
+            },
           },
-        });
+          abortController.signal,
+        );
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
       } catch (error) {
+        if (error instanceof StreamAbortError) {
+          // User aborted - clear partial response
+          setChatMessages((prev) => {
+            const updated = [...prev];
+            if (
+              updated.length > 0 &&
+              updated[updated.length - 1].role === "assistant"
+            ) {
+              updated.pop();
+            }
+            return updated;
+          });
+          setIsLoading(false);
+          setIsResponseActive(false);
+          abortControllerRef.current = null;
+          return;
+        }
         console.error("Failed to get chat response:", error);
         setIsLoading(false);
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
         setChatMessages((prev) => [
           ...prev,
           {
@@ -165,6 +233,13 @@ const PRChat: React.FC<PRChatProps> = ({
     },
     [buildChatRequest, conversationId],
   );
+
+  const handleInterrupt = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
 
   return (
     <Box flexDirection="column">
@@ -189,6 +264,8 @@ const PRChat: React.FC<PRChatProps> = ({
         prId={prId}
         enableMentions={false}
         onBack={onBack}
+        onInterrupt={handleInterrupt}
+        isResponseActive={isResponseActive}
       />
     </Box>
   );

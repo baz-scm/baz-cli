@@ -171,7 +171,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
     );
 
     useInput(
-      (input, key) => {
+      (_input, key) => {
         if (key.escape && isResponseActive && onInterrupt) {
           onInterrupt();
         } else if (key.tab && activeToolCalls.length > 0) {

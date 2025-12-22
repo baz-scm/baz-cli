@@ -503,7 +503,7 @@ export async function* streamChatResponse(
     for await (const chunk of response.data) {
       // Check if aborted before processing chunk
       if (abortSignal?.aborted) {
-        break;
+        throw new Error("StreamAbortError");
       }
 
       buffer += chunk.toString();

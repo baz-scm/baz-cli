@@ -123,7 +123,6 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     async (message: string) => {
       setChatMessages((prev) => [...prev, { role: "user", content: message }]);
       setIsLoading(true);
-
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
       setIsResponseActive(true);
@@ -134,6 +133,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           currentIssue,
           conversationId,
         );
+
         await processStream(
           request,
           {
@@ -164,8 +164,6 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           },
           abortController.signal,
         );
-        setIsResponseActive(false);
-        abortControllerRef.current = null;
       } catch (error) {
         if (error instanceof StreamAbortError) {
           // User aborted - clear partial response
@@ -179,15 +177,9 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
             }
             return updated;
           });
-          setIsLoading(false);
-          setIsResponseActive(false);
-          abortControllerRef.current = null;
           return;
         }
         console.error("Failed to get chat response:", error);
-        setIsLoading(false);
-        setIsResponseActive(false);
-        abortControllerRef.current = null;
         setChatMessages((prev) => [
           ...prev,
           {
@@ -195,6 +187,9 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
             content: "Sorry, I encountered an error. Please try again.",
           },
         ]);
+      } finally {
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
       }
     },
     [buildChatRequest, currentIssue, conversationId],

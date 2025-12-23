@@ -22,6 +22,7 @@ import {
   Requirement,
   SpecReview,
 } from "../providers/types.js";
+import { StreamAbortError } from "../chat-stream.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
 const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
@@ -530,6 +531,7 @@ function* processStreamMessage(
 
 export async function* streamChatResponse(
   request: CheckoutChatRequest,
+  abortSignal?: AbortSignal,
 ): AsyncGenerator<ChatStreamChunk, void, unknown> {
   try {
     const response = await axiosClient.post(CHAT_URL, request, {
@@ -537,11 +539,17 @@ export async function* streamChatResponse(
         "Content-Type": "application/json",
       },
       responseType: "stream",
+      signal: abortSignal,
     });
 
     let buffer = "";
 
     for await (const chunk of response.data) {
+      // Check if aborted before processing chunk
+      if (abortSignal?.aborted) {
+        throw new StreamAbortError();
+      }
+
       buffer += chunk.toString();
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
@@ -567,6 +575,16 @@ export async function* streamChatResponse(
       }
     }
   } catch (error: unknown) {
+    // Don't log abort errors as errors - they're expected
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "CanceledError"
+    ) {
+      logger.debug("Chat stream aborted by user");
+      throw error; // Re-throw so processStream can handle it
+    }
     logger.error({ error }, "Error streaming chat response");
     throw error;
   }

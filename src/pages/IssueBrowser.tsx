@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { Box } from "ink";
 import { Issue, IssueContext } from "../issues/types.js";
 import { getIssueHandler } from "../issues/registry.js";
@@ -12,7 +12,7 @@ import {
 import type { Discussion } from "../lib/providers/types.js";
 import { RepoWriteAccess } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/index.js";
-import { processStream } from "../lib/chat-stream.js";
+import { processStream, StreamAbortError } from "../lib/chat-stream.js";
 
 interface IssueBrowserProps {
   issues: Issue[];
@@ -43,6 +43,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
   const [repoWriteAccess, setRepoWriteAccess] =
     useState<RepoWriteAccess>(writeAccess);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResponseActive, setIsResponseActive] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const appMode = useAppMode();
 
   const currentIssue = issues[currentIndex];
@@ -121,6 +123,9 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     async (message: string) => {
       setChatMessages((prev) => [...prev, { role: "user", content: message }]);
       setIsLoading(true);
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      setIsResponseActive(true);
 
       try {
         const request = await buildChatRequest(
@@ -128,31 +133,53 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           currentIssue,
           conversationId,
         );
-        await processStream(request, {
-          onConversationId: setConversationId,
-          onFirstTextContent: () => setIsLoading(false),
-          onUpdate: (content, toolCalls, isFirst) => {
-            if (isFirst) {
-              setChatMessages((prev) => [
-                ...prev,
-                { role: "assistant", content, toolCalls },
-              ]);
-            } else {
-              setChatMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: "assistant",
-                  content,
-                  toolCalls,
-                };
-                return updated;
-              });
-            }
+
+        await processStream(
+          request,
+          {
+            onConversationId: setConversationId,
+            onFirstTextContent: () => setIsLoading(false),
+            onUpdate: (content, toolCalls, isFirst) => {
+              if (isFirst) {
+                setChatMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content, toolCalls },
+                ]);
+              } else {
+                setChatMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content,
+                    toolCalls,
+                  };
+                  return updated;
+                });
+              }
+            },
+            onAbort: () => {
+              setIsLoading(false);
+              setIsResponseActive(false);
+            },
           },
-        });
+          abortController.signal,
+        );
       } catch (error) {
+        if (error instanceof StreamAbortError) {
+          // User aborted - clear partial response
+          setChatMessages((prev) => {
+            const updated = [...prev];
+            if (
+              updated.length > 0 &&
+              updated[updated.length - 1].role === "assistant"
+            ) {
+              updated.pop();
+            }
+            return updated;
+          });
+          return;
+        }
         console.error("Failed to get chat response:", error);
-        setIsLoading(false);
         setChatMessages((prev) => [
           ...prev,
           {
@@ -160,6 +187,9 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
             content: "Sorry, I encountered an error. Please try again.",
           },
         ]);
+      } finally {
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
       }
     },
     [buildChatRequest, currentIssue, conversationId],
@@ -249,6 +279,13 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     [handler, currentIssue, context],
   );
 
+  const handleInterrupt = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
+
   return (
     <Box flexDirection="column">
       <ExplainComponent issue={currentIssue} />
@@ -266,6 +303,8 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
           prNumber={prNumber}
           enableMentions={currentIssue.type === "discussion"}
           onBack={onBack}
+          onInterrupt={handleInterrupt}
+          isResponseActive={isResponseActive}
         />
       </Box>
     </Box>

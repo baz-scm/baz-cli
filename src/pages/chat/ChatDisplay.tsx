@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Text, useStdout } from "ink";
+import { Box, Text, useStdout, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { ChatMessage } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
@@ -112,6 +112,8 @@ interface ChatDisplayProps {
   prNumber?: number;
   enableMentions?: boolean;
   onBack: () => void;
+  onInterrupt?: () => void;
+  isResponseActive?: boolean;
 }
 
 const ChatDisplay = memo<ChatDisplayProps>(
@@ -127,6 +129,8 @@ const ChatDisplay = memo<ChatDisplayProps>(
     prNumber,
     enableMentions = false,
     onBack,
+    onInterrupt,
+    isResponseActive = false,
   }) => {
     const { stdout } = useStdout();
     const [terminalWidth, setTerminalWidth] = useState(stdout?.columns ?? 80);
@@ -166,6 +170,17 @@ const ChatDisplay = memo<ChatDisplayProps>(
       [onSubmit],
     );
 
+    useInput(
+      (_input, key) => {
+        if (key.escape && isResponseActive && onInterrupt) {
+          onInterrupt();
+        } else if (key.tab && activeToolCalls.length > 0) {
+          toggleTools();
+        }
+      },
+      { isActive: isLoading || hasPendingToolCalls },
+    );
+
     return (
       <Box flexDirection="column">
         <Box flexDirection="column">
@@ -180,10 +195,17 @@ const ChatDisplay = memo<ChatDisplayProps>(
         </Box>
 
         {(isLoading || hasPendingToolCalls) && (
-          <Box marginBottom={1}>
-            <Text color="magenta">
-              <Spinner type="dots" /> Thinking...
-            </Text>
+          <Box flexDirection="column" marginBottom={1}>
+            <Box>
+              <Text color="magenta">
+                <Spinner type="dots" /> Thinking...
+              </Text>
+            </Box>
+            {isResponseActive && (
+              <Box marginTop={1}>
+                <Text dimColor>Press ESC to stop response</Text>
+              </Box>
+            )}
           </Box>
         )}
 
@@ -200,6 +222,8 @@ const ChatDisplay = memo<ChatDisplayProps>(
             terminalWidth={terminalWidth}
             toolsExist={activeToolCalls.length > 0}
             onToggleToolCallExpansion={toggleTools}
+            onInterrupt={onInterrupt}
+            isResponseActive={isResponseActive}
           />
         )}
       </Box>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Box, Text } from "ink";
 import type { Requirement } from "../../lib/providers/index.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
@@ -6,7 +6,7 @@ import { renderMarkdown } from "../../lib/markdown.js";
 import ChatDisplay from "../chat/ChatDisplay.js";
 import { ChatMessage, IssueType } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
-import { processStream } from "../../lib/chat-stream.js";
+import { processStream, StreamAbortError } from "../../lib/chat-stream.js";
 
 interface SpecReviewBrowserProps {
   unmetRequirements: Requirement[];
@@ -32,6 +32,8 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
   );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResponseActive, setIsResponseActive] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const currentRequirement = unmetRequirements[currentIndex];
 
@@ -40,80 +42,113 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
     return null;
   }
 
-  const handleChatSubmit = async (message: string) => {
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: message,
-    };
+  const handleChatSubmit = useCallback(
+    async (message: string) => {
+      const userMessage: ChatMessage = {
+        role: "user",
+        content: message,
+      };
 
-    setChatMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
+      setChatMessages((prev) => [...prev, userMessage]);
+      setIsLoading(true);
 
-    const assistantMessage: ChatMessage = {
-      role: "assistant",
-      content: "",
-    };
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: "",
+      };
 
-    setChatMessages((prev) => [...prev, assistantMessage]);
+      setChatMessages((prev) => [...prev, assistantMessage]);
 
-    if (!bazRepoId) {
-      console.error("Repository ID not available for chat");
-      setIsLoading(false);
-      setChatMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          role: "assistant",
-          content: "Repository ID not available. Please try again.",
-        };
-        return updated;
-      });
-      return;
-    }
+      if (!bazRepoId) {
+        console.error("Repository ID not available for chat");
+        setIsLoading(false);
+        setChatMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: "Repository ID not available. Please try again.",
+          };
+          return updated;
+        });
+        return;
+      }
 
-    try {
-      await processStream(
-        {
-          mode: "baz",
-          repoId: bazRepoId,
-          prId,
-          issue: {
-            type: IssueType.SPEC_REVIEW,
-            data: {
-              id: currentRequirement.id,
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      setIsResponseActive(true);
+
+      try {
+        await processStream(
+          {
+            mode: "baz",
+            repoId: bazRepoId,
+            prId,
+            issue: {
+              type: IssueType.SPEC_REVIEW,
+              data: {
+                id: currentRequirement.id,
+              },
+            },
+            freeText: message,
+            conversationId,
+          },
+          {
+            onConversationId: (id) => setConversationId(id),
+            onFirstTextContent: () => setIsLoading(false),
+            onUpdate: (content, toolCalls) => {
+              setChatMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content,
+                  toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+                };
+                return updated;
+              });
+            },
+            onAbort: () => {
+              setIsLoading(false);
+              setIsResponseActive(false);
             },
           },
-          freeText: message,
-          conversationId,
-        },
-        {
-          onConversationId: (id) => setConversationId(id),
-          onFirstTextContent: () => setIsLoading(false),
-          onUpdate: (content, toolCalls) => {
-            setChatMessages((prev) => {
-              const updated = [...prev];
-              updated[updated.length - 1] = {
-                role: "assistant",
-                content,
-                toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-              };
-              return updated;
-            });
-          },
-        },
-      );
-    } catch (error) {
-      console.error("Failed to get chat response:", error);
-      setIsLoading(false);
-      setChatMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
-        };
-        return updated;
-      });
-    }
-  };
+          abortController.signal,
+        );
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
+      } catch (error) {
+        if (error instanceof StreamAbortError) {
+          // User aborted - clear partial response
+          setChatMessages((prev) => {
+            const updated = [...prev];
+            if (
+              updated.length > 0 &&
+              updated[updated.length - 1].role === "assistant"
+            ) {
+              updated.pop();
+            }
+            return updated;
+          });
+          setIsLoading(false);
+          setIsResponseActive(false);
+          abortControllerRef.current = null;
+          return;
+        }
+        console.error("Failed to get chat response:", error);
+        setIsLoading(false);
+        setIsResponseActive(false);
+        abortControllerRef.current = null;
+        setChatMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: "Sorry, I encountered an error. Please try again.",
+          };
+          return updated;
+        });
+      }
+    },
+    [bazRepoId, prId, currentRequirement.id, conversationId],
+  );
 
   const handleNext = () => {
     setCurrentIndex((prev) => {
@@ -136,23 +171,33 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
     setViewState("evidence");
   };
 
-  const handleSubmit = async (message: string) => {
-    if (message.startsWith("/")) {
-      const spaceIndex = message.indexOf(" ");
-      const command =
-        spaceIndex === -1 ? message.slice(1) : message.slice(1, spaceIndex);
+  const handleSubmit = useCallback(
+    async (message: string) => {
+      if (message.startsWith("/")) {
+        const spaceIndex = message.indexOf(" ");
+        const command =
+          spaceIndex === -1 ? message.slice(1) : message.slice(1, spaceIndex);
 
-      if (command === "next") {
-        handleNext();
-        return;
-      } else if (command === "explain") {
-        handleExplain();
-        return;
+        if (command === "next") {
+          handleNext();
+          return;
+        } else if (command === "explain") {
+          handleExplain();
+          return;
+        }
       }
-    }
 
-    await handleChatSubmit(message);
-  };
+      await handleChatSubmit(message);
+    },
+    [handleChatSubmit, handleNext, handleExplain],
+  );
+
+  const handleInterrupt = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
 
   const availableCommands: IssueCommand[] = [
     {
@@ -213,6 +258,8 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
           enableMentions={false}
           onBack={onBack}
           placeholder="Ask about this requirement..."
+          onInterrupt={handleInterrupt}
+          isResponseActive={isResponseActive}
         />
       </Box>
     </Box>

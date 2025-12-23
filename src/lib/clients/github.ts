@@ -8,6 +8,9 @@ import type {
   FileDiff,
   MergeMethod,
   MergeStatus,
+  PRRun,
+  PRRunStatus,
+  CodeChangeReview,
 } from "../providers/types.js";
 
 let octokitClient: Octokit | null = null;
@@ -22,53 +25,224 @@ function getOctokitClient(): Octokit {
   return octokitClient;
 }
 
+// GraphQL Types for fetching pull requests
+interface GraphQLPullRequestsResponse {
+  viewer: {
+    repositories: {
+      nodes: Array<{
+        name: string;
+        owner: {
+          login: string;
+        };
+        pullRequests: {
+          nodes: Array<{
+            id: string;
+            number: number;
+            title: string;
+            body: string | null;
+            updatedAt: string;
+            author: {
+              login: string;
+            } | null;
+            mergeable: "MERGEABLE" | "CONFLICTING" | "UNKNOWN" | null;
+            reviews: {
+              nodes: Array<{
+                id: string;
+                state: string;
+                submittedAt: string;
+                author: {
+                  login: string;
+                } | null;
+              }>;
+            };
+            commits: {
+              nodes: Array<{
+                commit: {
+                  oid: string;
+                  statusCheckRollup: {
+                    state:
+                      | "SUCCESS"
+                      | "FAILURE"
+                      | "PENDING"
+                      | "ERROR"
+                      | "EXPECTED"
+                      | null;
+                  } | null;
+                };
+              }>;
+            };
+          }>;
+        };
+      }>;
+      pageInfo: {
+        hasNextPage: boolean;
+        endCursor: string | null;
+      };
+    };
+  };
+}
+
+const FETCH_OPEN_PULL_REQUESTS_QUERY = `
+  query FetchOpenPullRequests($repoAfter: String) {
+    viewer {
+      repositories(
+        first: 30
+        affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]
+        orderBy: { field: UPDATED_AT, direction: DESC }
+        after: $repoAfter
+      ) {
+        nodes {
+          name
+          owner { login }
+          pullRequests(states: OPEN, first: 20, orderBy: { field: UPDATED_AT, direction: DESC }) {
+            nodes {
+              id
+              number
+              title
+              body
+              updatedAt
+              author { login }
+              mergeable
+              reviews(first: 10) {
+                nodes {
+                  id
+                  state
+                  submittedAt
+                  author { login }
+                }
+              }
+              commits(last: 1) {
+                nodes {
+                  commit {
+                    oid
+                    statusCheckRollup { state }
+                  }
+                }
+              }
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+`;
+
+function mapGitHubMergeableToBoolean(
+  mergeable: "MERGEABLE" | "CONFLICTING" | "UNKNOWN" | null,
+): boolean | null {
+  if (mergeable === "MERGEABLE") return true;
+  if (mergeable === "CONFLICTING") return false;
+  // UNKNOWN or null means GitHub is still calculating
+  return null;
+}
+
+function mapGitHubStatusToRuns(
+  statusState:
+    | "SUCCESS"
+    | "FAILURE"
+    | "PENDING"
+    | "ERROR"
+    | "EXPECTED"
+    | null
+    | undefined,
+): PRRun[] {
+  if (!statusState) {
+    return [];
+  }
+
+  const status = mapGitHubStatusToPRRunStatus(statusState);
+
+  return [
+    {
+      name: "CI Status",
+      isRequired: true,
+      status,
+    },
+  ];
+}
+
+function mapGitHubStatusToPRRunStatus(
+  state: "SUCCESS" | "FAILURE" | "PENDING" | "ERROR" | "EXPECTED",
+): PRRunStatus {
+  switch (state) {
+    case "SUCCESS":
+      return "success";
+    case "FAILURE":
+    case "ERROR":
+      return "failure";
+    case "PENDING":
+      return "pending";
+    case "EXPECTED":
+      return "expected";
+    default:
+      return "unknown";
+  }
+}
+
+function mapGitHubReviewsToCodeChangeReviews(
+  reviews: Array<{
+    id: string;
+    state: string;
+    submittedAt: string;
+    author: { login: string } | null;
+  }>,
+): CodeChangeReview[] {
+  return reviews.map((review) => ({
+    review_state: review.state.toLowerCase(),
+    assignee: review.author?.login ?? "",
+  }));
+}
+
 export async function fetchOpenPullRequests(): Promise<PullRequest[]> {
   const octokit = getOctokitClient();
 
   try {
-    // Step 1: Fetch all repositories the user has access to
-    const repos = await octokit.paginate(
-      octokit.rest.repos.listForAuthenticatedUser,
-      {
-        visibility: "all",
-        sort: "updated",
-        per_page: 100,
-      },
-    );
-
     const pullRequests: PullRequest[] = [];
+    let hasNextPage = true;
+    let cursor: string | null = null;
 
-    // Step 2: Fetch open PRs from each repository
-    for (const repo of repos) {
-      try {
-        const prs = await octokit.paginate(octokit.rest.pulls.list, {
-          owner: repo.owner.login,
-          repo: repo.name,
-          state: "open",
-          sort: "updated",
-          direction: "desc",
-          per_page: 100,
-        });
+    // Paginate through repositories
+    while (hasNextPage) {
+      const response: GraphQLPullRequestsResponse =
+        await octokit.graphql<GraphQLPullRequestsResponse>(
+          FETCH_OPEN_PULL_REQUESTS_QUERY,
+          {
+            repoAfter: cursor,
+          },
+        );
 
-        for (const pr of prs) {
+      const repos = response.viewer.repositories.nodes;
+
+      for (const repo of repos) {
+        const fullRepoName = `${repo.owner.login}/${repo.name}`;
+
+        for (const pr of repo.pullRequests.nodes) {
+          // Get the CI status from the latest commit
+          const latestCommit = pr.commits.nodes[0];
+          const ciStatus = latestCommit?.commit.statusCheckRollup?.state;
+
           pullRequests.push({
-            id: pr.id.toString(),
+            id: pr.id,
             prNumber: pr.number,
             title: pr.title,
             description: pr.body ?? "",
-            repoId: `${repo.owner.login}/${repo.name}`,
-            repositoryName: repo.full_name,
-            authorName: pr.user?.login ?? "",
-            updatedAt: pr.updated_at,
+            repoId: fullRepoName,
+            repositoryName: fullRepoName,
+            authorName: pr.author?.login ?? "",
+            updatedAt: pr.updatedAt,
+            mergeable: mapGitHubMergeableToBoolean(pr.mergeable),
+            runs: mapGitHubStatusToRuns(ciStatus),
+            reviews: mapGitHubReviewsToCodeChangeReviews(pr.reviews.nodes),
           });
         }
-      } catch (repoError) {
-        // Log but continue if we fail to fetch PRs for a specific repo
-        logger.warn(
-          { repo: repo.full_name, error: repoError },
-          "Failed to fetch PRs for repository",
-        );
       }
+
+      hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
+      cursor = response.viewer.repositories.pageInfo.endCursor;
     }
 
     // Sort all PRs by updated date (most recent first)

@@ -8,13 +8,19 @@ import {
 } from "../../models/chat.js";
 import {
   ChangeReviewer,
+  CodeChangeReview,
+  CodeChangeReviewResponse,
   Discussion,
   FileDiff,
   Integration,
   IntegrationType,
   MergeMethod,
   MergeStatus,
+  PRRun,
+  PRRunResponse,
+  PRRunStatus,
   PullRequest,
+  PullRequestResponse,
   PullRequestDetails,
   RepoWriteAccess,
   Requirement,
@@ -23,7 +29,7 @@ import {
 import { StreamAbortError } from "../chat-stream.js";
 
 const COMMENTS_URL = `${env.BAZ_BASE_URL}/api/v1/comments`;
-const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v2/changes`;
+const PULL_REQUESTS_URL = `${env.BAZ_BASE_URL}/api/v1/changes/search`;
 const REPOSITORIES_URL = `${env.BAZ_BASE_URL}/api/v2/repositories`;
 const CHAT_URL = `${env.BAZ_BASE_URL}/api/v2/checkout/chat`;
 const INTEGRATIONS_URL = `${env.BAZ_BASE_URL}/api/v2/integrations`;
@@ -126,9 +132,44 @@ export async function fetchRepositories(): Promise<Repository[]> {
 }
 
 export interface PullRequestsResponse {
-  changes: PullRequest[];
+  changes: PullRequestResponse[];
   hasMore: boolean;
   page: number;
+}
+
+function mapBazRunsToPRRuns(runs: PRRunResponse[]): PRRun[] {
+  return runs.map((run) => ({
+    name: run.name,
+    isRequired: run.required,
+    status: mapBazRunStatus(run.status),
+  }));
+}
+
+function mapBazRunStatus(status: string): PRRunStatus {
+  const normalized = status.toLowerCase();
+  
+  if (normalized === "skipped") {
+    return "unknown";
+  }
+  
+  const validStatuses: PRRunStatus[] = [
+    "success", "failure", "cancelled", "pending", "unknown", "expected"
+  ];
+  
+  if (validStatuses.includes(normalized as PRRunStatus)) {
+    return normalized as PRRunStatus;
+  }
+  
+  return "unknown";
+}
+
+function mapBazReviewsToCodeChangeReviews(
+  reviews: CodeChangeReviewResponse[],
+): CodeChangeReview[] {
+  return reviews.map((review) => ({
+    review_state: review.state.toLowerCase(),
+    assignee: review.reviewer,
+  }));
 }
 
 export async function fetchPRs(): Promise<PullRequest[]> {
@@ -157,7 +198,21 @@ export async function fetchPRs(): Promise<PullRequest[]> {
         logger.debug(`Axios error while fetching pull requests: ${error}`);
         throw error;
       });
-    changes.push(...resp.changes);
+    changes.push(
+      ...resp.changes.map((change) => ({
+        id: change.id,
+        prNumber: change.pr_number,
+        title: change.title,
+        description: change.description,
+        repoId: change.repo_id,
+        repositoryName: change.repo_full_name,
+        authorName: change.author_name,
+        updatedAt: change.updated_at,
+        mergeable: change.is_mergeable,
+        runs: mapBazRunsToPRRuns(change.runs ?? []),
+        reviews: mapBazReviewsToCodeChangeReviews(change.reviews),
+      })),
+    );
   } while (resp.hasMore);
 
   return changes;

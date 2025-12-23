@@ -111,9 +111,24 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
         </Text>
       </Box>
 
-      <Box marginBottom={1}>
-        <Text color="gray">Search: </Text>
-        <Text>{searchQuery || <Text dimColor>Type to search...</Text>}</Text>
+      <Box flexDirection="column" marginBottom={1}>
+        <Box>
+          <Text color="gray">Search: </Text>
+          <Text>
+            {searchQuery || (
+              <Text dimColor>
+                Try: repo:myrepo, author:username bug fix...
+              </Text>
+            )}
+          </Text>
+        </Box>
+        {!searchQuery && (
+          <Box marginTop={0}>
+            <Text dimColor italic>
+              💡 Use repo:name, author:user to filter
+            </Text>
+          </Box>
+        )}
       </Box>
 
       <Box flexDirection="column" marginTop={1}>

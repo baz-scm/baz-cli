@@ -5,6 +5,8 @@ import {
   ChatStreamChunk,
   ChatStreamMessage,
   CheckoutChatRequest,
+  ChatMessage,
+  IssueType,
 } from "../../models/chat.js";
 import {
   ChangeReviewer,
@@ -64,6 +66,17 @@ export interface Repository {
   id: string;
   fullName: string;
   description?: string;
+}
+
+export interface LatestConversation {
+  id: string;
+  conversationType: string;
+  createdAt: string;
+  userId: string;
+  pullRequestId: string;
+  relatedEntityId: string;
+  messageCount: number;
+  messages: ChatMessage[];
 }
 
 export interface RepositoriesResponse {
@@ -380,6 +393,36 @@ export async function triggerSpecReview(
       logger.debug(`Axios error while triggering spec review: ${error}`);
       throw error;
     });
+}
+
+export async function fetchLatestConversation(
+  prId: string,
+  conversationType: IssueType,
+): Promise<LatestConversation | null> {
+  try {
+    const response = await axiosClient.get<LatestConversation>(
+      `${env.BAZ_BASE_URL}/api/v2/checkout/conversations/latest`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        params: {
+          prId,
+          conversationType,
+        },
+      },
+    );
+    return response.data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as { response?: { status: number } };
+      if (axiosError.response?.status === 404) {
+        return null;
+      }
+    }
+    logger.debug(`Error while fetching latest conversation: ${error}`);
+    return null;
+  }
 }
 export interface FileDiffsResponse {
   fileDiffs: FileDiff[];

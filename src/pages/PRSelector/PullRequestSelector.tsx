@@ -27,14 +27,6 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const isFirstRender = useRef(true);
 
-  const initialIndex = initialPrId
-    ? pullRequests.findIndex((pr) => pr.id === initialPrId)
-    : 0;
-
-  const [selectedIndex, setSelectedIndex] = useState(
-    initialIndex >= 0 ? initialIndex : 0,
-  );
-
   const sanitizedPRs = [...pullRequests]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .map((pr) => ({
@@ -45,6 +37,14 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
           : pr.authorName,
       updatedAt: updatedTimeAgo(pr.updatedAt),
     }));
+
+  const initialIndex = initialPrId
+    ? sanitizedPRs.findIndex((pr) => pr.id === initialPrId)
+    : 0;
+
+  const [selectedIndex, setSelectedIndex] = useState(
+    initialIndex >= 0 ? initialIndex : 0,
+  );
 
   const searchKeywords = extractSearchKeywords(searchQuery.toLowerCase());
   const filteredPRs = sanitizedPRs.filter((pr) => {

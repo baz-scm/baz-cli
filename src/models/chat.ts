@@ -174,7 +174,7 @@ export interface ChatStreamChunk {
 }
 
 export interface ChatToolCall {
-  id: string;
+  id?: string;
   toolName: string;
   toolArgs: Record<string, unknown>;
   message?: string;
@@ -192,4 +192,21 @@ export interface MentionableUser {
   id: string;
   name: string;
   login: string;
+}
+
+export function ensureMessageToolCallIds(
+  message: ChatMessage,
+  index: number,
+): ChatMessage {
+  // If message has tool calls without IDs, add them
+  if (message.toolCalls) {
+    return {
+      ...message,
+      toolCalls: message.toolCalls.map((tc, tcIndex) => ({
+        ...tc,
+        id: tc.id || `${index}-${tcIndex}`,
+      })),
+    };
+  }
+  return message;
 }

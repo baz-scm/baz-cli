@@ -20,6 +20,8 @@ interface PRChatProps {
   chatDescription?: string;
   outputInitialMessage?: boolean;
   issueType: IssueType.PR_CHAT | IssueType.PR_WALKTHROUGH;
+  existingMessages?: ChatMessage[];
+  existingConversationId?: string;
   onBack: () => void;
 }
 
@@ -33,13 +35,17 @@ const PRChat: React.FC<PRChatProps> = ({
   chatDescription,
   outputInitialMessage = true,
   issueType,
+  existingMessages,
+  existingConversationId,
   onBack,
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
-    undefined,
+    existingConversationId,
   );
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(
+    existingMessages || [],
+  );
+  const [isLoading, setIsLoading] = useState(!existingMessages);
   const hasInitialized = useRef(false);
   const appMode = useAppMode();
 
@@ -75,6 +81,11 @@ const PRChat: React.FC<PRChatProps> = ({
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
+
+    // If existing messages are provided, skip sending initial message
+    if (existingMessages) {
+      return;
+    }
 
     const sendInitialMessage = async () => {
       if (!chatInput) {
@@ -120,7 +131,7 @@ const PRChat: React.FC<PRChatProps> = ({
     };
 
     sendInitialMessage();
-  }, [buildChatRequest, chatInput, outputInitialMessage]);
+  }, [buildChatRequest, chatInput, outputInitialMessage, existingMessages]);
 
   const handleChatSubmit = useCallback(
     async (userInput: string) => {

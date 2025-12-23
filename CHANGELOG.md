@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/baz-scm/baz-cli/compare/v0.3.7...v0.3.8) (2025-12-23)
+
+
+### ✨ New Features
+
+* stop agent after sending prompt ([#90](https://github.com/baz-scm/baz-cli/issues/90)) ([50c5b42](https://github.com/baz-scm/baz-cli/commit/50c5b42ffc4ee5c532105f74ff40649a858d9d91))
+
 ## [0.3.7](https://github.com/baz-scm/baz-cli/compare/v0.3.6...v0.3.7) (2025-12-18)
 
 

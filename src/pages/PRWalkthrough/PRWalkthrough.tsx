@@ -41,9 +41,12 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
     );
   }
 
-  const existingMessages = session.data?.messages.map(
-    (msg: ChatMessage, index: number) => ensureMessageToolCallIds(msg, index),
-  );
+  const existingMessages =
+    !session.error && session.data?.messages
+      ? session.data.messages.map((msg: ChatMessage, index: number) =>
+          ensureMessageToolCallIds(msg, index),
+        )
+      : undefined;
 
   return (
     <PRChat
@@ -61,7 +64,7 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
       }
       outputInitialMessage={false}
       existingMessages={existingMessages}
-      existingConversationId={session.data?.id}
+      existingConversationId={!session.error ? session.data?.id : undefined}
       onBack={onBack}
     />
   );

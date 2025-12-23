@@ -14,6 +14,7 @@ export function useLatestConversation(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setError(null);
     fetchLatestConversation(prId, conversationType)
       .then((conversation) => {
         setData(conversation);

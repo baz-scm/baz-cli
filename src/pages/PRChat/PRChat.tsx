@@ -45,7 +45,9 @@ const PRChat: React.FC<PRChatProps> = ({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(
     existingMessages || [],
   );
-  const [isLoading, setIsLoading] = useState(!existingMessages);
+  const [isLoading, setIsLoading] = useState(
+    !(existingMessages && existingMessages.length > 0),
+  );
   const [isResponseActive, setIsResponseActive] = useState(false);
 
   const hasInitialized = useRef(false);
@@ -178,7 +180,7 @@ const PRChat: React.FC<PRChatProps> = ({
     hasInitialized.current = true;
 
     // If existing messages are provided, skip sending initial message
-    if (existingMessages) {
+    if (existingMessages && existingMessages.length > 0 && chatInput) {
       return;
     }
 

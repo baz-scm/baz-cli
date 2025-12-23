@@ -54,7 +54,11 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
       prNumber={prNumber}
       chatTitle="PR Walkthrough"
       chatDescription="Walkthrough the pull request with Baz. Press ESC to go back."
-      chatInput={!session.data ? INITIAL_PROMPT : undefined}
+      chatInput={
+        !(existingMessages && existingMessages.length > 0)
+          ? INITIAL_PROMPT
+          : undefined
+      }
       outputInitialMessage={false}
       existingMessages={existingMessages}
       existingConversationId={session.data?.id}

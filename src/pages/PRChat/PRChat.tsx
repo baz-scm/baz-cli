@@ -19,6 +19,9 @@ interface PRChatProps {
   chatTitle?: string;
   chatDescription?: string;
   outputInitialMessage?: boolean;
+  issueType: IssueType.PR_CHAT | IssueType.PR_WALKTHROUGH;
+  existingMessages?: ChatMessage[];
+  existingConversationId?: string;
   onBack: () => void;
 }
 
@@ -31,11 +34,20 @@ const PRChat: React.FC<PRChatProps> = ({
   chatTitle,
   chatDescription,
   outputInitialMessage = true,
+  issueType,
+  existingMessages,
+  existingConversationId,
   onBack,
 }) => {
-  const [conversationId, setConversationId] = useState<string | undefined>();
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [conversationId, setConversationId] = useState<string | undefined>(
+    existingConversationId,
+  );
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(
+    existingMessages || [],
+  );
+  const [isLoading, setIsLoading] = useState(
+    !(existingMessages && existingMessages.length > 0),
+  );
   const [isResponseActive, setIsResponseActive] = useState(false);
 
   const hasInitialized = useRef(false);
@@ -45,7 +57,7 @@ const PRChat: React.FC<PRChatProps> = ({
   const buildChatRequest = useCallback(
     (freeText: string, convId?: string): CheckoutChatRequest => {
       const issue = {
-        type: IssueType.PULL_REQUEST,
+        type: issueType,
         data: { id: prId },
       } as const;
 
@@ -167,6 +179,11 @@ const PRChat: React.FC<PRChatProps> = ({
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
+    // If existing messages are provided, skip sending initial message
+    if (existingMessages && existingMessages.length > 0 && chatInput) {
+      return;
+    }
+
     const sendInitialMessage = async () => {
       if (!chatInput) {
         setIsLoading(false);
@@ -183,7 +200,13 @@ const PRChat: React.FC<PRChatProps> = ({
     };
 
     sendInitialMessage();
-  }, [buildChatRequest, chatInput, outputInitialMessage, runChatStream]);
+  }, [
+    buildChatRequest,
+    chatInput,
+    outputInitialMessage,
+    existingMessages,
+    runChatStream,
+  ]);
 
   const handleChatSubmit = useCallback(
     async (userInput: string) => {

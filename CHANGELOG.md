@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.9](https://github.com/baz-scm/baz-cli/compare/v0.3.8...v0.3.9) (2025-12-24)
+
+
+### ✨ New Features
+
+* Migrate conversation types and get latest walkthrough ([#92](https://github.com/baz-scm/baz-cli/issues/92)) ([1562c4f](https://github.com/baz-scm/baz-cli/commit/1562c4f1f40942ec103b3ab1b1a50593d797d327))
+
 ## [0.3.8](https://github.com/baz-scm/baz-cli/compare/v0.3.7...v0.3.8) (2025-12-23)
 
 

@@ -39,17 +39,23 @@ function getCIStatus(runs: PRRun[]): CIStatus {
   return "none";
 }
 
-function getCIIcon(status: CIStatus): { icon: string; color: string } {
-  switch (status) {
-    case "success":
-      return { icon: "✓", color: "green" };
-    case "pending":
-      return { icon: "●", color: "yellow" };
-    case "failure":
-      return { icon: "✗", color: "red" };
-    case "none":
-      return { icon: "", color: "gray" };
+function getCIIcon(status: CIStatus):
+  | {
+      text: string;
+      icon: string;
+      color: string;
+    }
+  | undefined {
+  if (status === "success") {
+    return { text: "passed", icon: "✓", color: "green" };
   }
+  if (status === "pending") {
+    return { text: "pending", icon: "●", color: "yellow" };
+  }
+  if (status === "failure") {
+    return { text: "failed", icon: "✗", color: "red" };
+  }
+  return undefined;
 }
 
 function getReviewStatus(
@@ -63,7 +69,7 @@ function getReviewStatus(
   const userReview = reviews.find(
     (r) => currentUserLogin && r.assignee === currentUserLogin,
   );
-  if (userReview) {
+  if (userReview && userReview.review_state !== "assigned") {
     if (userReview.review_state === "approved") {
       return "approved_by_me";
     }
@@ -75,43 +81,22 @@ function getReviewStatus(
   return "reviewed";
 }
 
-function getReviewStatusText(status: ReviewStatus): string {
+function getReviewStatusDisplay(status: ReviewStatus): {
+  text: string;
+  color: string;
+} {
   switch (status) {
     case "waiting_review":
-      return "⏳ Waiting review";
+      return { text: "● Waiting review", color: "black" };
     case "reviewed":
-      return "📝 Reviewed";
+      return { text: "◐ Reviewed", color: "yellow" };
     case "reviewed_by_me":
-      return "📝 Reviewed by me";
+      return { text: "◐ Reviewed by me", color: "yellow" };
     case "approved":
-      return "✅ Approved";
+      return { text: "✓ Approved", color: "green" };
     case "approved_by_me":
-      return "✅ Approved by me";
+      return { text: "✓ Approved by me", color: "green" };
   }
-}
-
-function getReviewStatusColor(status: ReviewStatus): string {
-  switch (status) {
-    case "waiting_review":
-      return "gray";
-    case "reviewed":
-    case "reviewed_by_me":
-      return "yellow";
-    case "approved":
-    case "approved_by_me":
-      return "green";
-  }
-}
-
-function formatTimeShort(timeStr: string): string {
-  // Convert time strings to short format
-  return timeStr
-    .replace(/(\d+)\s*days?\s*ago/, "$1d")
-    .replace(/(\d+)\s*hours?\s*ago/, "$1h")
-    .replace(/(\d+)\s*minutes?\s*ago/, "$1m")
-    .replace(/(\d+)\s*seconds?\s*ago/, "$1s")
-    .replace("just now", "now")
-    .replace("updated ", "");
 }
 
 export const PullRequestCard: React.FC<PullRequestCardProps> = ({
@@ -122,31 +107,35 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
   const ciStatus = getCIStatus(pr.runs);
   const ciIcon = getCIIcon(ciStatus);
   const reviewStatus = getReviewStatus(pr.reviews, currentUserLogin);
-  const reviewText = getReviewStatusText(reviewStatus);
-  const reviewColor = getReviewStatusColor(reviewStatus);
-  const timeShort = formatTimeShort(pr.updatedAt);
+  const reviewDisplay = getReviewStatusDisplay(reviewStatus);
+  const timeShort = pr.updatedAt;
 
   const titleColor = isSelected ? "cyan" : "white";
   const metadataColor = isSelected ? MAIN_COLOR : "white";
 
   return (
     <Box flexDirection="column">
-      <Box justifyContent="space-between">
-        <Text color={titleColor}>
+      <Box>
+        <Text bold={isSelected} color={titleColor}>
           {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}#{pr.prNumber}{" "}
-          {pr.title}
+          {pr.title} <Text color="gray">[{pr.repositoryName}]</Text>{" "}
+          {ciIcon?.icon && (
+            <Text bold color={ciIcon.color}>
+              {ciIcon.icon}
+            </Text>
+          )}
         </Text>
-        {ciIcon.icon && <Text color={ciIcon.color}>{ciIcon.icon}</Text>}
       </Box>
-      <Text color={metadataColor}>
-        {"         "}
-        <Text color="gray">{pr.repositoryName}</Text>
-        {" • "}
-        {pr.authorName}
+      <Text dimColor={!isSelected} color={metadataColor}>
+        {"    "}by {pr.authorName}
         {" • "}
         {timeShort}
         {" • "}
-        <Text color={reviewColor}>{reviewText}</Text>
+        <Text dimColor={!isSelected} color={reviewDisplay.color}>
+          {reviewDisplay.text}
+        </Text>
+        {" • "}
+        {ciIcon?.text && <Text>CI {ciIcon.text}</Text>}
       </Text>
     </Box>
   );

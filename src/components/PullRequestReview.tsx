@@ -20,6 +20,7 @@ import type { Requirement } from "../lib/providers/index.js";
 import { PRContext } from "../lib/providers/index.js";
 import { useRepoWriteAccess } from "../hooks/useRepoWriteAccess.js";
 import PRChat from "../pages/PRChat/PRChat.js";
+import { IssueType } from "../models/chat.js";
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
@@ -435,6 +436,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     case "prChat":
       return (
         <PRChat
+          issueType={IssueType.PR_CHAT}
           prId={prId}
           bazRepoId={bazRepoId}
           fullRepoName={fullRepoName}

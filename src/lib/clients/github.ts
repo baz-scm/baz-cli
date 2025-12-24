@@ -159,7 +159,6 @@ function mapGitHubStatusToRuns(
   return [
     {
       name: "CI Status",
-      isRequired: true,
       status,
     },
   ];

@@ -14,43 +14,18 @@ export interface PullRequest {
 
 export interface PRRun {
   name: string;
-  isRequired: boolean;
   status: PRRunStatus;
 }
 
-export type PRRunStatus = "success" | "failure" | "in_progress" | "queued" | "pending" | "cancelled" | "unknown" | "expected";
-
-export interface PullRequestResponse {
-  id: string;
-  pr_number: number;
-  title: string;
-  description: string;
-  repo_id: string;
-  repo_full_name: string;
-  author_name: string;
-  updated_at: string;
-  is_mergeable: boolean;
-  runs?: PRRunResponse[];
-  reviews: CodeChangeReviewResponse[];
-}
-
-export interface PRRunResponse {
-  ci_name: string;
-  name: string;
-  status: string;
-  link?: string;
-  required: boolean;
-  started_at?: string;
-  completed_at?: string;
-}
-
-export interface CodeChangeReviewResponse {
-  state: string;
-  created_at: string;
-  updated_at: string;
-  reviewer: string;
-  has_write_access: boolean;
-}
+export type PRRunStatus =
+  | "success"
+  | "failure"
+  | "in_progress"
+  | "queued"
+  | "pending"
+  | "cancelled"
+  | "unknown"
+  | "expected";
 
 export interface PullRequestDetails {
   id: string;

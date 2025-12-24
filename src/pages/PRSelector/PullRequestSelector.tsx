@@ -4,6 +4,7 @@ import type { PullRequest } from "../../lib/providers/index.js";
 import { updatedTimeAgo } from "../../lib/date.js";
 import { PullRequestCard } from "./PullRequestCard.js";
 import { useFetchUser } from "../../hooks/useFetchUser.js";
+import MergeConfirmationPrompt from "./MergeConfirmationPrompt.js";
 
 interface PullRequestSearchKeywords {
   author?: string;
@@ -17,24 +18,20 @@ interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
   onSelect: (pr: PullRequest) => void;
   initialPrId?: string;
+  updateData: (updater: (prev: PullRequest[]) => PullRequest[]) => void;
 }
 
 const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   pullRequests,
   onSelect,
   initialPrId,
+  updateData,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const isFirstRender = useRef(true);
   const { data: user } = useFetchUser();
-
-  const initialIndex = initialPrId
-    ? pullRequests.findIndex((pr) => pr.id === initialPrId)
-    : 0;
-
-  const [selectedIndex, setSelectedIndex] = useState(
-    initialIndex >= 0 ? initialIndex : 0,
-  );
+  const [showMergePrompt, setShowMergePrompt] = useState(false);
+  const [prToMerge, setPrToMerge] = useState<PullRequest | null>(null);
 
   const sanitizedPRs = [...pullRequests]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
@@ -46,6 +43,14 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
           : pr.authorName,
       updatedAt: updatedTimeAgo(pr.updatedAt),
     }));
+
+  const initialIndex = initialPrId
+    ? sanitizedPRs.findIndex((pr) => pr.id === initialPrId)
+    : 0;
+
+  const [selectedIndex, setSelectedIndex] = useState(
+    initialIndex >= 0 ? initialIndex : 0,
+  );
 
   const searchKeywords = extractSearchKeywords(searchQuery.toLowerCase());
   const filteredPRs = sanitizedPRs.filter((pr) => {
@@ -84,14 +89,22 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   }, [searchQuery]);
 
   useInput((input, key) => {
+    if (showMergePrompt) {
+      return;
+    }
+
     if (key.upArrow) {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.downArrow) {
       setSelectedIndex((prev) => Math.min(filteredPRs.length - 1, prev + 1));
-    } else if (key.return) {
+    } else if (key.return && !key.ctrl) {
       handleSubmit();
+    } else if (key.ctrl && input === "g") {
+      if (canMergeSelectedPr && selectedPr) {
+        setPrToMerge(selectedPr);
+        setShowMergePrompt(true);
+      }
     } else if (input && input.length === 1 && !key.ctrl && !key.meta) {
-      // Regular character typed
       setSearchQuery((prev) => prev + input);
     } else if (key.backspace || key.delete) {
       setSearchQuery((prev) => prev.slice(0, -1));
@@ -103,6 +116,33 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
       onSelect(filteredPRs[selectedIndex]);
     }
   };
+
+  const selectedPr = filteredPRs[selectedIndex];
+  const canMergeSelectedPr =
+    selectedPr &&
+    selectedPr.mergeable === true &&
+    (selectedPr.runs.length === 0 ||
+      selectedPr.runs.every((run) => run.status === "success")) &&
+    selectedPr.reviews.some((review) => review.review_state === "approved");
+
+  if (showMergePrompt && prToMerge) {
+    return (
+      <MergeConfirmationPrompt
+        pr={prToMerge}
+        updateData={updateData}
+        onComplete={() => {
+          setSearchQuery("");
+          setSelectedIndex((prev) => Math.min(prev, pullRequests.length - 2));
+          setShowMergePrompt(false);
+          setPrToMerge(null);
+        }}
+        onCancel={() => {
+          setShowMergePrompt(false);
+          setPrToMerge(null);
+        }}
+      />
+    );
+  }
 
   return (
     <Box flexDirection="column">
@@ -187,6 +227,16 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
         <Text dimColor italic>
           Type to search • ↑↓ to navigate • Enter to select • Ctrl+C to cancel
         </Text>
+        {canMergeSelectedPr && (
+          <>
+            <Text dimColor italic>
+              {" • "}
+            </Text>
+            <Text bold color="cyan">
+              Ctrl+G to merge
+            </Text>
+          </>
+        )}
       </Box>
     </Box>
   );

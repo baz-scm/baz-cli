@@ -142,7 +142,7 @@ export interface BazPullRequest {
   repositoryName: string;
   authorName: string;
   updatedAt: string;
-  mergeable: boolean | null;
+  isMergeable: boolean | null;
   runs: PRRunResponse[];
   reviews: CodeChangeReviewResponse[];
 }
@@ -234,7 +234,7 @@ export async function fetchPRs(): Promise<PullRequest[]> {
         repositoryName: change.repositoryName,
         authorName: change.authorName,
         updatedAt: change.updatedAt,
-        mergeable: change.mergeable,
+        mergeable: change.isMergeable,
         runs: mapBazRunsToPRRuns(change.runs ?? []),
         reviews: mapBazReviewsToCodeChangeReviews(change.reviews),
       })),
@@ -405,7 +405,10 @@ export async function fetchMergeStatus(prId: string): Promise<MergeStatus> {
         "Content-Type": "application/json",
       },
     })
-    .then((value) => value.data)
+    .then((value) => ({
+      is_mergeable: value.data.is_mergeable,
+      merge_strategy: value.data.default_merge_strategy,
+    }))
     .catch((error: unknown) => {
       logger.debug(`Axios error while fetching merge status: ${error}`);
       throw error;

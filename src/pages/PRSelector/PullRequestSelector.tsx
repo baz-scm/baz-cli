@@ -97,7 +97,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.downArrow) {
       setSelectedIndex((prev) => Math.min(filteredPRs.length - 1, prev + 1));
-    } else if (key.return && !key.ctrl) {
+    } else if (key.return) {
       handleSubmit();
     } else if (key.ctrl && input === "g") {
       if (canMergeSelectedPr && selectedPr) {

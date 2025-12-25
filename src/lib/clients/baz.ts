@@ -10,12 +10,15 @@ import {
 } from "../../models/chat.js";
 import {
   ChangeReviewer,
+  CodeChangeReview,
   Discussion,
   FileDiff,
   Integration,
   IntegrationType,
   MergeMethod,
   MergeStatus,
+  PRRun,
+  PRRunStatus,
   PullRequest,
   PullRequestDetails,
   RepoWriteAccess,
@@ -139,9 +142,75 @@ export async function fetchRepositories(): Promise<Repository[]> {
 }
 
 export interface PullRequestsResponse {
-  changes: PullRequest[];
+  changes: BazPullRequest[];
   hasMore: boolean;
   page: number;
+}
+
+export interface BazPullRequest {
+  id: string;
+  prNumber: number;
+  title: string;
+  description: string;
+  repositoryName: string;
+  authorName: string;
+  updatedAt: string;
+  isMergeable: boolean | null;
+  runs: PRRunResponse[];
+  reviews: CodeChangeReviewResponse[];
+}
+
+export interface PRRunResponse {
+  ciName: string;
+  name: string;
+  status: string;
+  link?: string;
+}
+
+export interface CodeChangeReviewResponse {
+  state: string;
+  reviewer: string;
+}
+
+function mapBazRunsToPRRuns(runs: PRRunResponse[]): PRRun[] {
+  return runs.map((run) => ({
+    name: run.name,
+    status: mapBazRunStatus(run.status),
+  }));
+}
+
+function mapBazRunStatus(status: string): PRRunStatus {
+  const normalized = status.toLowerCase();
+
+  if (normalized === "skipped") {
+    return "unknown";
+  }
+
+  const validStatuses: PRRunStatus[] = [
+    "success",
+    "failure",
+    "cancelled",
+    "pending",
+    "unknown",
+    "expected",
+    "in_progress",
+    "queued",
+  ];
+
+  if (validStatuses.includes(normalized as PRRunStatus)) {
+    return normalized as PRRunStatus;
+  }
+
+  return "unknown";
+}
+
+function mapBazReviewsToCodeChangeReviews(
+  reviews: CodeChangeReviewResponse[],
+): CodeChangeReview[] {
+  return reviews.map((review) => ({
+    review_state: review.state.toLowerCase(),
+    assignee: review.reviewer,
+  }));
 }
 
 export async function fetchPRs(): Promise<PullRequest[]> {
@@ -170,7 +239,21 @@ export async function fetchPRs(): Promise<PullRequest[]> {
         logger.debug(`Axios error while fetching pull requests: ${error}`);
         throw error;
       });
-    changes.push(...resp.changes);
+    changes.push(
+      ...resp.changes.map((change) => ({
+        id: change.id,
+        prNumber: change.prNumber,
+        title: change.title,
+        description: change.description,
+        repoId: change.repositoryName,
+        repositoryName: change.repositoryName,
+        authorName: change.authorName,
+        updatedAt: change.updatedAt,
+        mergeable: change.isMergeable,
+        runs: mapBazRunsToPRRuns(change.runs ?? []),
+        reviews: mapBazReviewsToCodeChangeReviews(change.reviews),
+      })),
+    );
   } while (resp.hasMore);
 
   return changes;
@@ -337,7 +420,10 @@ export async function fetchMergeStatus(prId: string): Promise<MergeStatus> {
         "Content-Type": "application/json",
       },
     })
-    .then((value) => value.data)
+    .then((value) => ({
+      is_mergeable: value.data.is_mergeable,
+      merge_strategy: value.data.default_merge_strategy,
+    }))
     .catch((error: unknown) => {
       logger.debug(`Axios error while fetching merge status: ${error}`);
       throw error;

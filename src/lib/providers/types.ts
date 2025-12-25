@@ -7,7 +7,25 @@ export interface PullRequest {
   repositoryName: string;
   authorName: string;
   updatedAt: string;
+  mergeable: boolean | null;
+  runs: PRRun[];
+  reviews: CodeChangeReview[];
 }
+
+export interface PRRun {
+  name: string;
+  status: PRRunStatus;
+}
+
+export type PRRunStatus =
+  | "success"
+  | "failure"
+  | "in_progress"
+  | "queued"
+  | "pending"
+  | "cancelled"
+  | "unknown"
+  | "expected";
 
 export interface PullRequestDetails {
   id: string;

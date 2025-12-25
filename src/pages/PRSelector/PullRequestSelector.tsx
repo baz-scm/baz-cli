@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import type { PullRequest } from "../../lib/providers/index.js";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
-import { MAIN_COLOR } from "../../theme/colors.js";
 import { updatedTimeAgo } from "../../lib/date.js";
+import { PullRequestCard } from "./PullRequestCard.js";
+import { useFetchUser } from "../../hooks/useFetchUser.js";
+import MergeConfirmationPrompt from "./MergeConfirmationPrompt.js";
 
 interface PullRequestSearchKeywords {
   author?: string;
@@ -17,15 +18,20 @@ interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
   onSelect: (pr: PullRequest) => void;
   initialPrId?: string;
+  updateData: (updater: (prev: PullRequest[]) => PullRequest[]) => void;
 }
 
 const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   pullRequests,
   onSelect,
   initialPrId,
+  updateData,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const isFirstRender = useRef(true);
+  const { data: user } = useFetchUser();
+  const [showMergePrompt, setShowMergePrompt] = useState(false);
+  const [prToMerge, setPrToMerge] = useState<PullRequest | null>(null);
 
   const sanitizedPRs = [...pullRequests]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
@@ -83,14 +89,22 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   }, [searchQuery]);
 
   useInput((input, key) => {
+    if (showMergePrompt) {
+      return;
+    }
+
     if (key.upArrow) {
       setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.downArrow) {
       setSelectedIndex((prev) => Math.min(filteredPRs.length - 1, prev + 1));
     } else if (key.return) {
       handleSubmit();
+    } else if (key.ctrl && input === "g") {
+      if (canMergeSelectedPr && selectedPr) {
+        setPrToMerge(selectedPr);
+        setShowMergePrompt(true);
+      }
     } else if (input && input.length === 1 && !key.ctrl && !key.meta) {
-      // Regular character typed
       setSearchQuery((prev) => prev + input);
     } else if (key.backspace || key.delete) {
       setSearchQuery((prev) => prev.slice(0, -1));
@@ -103,6 +117,32 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     }
   };
 
+  const selectedPr = filteredPRs[selectedIndex];
+  const canMergeSelectedPr =
+    selectedPr?.mergeable === true &&
+    (selectedPr?.runs.length === 0 ||
+      selectedPr?.runs.every((run) => run.status === "success")) &&
+    selectedPr?.reviews.some((review) => review.review_state === "approved");
+
+  if (showMergePrompt && prToMerge) {
+    return (
+      <MergeConfirmationPrompt
+        pr={prToMerge}
+        updateData={updateData}
+        onComplete={() => {
+          setSearchQuery("");
+          setSelectedIndex(0);
+          setShowMergePrompt(false);
+          setPrToMerge(null);
+        }}
+        onCancel={() => {
+          setShowMergePrompt(false);
+          setPrToMerge(null);
+        }}
+      />
+    );
+  }
+
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
@@ -111,9 +151,22 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
         </Text>
       </Box>
 
-      <Box marginBottom={1}>
-        <Text color="gray">Search: </Text>
-        <Text>{searchQuery || <Text dimColor>Type to search...</Text>}</Text>
+      <Box flexDirection="column" marginBottom={1}>
+        <Box>
+          <Text color="gray">Search: </Text>
+          <Text>
+            {searchQuery || (
+              <Text dimColor>Try: repo:myrepo, author:username bug fix...</Text>
+            )}
+          </Text>
+        </Box>
+        {!searchQuery && (
+          <Box marginTop={0}>
+            <Text dimColor italic>
+              💡 Use repo:name, author:user to filter
+            </Text>
+          </Box>
+        )}
       </Box>
 
       <Box flexDirection="column" marginTop={1}>
@@ -148,28 +201,12 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                     {visiblePRs.map((pr, index) => {
                       const actualIndex = startIndex + index;
                       return (
-                        <Box key={pr.id} flexDirection="column">
-                          <Text
-                            color={
-                              actualIndex === selectedIndex ? "cyan" : "white"
-                            }
-                          >
-                            {actualIndex === selectedIndex
-                              ? ITEM_SELECTOR
-                              : ITEM_SELECTION_GAP}
-                            #{pr.prNumber} {pr.title}
-                            <Text color="gray"> [{pr.repositoryName}]</Text>
-                          </Text>
-                          <Text
-                            color={
-                              actualIndex === selectedIndex
-                                ? MAIN_COLOR
-                                : "white"
-                            }
-                          >
-                            {`${ITEM_SELECTION_GAP}  by ${pr.authorName} ⏺ ${pr.updatedAt}`}
-                          </Text>
-                        </Box>
+                        <PullRequestCard
+                          key={pr.id}
+                          pr={pr}
+                          isSelected={actualIndex === selectedIndex}
+                          currentUserLogin={user?.login}
+                        />
                       );
                     })}
                     {endIndex < filteredPRs.length && (
@@ -189,6 +226,16 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
         <Text dimColor italic>
           Type to search • ↑↓ to navigate • Enter to select • Ctrl+C to cancel
         </Text>
+        {canMergeSelectedPr && (
+          <>
+            <Text dimColor italic>
+              {" • "}
+            </Text>
+            <Text bold color="cyan">
+              Ctrl+G to merge
+            </Text>
+          </>
+        )}
       </Box>
     </Box>
   );

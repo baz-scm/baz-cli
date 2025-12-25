@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PullRequest } from "../lib/providers/index.js";
 import { useAppMode } from "../lib/config/AppModeContext.js";
 
@@ -9,14 +9,28 @@ export function usePullRequests() {
   const appMode = useAppMode();
 
   useEffect(() => {
-    appMode.mode.dataProvider
-      .fetchPRs()
-      .then((prs) => {
+    const fetchPRs = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const prs = await appMode.mode.dataProvider.fetchPRs();
         setData(prs.sort((a, b) => b.prNumber - a.prNumber));
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return { data, loading, error };
+    fetchPRs();
+  }, [appMode.mode.dataProvider]);
+
+  const updateData = useCallback(
+    (updater: (prev: PullRequest[]) => PullRequest[]) => {
+      setData(updater);
+    },
+    [],
+  );
+
+  return { data, loading, error, updateData };
 }

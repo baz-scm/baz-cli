@@ -134,8 +134,7 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
         <Text dimColor={!isSelected} color={reviewDisplay.color}>
           {reviewDisplay.text}
         </Text>
-        {" • "}
-        {ciIcon?.text && <Text>CI {ciIcon.text}</Text>}
+        {ciIcon?.text && <Text>" • " CI {ciIcon.text}</Text>}
       </Text>
     </Box>
   );

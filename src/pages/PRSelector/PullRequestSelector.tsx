@@ -119,11 +119,10 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
 
   const selectedPr = filteredPRs[selectedIndex];
   const canMergeSelectedPr =
-    selectedPr &&
-    selectedPr.mergeable === true &&
-    (selectedPr.runs.length === 0 ||
-      selectedPr.runs.every((run) => run.status === "success")) &&
-    selectedPr.reviews.some((review) => review.review_state === "approved");
+    selectedPr?.mergeable === true &&
+    (selectedPr?.runs.length === 0 ||
+      selectedPr?.runs.every((run) => run.status === "success")) &&
+    selectedPr?.reviews.some((review) => review.review_state === "approved");
 
   if (showMergePrompt && prToMerge) {
     return (
@@ -132,7 +131,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
         updateData={updateData}
         onComplete={() => {
           setSearchQuery("");
-          setSelectedIndex((prev) => Math.min(prev, pullRequests.length - 2));
+          setSelectedIndex(0);
           setShowMergePrompt(false);
           setPrToMerge(null);
         }}

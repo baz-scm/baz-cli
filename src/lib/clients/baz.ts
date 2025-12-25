@@ -193,6 +193,8 @@ function mapBazRunStatus(status: string): PRRunStatus {
     "pending",
     "unknown",
     "expected",
+    "in_progress",
+    "queued",
   ];
 
   if (validStatuses.includes(normalized as PRRunStatus)) {

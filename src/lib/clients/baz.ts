@@ -81,6 +81,7 @@ export interface LatestConversation {
   relatedEntityId: string;
   messageCount: number;
   messages: ChatMessage[];
+  newDataAvailable?: boolean;
 }
 
 export interface RepositoriesResponse {

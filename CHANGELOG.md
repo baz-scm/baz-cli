@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.10](https://github.com/baz-scm/baz-cli/compare/v0.3.9...v0.3.10) (2025-12-28)
+
+
+### ✨ New Features
+
+* handle new walkthrough data ([#96](https://github.com/baz-scm/baz-cli/issues/96)) ([cb8866a](https://github.com/baz-scm/baz-cli/commit/cb8866a568545f3c03b2a88ab117ead134d5c653))
+
 ## [0.3.9](https://github.com/baz-scm/baz-cli/compare/v0.3.8...v0.3.9) (2025-12-28)
 
 

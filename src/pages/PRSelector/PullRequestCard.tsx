@@ -88,7 +88,7 @@ function getReviewStatusDisplay(status: ReviewStatus): {
 } {
   switch (status) {
     case "waiting_review":
-      return { text: "● Waiting review", color: "black" };
+      return { text: "● Awaiting review", color: "black" };
     case "reviewed":
       return { text: "◐ Reviewed", color: "yellow" };
     case "reviewed_by_me":
@@ -110,7 +110,7 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
   const ciIcon = getCIIcon(ciStatus);
   const reviewStatus = getReviewStatus(pr.reviews, currentUserLogin);
   const reviewDisplay = getReviewStatusDisplay(reviewStatus);
-  const timeShort = pr.updatedAt;
+  const updatedTime = pr.updatedAt;
 
   const titleColor = isSelected ? "cyan" : "white";
   const metadataColor = isSelected ? MAIN_COLOR : "white";
@@ -131,7 +131,7 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
       <Text dimColor={!isSelected} color={metadataColor}>
         {"    "}by {pr.authorName}
         {" • "}
-        {timeShort}
+        {updatedTime}
         {" • "}
         <Text dimColor={!isSelected} color={reviewDisplay.color}>
           {reviewDisplay.text}

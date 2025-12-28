@@ -11,6 +11,7 @@ import { MAIN_COLOR } from "../../theme/colors.js";
 interface PullRequestCardProps {
   pr: PullRequest;
   isSelected: boolean;
+  canMerge: boolean;
   currentUserLogin?: string;
 }
 
@@ -103,6 +104,7 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
   pr,
   isSelected,
   currentUserLogin,
+  canMerge,
 }) => {
   const ciStatus = getCIStatus(pr.runs);
   const ciIcon = getCIIcon(ciStatus);
@@ -134,8 +136,13 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
         <Text dimColor={!isSelected} color={reviewDisplay.color}>
           {reviewDisplay.text}
         </Text>
-        {ciIcon?.text && <Text>" • " CI {ciIcon.text}</Text>}
+        {ciIcon?.text && <Text> • CI {ciIcon.text}</Text>}
       </Text>
+      {canMerge && (
+        <Text bold color="green">
+          {"    "}Want to merge? Ctrl+G and let's go!
+        </Text>
+      )}
     </Box>
   );
 };

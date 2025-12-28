@@ -117,12 +117,17 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     }
   };
 
+  const canMergePR = (pr: PullRequest) => {
+    return (
+      pr.mergeable === true &&
+      (pr.runs.length === 0 ||
+        pr.runs.every((run) => run.status === "success")) &&
+      pr.reviews.some((review) => review.review_state === "approved")
+    );
+  };
+
   const selectedPr = filteredPRs[selectedIndex];
-  const canMergeSelectedPr =
-    selectedPr?.mergeable === true &&
-    (selectedPr?.runs.length === 0 ||
-      selectedPr?.runs.every((run) => run.status === "success")) &&
-    selectedPr?.reviews.some((review) => review.review_state === "approved");
+  const canMergeSelectedPr = selectedPr ? canMergePR(selectedPr) : false;
 
   if (showMergePrompt && prToMerge) {
     return (
@@ -200,12 +205,14 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                     )}
                     {visiblePRs.map((pr, index) => {
                       const actualIndex = startIndex + index;
+                      const isSelected = actualIndex === selectedIndex;
                       return (
                         <PullRequestCard
                           key={pr.id}
                           pr={pr}
-                          isSelected={actualIndex === selectedIndex}
+                          isSelected={isSelected}
                           currentUserLogin={user?.login}
+                          canMerge={isSelected && canMergePR(pr)}
                         />
                       );
                     })}
@@ -226,16 +233,6 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
         <Text dimColor italic>
           Type to search • ↑↓ to navigate • Enter to select • Ctrl+C to cancel
         </Text>
-        {canMergeSelectedPr && (
-          <>
-            <Text dimColor italic>
-              {" • "}
-            </Text>
-            <Text bold color="cyan">
-              Ctrl+G to merge
-            </Text>
-          </>
-        )}
       </Box>
     </Box>
   );

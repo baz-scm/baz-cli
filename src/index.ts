@@ -13,7 +13,7 @@ import {
 import { OAuthFlow } from "./auth/oauth-flow.js";
 import { authConfig } from "./auth/config.js";
 
-const VERSION = "0.3.9"; // x-release-please-version
+const VERSION = "0.3.10"; // x-release-please-version
 
 const program = new Command();
 

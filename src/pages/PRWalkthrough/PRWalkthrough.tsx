@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import PRChat from "../PRChat/PRChat.js";
@@ -9,6 +9,7 @@ import {
 } from "../../models/chat.js";
 import { useLatestConversation } from "../../hooks/useLatestConversation.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
+import UpdateAvailablePrompt from "./UpdateAvailablePrompt.js";
 
 const INITIAL_PROMPT =
   "Please walk me through this pull request. Start by showing me a very short description on what the pull request do, followed by a brief summary of the sections. Do not include any section yet in your answer";
@@ -29,6 +30,9 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
   onBack,
 }) => {
   const session = useLatestConversation(prId, IssueType.PR_WALKTHROUGH);
+  const [userChoice, setUserChoice] = useState<
+    "pending" | "continue" | "startNew"
+  >("pending");
 
   if (session.loading) {
     return (
@@ -48,6 +52,18 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
         )
       : undefined;
 
+  const hasExistingMessages = existingMessages && existingMessages.length > 0;
+  const showUpdatePrompt =
+    hasExistingMessages &&
+    session.data?.newDataAvailable &&
+    userChoice === "pending";
+
+  if (showUpdatePrompt) {
+    return <UpdateAvailablePrompt onSelect={setUserChoice} />;
+  }
+
+  const shouldStartNewSession = userChoice === "startNew";
+
   return (
     <PRChat
       issueType={IssueType.PR_WALKTHROUGH}
@@ -58,13 +74,19 @@ const PRWalkthrough: React.FC<PRWalkthroughProps> = ({
       chatTitle="PR Walkthrough"
       chatDescription="Walkthrough the pull request with Baz. Press ESC to go back."
       chatInput={
-        !(existingMessages && existingMessages.length > 0)
+        !hasExistingMessages || shouldStartNewSession
           ? INITIAL_PROMPT
           : undefined
       }
       outputInitialMessage={false}
-      existingMessages={existingMessages}
-      existingConversationId={!session.error ? session.data?.id : undefined}
+      existingMessages={shouldStartNewSession ? undefined : existingMessages}
+      existingConversationId={
+        shouldStartNewSession
+          ? undefined
+          : !session.error
+            ? session.data?.id
+            : undefined
+      }
       onBack={onBack}
     />
   );

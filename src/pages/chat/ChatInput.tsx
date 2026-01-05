@@ -228,8 +228,19 @@ const ChatInput = memo<ChatInputProps>((props) => {
       return;
     }
 
-    if (key.tab && toolsExist) {
-      onToggleToolCallExpansion();
+    if (key.tab) {
+      if (toolsExist) {
+        // Expand/collapse tool calls when they exist
+        onToggleToolCallExpansion();
+      } else {
+        // Insert tab character into text when no tool calls exist
+        textRef.current =
+          textRef.current.slice(0, cursorRef.current) +
+          "\t" +
+          textRef.current.slice(cursorRef.current);
+        cursorRef.current += 1;
+        syncDisplay();
+      }
       return;
     }
 

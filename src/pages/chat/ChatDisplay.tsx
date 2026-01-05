@@ -1,4 +1,11 @@
-import React, { memo, useCallback, useEffect, useMemo, useState, useRef } from "react";
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import { Box, Text, useStdout, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { ScrollView, type ScrollViewRef } from "ink-scroll-view";
@@ -170,7 +177,10 @@ const ChatDisplay = memo<ChatDisplayProps>(
     const scrollViewHeight = useMemo(() => {
       const reservedHeight = isLoading || hasPendingToolCalls ? 3 : 6; // Loading takes less space
       const indicatorHeight = messages.length > 3 ? 2 : 0; // Reserve space for scroll indicators if needed
-      const available = Math.max(5, terminalHeight - reservedHeight - indicatorHeight - 2); // Min 5 lines, 2 for margins
+      const available = Math.max(
+        5,
+        terminalHeight - reservedHeight - indicatorHeight - 2,
+      ); // Min 5 lines, 2 for margins
       return Math.max(3, Math.floor(available * 0.7)); // Min 3 lines after reduction
     }, [terminalHeight, isLoading, hasPendingToolCalls, messages.length]);
 
@@ -201,8 +211,11 @@ const ChatDisplay = memo<ChatDisplayProps>(
     useEffect(() => {
       const wasEmpty = previousMessagesLengthRef.current === 0;
       const nowHasMessages = messages.length > 0;
-      
-      if ((!hasInitializedRef.current && nowHasMessages) || (wasEmpty && nowHasMessages)) {
+
+      if (
+        (!hasInitializedRef.current && nowHasMessages) ||
+        (wasEmpty && nowHasMessages)
+      ) {
         hasInitializedRef.current = true;
         userScrolledRef.current = false;
         scrollToBottom();
@@ -210,7 +223,8 @@ const ChatDisplay = memo<ChatDisplayProps>(
         return;
       }
 
-      const hasNewMessages = messages.length > previousMessagesLengthRef.current;
+      const hasNewMessages =
+        messages.length > previousMessagesLengthRef.current;
       if (hasNewMessages && !userScrolledRef.current) {
         scrollToBottom();
       }
@@ -235,7 +249,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
           onInterrupt();
           return;
         }
-        
+
         if (scrollViewRef.current) {
           if (key.upArrow) {
             userScrolledRef.current = true;
@@ -334,7 +348,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
               onInterrupt={onInterrupt}
               isResponseActive={isResponseActive}
             />
-            
+
             {(canScrollUp || canScrollDown) && (
               <Box marginTop={1}>
                 <Text dimColor>

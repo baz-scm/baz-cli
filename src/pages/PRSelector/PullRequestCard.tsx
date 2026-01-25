@@ -7,8 +7,7 @@ import type {
 } from "../../lib/providers/index.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
-const BAZ_REVIEWER_PATTERN =
-  /^(https:\/\/github\.com\/apps\/)?baz-reviewer(\[bot])?$/i;
+import { isBazReviewer } from "../../lib/reviewer.js";
 
 interface PullRequestCardProps {
   pr: PullRequest;
@@ -61,14 +60,10 @@ function getCIIcon(status: CIStatus):
   return undefined;
 }
 
-function isBazReviewer(review: CodeChangeReview): boolean {
-  return BAZ_REVIEWER_PATTERN.test(review.assignee);
-}
-
 function getBazReviewerStatus(
   reviews: CodeChangeReview[],
 ): "approved" | "reviewed" | "none" {
-  const bazReviews = reviews.filter((r) => isBazReviewer(r));
+  const bazReviews = reviews.filter((r) => isBazReviewer(r.assignee));
 
   if (bazReviews.length === 0) {
     return "none";
@@ -94,7 +89,7 @@ function getReviewStatus(
   reviews: CodeChangeReview[],
   currentUserLogin?: string,
 ): ReviewStatus {
-  const humanReviews = reviews.filter((r) => !isBazReviewer(r));
+  const humanReviews = reviews.filter((r) => !isBazReviewer(r.assignee));
 
   if (humanReviews.length === 0) {
     return "waiting_review";

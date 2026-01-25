@@ -8,7 +8,7 @@ import type {
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 const BAZ_REVIEWER_PATTERN =
-  /^(https:\/\/github\.com\/apps\/)?baz-reviewer(\[bot\])?$/i;
+  /^(https:\/\/github\.com\/apps\/)?baz-reviewer(\[bot])?$/i;
 
 interface PullRequestCardProps {
   pr: PullRequest;
@@ -96,7 +96,7 @@ function getReviewStatus(
 ): ReviewStatus {
   const humanReviews = reviews.filter((r) => !isBazReviewer(r));
 
-  if (!humanReviews || humanReviews.length === 0) {
+  if (humanReviews.length === 0) {
     return "waiting_review";
   }
   const hasApprovals = humanReviews.some((r) => r.review_state === "approved");

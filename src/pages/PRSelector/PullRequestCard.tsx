@@ -59,15 +59,38 @@ function getCIIcon(status: CIStatus):
   return undefined;
 }
 
+function isBazReviewer(review: CodeChangeReview): boolean {
+  // Match baz-reviewer by username
+  return review.assignee.toLowerCase().includes('baz-reviewer');
+}
+
+function getBazReviewerStatus(reviews: CodeChangeReview[]): "approved" | "reviewed" | "none" {
+  const bazReviews = reviews.filter(r => isBazReviewer(r));
+
+  if (bazReviews.length === 0) {
+    return "none";
+  }
+
+  const hasApproval = bazReviews.some(r => r.review_state === "approved");
+  if (hasApproval) {
+    return "approved";
+  }
+
+  return "reviewed";
+}
+
 function getReviewStatus(
   reviews: CodeChangeReview[],
   currentUserLogin?: string,
 ): ReviewStatus {
-  if (!reviews || reviews.length === 0) {
+  // Filter to only human reviews for this status
+  const humanReviews = reviews.filter(r => !isBazReviewer(r));
+
+  if (!humanReviews || humanReviews.length === 0) {
     return "waiting_review";
   }
-  const hasApprovals = reviews.some((r) => r.review_state === "approved");
-  const userReview = reviews.find(
+  const hasApprovals = humanReviews.some((r) => r.review_state === "approved");
+  const userReview = humanReviews.find(
     (r) => currentUserLogin && r.assignee === currentUserLogin,
   );
   if (userReview && userReview.review_state !== "assigned") {
@@ -100,6 +123,20 @@ function getReviewStatusDisplay(status: ReviewStatus): {
   }
 }
 
+function getBazBadge(status: "approved" | "reviewed" | "none"): {
+  text: string;
+  color: string;
+} | null {
+  switch (status) {
+    case "approved":
+      return { text: "[✓ baz]", color: "cyan" };
+    case "reviewed":
+      return { text: "[◐ baz]", color: "yellow" };
+    case "none":
+      return null;
+  }
+}
+
 export const PullRequestCard: React.FC<PullRequestCardProps> = ({
   pr,
   isSelected,
@@ -110,6 +147,8 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
   const ciIcon = getCIIcon(ciStatus);
   const reviewStatus = getReviewStatus(pr.reviews, currentUserLogin);
   const reviewDisplay = getReviewStatusDisplay(reviewStatus);
+  const bazStatus = getBazReviewerStatus(pr.reviews);
+  const bazBadge = getBazBadge(bazStatus);
   const updatedTime = pr.updatedAt;
 
   const titleColor = isSelected ? "cyan" : "white";
@@ -136,6 +175,14 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
         <Text dimColor={!isSelected} color={reviewDisplay.color}>
           {reviewDisplay.text}
         </Text>
+        {bazBadge && (
+          <>
+            {" • "}
+            <Text dimColor={!isSelected} color={bazBadge.color}>
+              {bazBadge.text}
+            </Text>
+          </>
+        )}
         {ciIcon?.text && <Text> • CI {ciIcon.text}</Text>}
       </Text>
       {canMerge && (

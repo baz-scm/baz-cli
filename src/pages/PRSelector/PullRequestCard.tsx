@@ -60,8 +60,7 @@ function getCIIcon(status: CIStatus):
 }
 
 function isBazReviewer(review: CodeChangeReview): boolean {
-  // Match baz-reviewer by username
-  return review.assignee.toLowerCase().includes('baz-reviewer');
+  return review.assignee.toLowerCase().startsWith('https://github.com/apps/baz-reviewer');
 }
 
 function getBazReviewerStatus(reviews: CodeChangeReview[]): "approved" | "reviewed" | "none" {
@@ -79,11 +78,18 @@ function getBazReviewerStatus(reviews: CodeChangeReview[]): "approved" | "review
   return "reviewed";
 }
 
+/**
+ * Determines the review status from human reviewers, excluding baz-reviewer.
+ * Prioritizes showing if the current user has reviewed/approved.
+ *
+ * @param reviews - Array of code change reviews for the pull request
+ * @param currentUserLogin - Optional login name of the current user
+ * @returns The calculated review status for human reviewers only
+ */
 function getReviewStatus(
   reviews: CodeChangeReview[],
   currentUserLogin?: string,
 ): ReviewStatus {
-  // Filter to only human reviews for this status
   const humanReviews = reviews.filter(r => !isBazReviewer(r));
 
   if (!humanReviews || humanReviews.length === 0) {

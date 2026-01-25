@@ -60,17 +60,21 @@ function getCIIcon(status: CIStatus):
 }
 
 function isBazReviewer(review: CodeChangeReview): boolean {
-  return review.assignee.toLowerCase().startsWith('https://github.com/apps/baz-reviewer');
+  return review.assignee
+    .toLowerCase()
+    .startsWith("https://github.com/apps/baz-reviewer");
 }
 
-function getBazReviewerStatus(reviews: CodeChangeReview[]): "approved" | "reviewed" | "none" {
-  const bazReviews = reviews.filter(r => isBazReviewer(r));
+function getBazReviewerStatus(
+  reviews: CodeChangeReview[],
+): "approved" | "reviewed" | "none" {
+  const bazReviews = reviews.filter((r) => isBazReviewer(r));
 
   if (bazReviews.length === 0) {
     return "none";
   }
 
-  const hasApproval = bazReviews.some(r => r.review_state === "approved");
+  const hasApproval = bazReviews.some((r) => r.review_state === "approved");
   if (hasApproval) {
     return "approved";
   }
@@ -90,7 +94,7 @@ function getReviewStatus(
   reviews: CodeChangeReview[],
   currentUserLogin?: string,
 ): ReviewStatus {
-  const humanReviews = reviews.filter(r => !isBazReviewer(r));
+  const humanReviews = reviews.filter((r) => !isBazReviewer(r));
 
   if (!humanReviews || humanReviews.length === 0) {
     return "waiting_review";

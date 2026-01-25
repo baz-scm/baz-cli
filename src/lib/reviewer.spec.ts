@@ -16,7 +16,9 @@ describe("isBazReviewer", () => {
     });
 
     it("returns true for 'https://github.com/apps/baz-reviewer-dev'", () => {
-      expect(isBazReviewer("https://github.com/apps/baz-reviewer-dev")).toBe(true);
+      expect(isBazReviewer("https://github.com/apps/baz-reviewer-dev")).toBe(
+        true,
+      );
     });
   });
 

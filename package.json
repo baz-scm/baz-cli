@@ -19,7 +19,8 @@
     "lint:fix": "eslint src --fix",
     "format:fix": "prettier --write \"**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx}\"",
-    "cicd": "npm run lint:fix && npm run format:fix && npm run build"
+    "test": "vitest run",
+    "cicd": "npm run lint:fix && npm run format:fix && npm run test && npm run build"
   },
   "keywords": [
     "cli"
@@ -62,7 +63,8 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.4"
+    "typescript-eslint": "^8.46.4",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=22"

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.11](https://github.com/baz-scm/baz-cli/compare/v0.3.10...v0.3.11) (2026-01-27)
+
+
+### ✨ New Features
+
+* Move baz reviewer to a separate category from other reviewers ([#99](https://github.com/baz-scm/baz-cli/issues/99)) ([594ce8f](https://github.com/baz-scm/baz-cli/commit/594ce8fbf9f67f8a965c25aa6364d055c3c7ae09))
+
 ## [0.3.10](https://github.com/baz-scm/baz-cli/compare/v0.3.9...v0.3.10) (2025-12-28)
 
 

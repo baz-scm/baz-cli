@@ -175,12 +175,85 @@ export class OAuthFlow {
 
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end(`
-      <html>
-        <body>
-          <h1>Login successful!</h1>
-          <p>You may close this browser window and return to your terminal.</p>
-        </body>
-      </html>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Authentication Successful | Baz</title>
+    <link rel="icon" type="image/png" href="https://baz-co-public-assets.s3.us-east-2.amazonaws.com/Light.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #0F1D2A;
+        color: #fff;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .container {
+        text-align: center;
+        padding: 48px;
+        max-width: 400px;
+      }
+      .logo {
+        margin-bottom: 32px;
+      }
+      .logo img {
+        height: 120px;
+      }
+      .icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #5533FF 0%, #A2A2FF 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+      }
+      .icon svg {
+        width: 32px;
+        height: 32px;
+        color: #fff;
+      }
+      h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 12px;
+        color: #fff;
+      }
+      p {
+        font-size: 16px;
+        color: #A2A2FF;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <img src="https://baz-co-public-assets.s3.us-east-2.amazonaws.com/full+-+svg/Light-Transparent.svg" alt="Baz" />
+      </div>
+      <div class="icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h1>Baz CLI is authenticated</h1>
+      <p>Let's get those reviews rolling!</p>
+      <p>You can close this window</p>
+    </div>
+  </body>
+</html>
     `);
 
     clearTimeout(timeoutId);

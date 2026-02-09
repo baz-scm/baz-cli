@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.12](https://github.com/baz-scm/baz-cli/compare/v0.3.11...v0.3.12) (2026-02-09)
+
+
+### 🐛 Bug Fixes
+
+* Add nicer callback to CLI ([#101](https://github.com/baz-scm/baz-cli/issues/101)) ([d25b409](https://github.com/baz-scm/baz-cli/commit/d25b409c02d68f47cedb1d56332492641748d6aa))
+
 ## [0.3.11](https://github.com/baz-scm/baz-cli/compare/v0.3.10...v0.3.11) (2026-01-27)
 
 

@@ -249,8 +249,8 @@ export class OAuthFlow {
         </svg>
       </div>
       <h1>Baz CLI is authenticated</h1>
-      <p>Let's get those reviews rolling!</p>
-      <p>You can close this window</p>
+      <p>You’re authenticated and good to go</p>
+      <p>Head back to your terminal to start reviewing!</p>
     </div>
   </body>
 </html>

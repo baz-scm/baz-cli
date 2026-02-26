@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.13](https://github.com/baz-scm/baz-cli/compare/v0.3.12...v0.3.13) (2026-02-26)
+
+
+### 🐛 Bug Fixes
+
+* Update authentication success message in HTML ([#103](https://github.com/baz-scm/baz-cli/issues/103)) ([9bdf94f](https://github.com/baz-scm/baz-cli/commit/9bdf94f5249f93ac4762fcbf0e82fa82e7ca2324))
+
 ## [0.3.12](https://github.com/baz-scm/baz-cli/compare/v0.3.11...v0.3.12) (2026-02-09)
 
 

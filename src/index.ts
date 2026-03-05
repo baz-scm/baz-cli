@@ -20,9 +20,18 @@ const program = new Command();
 program.name("Baz CLI").version(VERSION);
 
 program
-  .command("review", { isDefault: true })
+  .command("review [url]", { isDefault: true })
   .description("Start a review")
-  .action(async () => {
+  .option("--chat <message>", "Chat with the PR (headless)")
+  .option("--walkthrough", "Get a PR walkthrough (headless)")
+  .option("--spec-review", "Fetch spec review results (headless)")
+  .action(async (url, options) => {
+    if (url) {
+      const { runHeadless } = await import("./commands/headless.js");
+      await runHeadless(url, options);
+      return;
+    }
+
     try {
       getAppConfig(); // Validate early before rendering
     } catch (e) {

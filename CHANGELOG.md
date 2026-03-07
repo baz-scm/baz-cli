@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.14](https://github.com/baz-scm/baz-cli/compare/v0.3.13...v0.3.14) (2026-03-07)
+
+
+### 🐛 Bug Fixes
+
+* fix oauth page message ([#106](https://github.com/baz-scm/baz-cli/issues/106)) ([d5a51dc](https://github.com/baz-scm/baz-cli/commit/d5a51dc5f7bded9ce28097e03b5a6790086fe085))
+
 ## [0.3.13](https://github.com/baz-scm/baz-cli/compare/v0.3.12...v0.3.13) (2026-02-26)
 
 

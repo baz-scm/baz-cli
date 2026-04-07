@@ -1,7 +1,10 @@
 import { execSync } from "child_process";
 import path from "path";
 
-const EXEC_OPTIONS = { encoding: "utf-8" as const, maxBuffer: 10 * 1024 * 1024 };
+const EXEC_OPTIONS = {
+  encoding: "utf-8" as const,
+  maxBuffer: 10 * 1024 * 1024,
+};
 
 function gitExec(args: string): string {
   try {

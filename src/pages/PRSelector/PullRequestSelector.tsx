@@ -208,10 +208,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                   Review local changes
                 </Text>
                 {changeSummary && (
-                  <Text dimColor>
-                    {" "}
-                    ({formatChangeSummary(changeSummary)})
-                  </Text>
+                  <Text dimColor> ({formatChangeSummary(changeSummary)})</Text>
                 )}
               </Box>
             )}

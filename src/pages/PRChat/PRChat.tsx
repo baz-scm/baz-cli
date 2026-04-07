@@ -8,7 +8,7 @@ import {
 } from "../../models/chat.js";
 import { processStream, StreamAbortError } from "../../lib/chat-stream.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
-import { useAppMode } from "../../lib/config/AppModeContext.js";
+import { useAppMode } from "../../lib/config/index.js";
 
 interface PRChatProps {
   prId: string;
@@ -22,6 +22,10 @@ interface PRChatProps {
   issueType: IssueType.PR_CHAT | IssueType.PR_WALKTHROUGH;
   existingMessages?: ChatMessage[];
   existingConversationId?: string;
+  buildChatRequestOverride?: (
+    freeText: string,
+    conversationId?: string,
+  ) => CheckoutChatRequest;
   onBack: () => void;
 }
 
@@ -37,6 +41,7 @@ const PRChat: React.FC<PRChatProps> = ({
   issueType,
   existingMessages,
   existingConversationId,
+  buildChatRequestOverride,
   onBack,
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
@@ -56,6 +61,10 @@ const PRChat: React.FC<PRChatProps> = ({
 
   const buildChatRequest = useCallback(
     (freeText: string, convId?: string): CheckoutChatRequest => {
+      if (buildChatRequestOverride) {
+        return buildChatRequestOverride(freeText, convId);
+      }
+
       const issue = {
         type: issueType,
         data: { id: prId },
@@ -80,7 +89,14 @@ const PRChat: React.FC<PRChatProps> = ({
         conversationId: convId,
       };
     },
-    [appMode.mode.name, bazRepoId, prId, fullRepoName, prNumber],
+    [
+      appMode.mode.name,
+      bazRepoId,
+      prId,
+      fullRepoName,
+      prNumber,
+      buildChatRequestOverride,
+    ],
   );
 
   const runChatStream = useCallback(

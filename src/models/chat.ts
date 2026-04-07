@@ -102,7 +102,20 @@ export interface TokensChatRequest {
   conversationId?: string;
 }
 
-export type CheckoutChatRequest = BazChatRequest | TokensChatRequest;
+export interface LocalChatRequest {
+  mode: "local";
+  repoName: string;
+  diff: string;
+  diffEncoding: "base64";
+  issue: ChatIssue;
+  freeText: string;
+  conversationId?: string;
+}
+
+export type CheckoutChatRequest =
+  | BazChatRequest
+  | TokensChatRequest
+  | LocalChatRequest;
 
 export interface MessageStart {
   type: "message_start";

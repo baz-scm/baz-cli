@@ -1,5 +1,85 @@
 # Changelog
 
+## [0.4.0](https://github.com/baz-scm/baz-cli/compare/v0.3.16...v0.4.0) (2026-04-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* Support tokens mode ([#57](https://github.com/baz-scm/baz-cli/issues/57))
+* CR-2814 menu and narrate pr flow ([#42](https://github.com/baz-scm/baz-cli/issues/42))
+
+### 🐛 Bug Fixes
+
+* Add error message for insufficient write access ([#64](https://github.com/baz-scm/baz-cli/issues/64)) ([6f7ccb4](https://github.com/baz-scm/baz-cli/commit/6f7ccb4a740e2348c6153c88ded6aa8aa700c1b5))
+* Add nicer callback to CLI ([#101](https://github.com/baz-scm/baz-cli/issues/101)) ([d25b409](https://github.com/baz-scm/baz-cli/commit/d25b409c02d68f47cedb1d56332492641748d6aa))
+* avoid re-rendering the input box ([#52](https://github.com/baz-scm/baz-cli/issues/52)) ([11f31ef](https://github.com/baz-scm/baz-cli/commit/11f31ef28a5eace69f2a92efed13bed20c752ef4))
+* Correct verdict values and ADO ([#73](https://github.com/baz-scm/baz-cli/issues/73)) ([c00810f](https://github.com/baz-scm/baz-cli/commit/c00810fb10db3ea8c5fc8868ae997a14d5b48946))
+* CR-2716 fix file changes summary ([#38](https://github.com/baz-scm/baz-cli/issues/38)) ([8d12d58](https://github.com/baz-scm/baz-cli/commit/8d12d582ba20a2c485c16f6d96c4ab57af2f03fe))
+* disable provenance ([#17](https://github.com/baz-scm/baz-cli/issues/17)) ([5bf57c6](https://github.com/baz-scm/baz-cli/commit/5bf57c611558a4e2682578da0d0bf5f557967146))
+* fix CLI version bump ([#21](https://github.com/baz-scm/baz-cli/issues/21)) ([bcffdd1](https://github.com/baz-scm/baz-cli/commit/bcffdd185e7ba09aa95ad1e1f31aad366424a018))
+* fix discussion tokens request ([#80](https://github.com/baz-scm/baz-cli/issues/80)) ([68bb7ba](https://github.com/baz-scm/baz-cli/commit/68bb7ba59ee8b3ec2cefbceb8ae49287b9cdeb3c))
+* fix merge actions ([#77](https://github.com/baz-scm/baz-cli/issues/77)) ([4dfcead](https://github.com/baz-scm/baz-cli/commit/4dfcead5b8188af03d44993e8f8bff553b1af14b))
+* fix oauth page message ([#106](https://github.com/baz-scm/baz-cli/issues/106)) ([d5a51dc](https://github.com/baz-scm/baz-cli/commit/d5a51dc5f7bded9ce28097e03b5a6790086fe085))
+* implement resolve and comment ([#79](https://github.com/baz-scm/baz-cli/issues/79)) ([cd25f58](https://github.com/baz-scm/baz-cli/commit/cd25f58a0620fa98d59aa8a01386b933848b2579))
+* optimistically update pr data after approval ([#72](https://github.com/baz-scm/baz-cli/issues/72)) ([2b6433d](https://github.com/baz-scm/baz-cli/commit/2b6433d523ddf7b9dcf277dd6592033f3fa079bf))
+* rerendering issue  ([#78](https://github.com/baz-scm/baz-cli/issues/78)) ([49c66b9](https://github.com/baz-scm/baz-cli/commit/49c66b91d2b9171f1b95d6b8876f336372d3e97c))
+* small fixes around auth flow ([#6](https://github.com/baz-scm/baz-cli/issues/6)) ([d5d271b](https://github.com/baz-scm/baz-cli/commit/d5d271b9db2f637ee93df0dfbf5c994f14b89ad3))
+* Update authentication success message in HTML ([#103](https://github.com/baz-scm/baz-cli/issues/103)) ([9bdf94f](https://github.com/baz-scm/baz-cli/commit/9bdf94f5249f93ac4762fcbf0e82fa82e7ca2324))
+* Use useMemo to speed up chat display and avoid lags ([#46](https://github.com/baz-scm/baz-cli/issues/46)) ([44443ea](https://github.com/baz-scm/baz-cli/commit/44443ea2d6419449abd95fe1e29520c648f4846f))
+
+
+### ✨ New Features
+
+* add author name and updated time to PR selection ([#85](https://github.com/baz-scm/baz-cli/issues/85)) ([6175ddd](https://github.com/baz-scm/baz-cli/commit/6175ddda010bcef83bb310fd72154d5d8ef976a8))
+* add git diff component ([#4](https://github.com/baz-scm/baz-cli/issues/4)) ([2022b9c](https://github.com/baz-scm/baz-cli/commit/2022b9c908066bdc871807a061463a91d3a84801))
+* add include and exclude keyword search to PR selection ([#88](https://github.com/baz-scm/baz-cli/issues/88)) ([17a51be](https://github.com/baz-scm/baz-cli/commit/17a51beea726b0e830352f47a2b7527050b9ebce))
+* add issue explanation component ([#7](https://github.com/baz-scm/baz-cli/issues/7)) ([d6a4497](https://github.com/baz-scm/baz-cli/commit/d6a44978f222e0c7ed1bf777f1f487863581bd1d))
+* Add markdown rendering ([#44](https://github.com/baz-scm/baz-cli/issues/44)) ([6d787c4](https://github.com/baz-scm/baz-cli/commit/6d787c47077839697d24a0a3538dd9d9ea6ae849))
+* add option to Chat with PR ([#67](https://github.com/baz-scm/baz-cli/issues/67)) ([b794e7c](https://github.com/baz-scm/baz-cli/commit/b794e7c95fc5a57ea78a3a45778e7d4c3440d3e2))
+* add release-please and prepare npm publish ([#11](https://github.com/baz-scm/baz-cli/issues/11)) ([e34225f](https://github.com/baz-scm/baz-cli/commit/e34225fbb308a7b6874971714b0d9518d6bdc0e6))
+* Add support for review of local changes ([#109](https://github.com/baz-scm/baz-cli/issues/109)) ([1dfebd6](https://github.com/baz-scm/baz-cli/commit/1dfebd69580a5087d21a7f65439d2ccd009bf703))
+* change package name to @baz-scm/cli ([#23](https://github.com/baz-scm/baz-cli/issues/23)) ([8ee35f5](https://github.com/baz-scm/baz-cli/commit/8ee35f557c0ce4451a2baa78a9bf39470916b8ae))
+* CR-2519  token fetch and axios intercept ([#3](https://github.com/baz-scm/baz-cli/issues/3)) ([55b90b3](https://github.com/baz-scm/baz-cli/commit/55b90b33747a70e64a6b641d7386a4897606f8ed))
+* CR-2565 generic issue wrapper ([#5](https://github.com/baz-scm/baz-cli/issues/5)) ([08064fd](https://github.com/baz-scm/baz-cli/commit/08064fd6261a7dcd8539418e0b4f36232523f1a5))
+* CR-2630 integration setup flow ([#29](https://github.com/baz-scm/baz-cli/issues/29)) ([84da6a8](https://github.com/baz-scm/baz-cli/commit/84da6a8b5ecce9ead1f187b9b37284dca07d717c))
+* CR-2631 Cli input adjusments ([#35](https://github.com/baz-scm/baz-cli/issues/35)) ([b950a74](https://github.com/baz-scm/baz-cli/commit/b950a74ad63e5469782cd177456392ef7dceceed))
+* CR-2631 Spec review flow ([#36](https://github.com/baz-scm/baz-cli/issues/36)) ([09967e1](https://github.com/baz-scm/baz-cli/commit/09967e1928bb8d811e8de40caff8e4538e0d6f14))
+* CR-2716 add CR overview and completed ([#33](https://github.com/baz-scm/baz-cli/issues/33)) ([c9cd892](https://github.com/baz-scm/baz-cli/commit/c9cd8922a396625c447fe9f7737227f772086256))
+* CR-2727 implement back button ([#32](https://github.com/baz-scm/baz-cli/issues/32)) ([58acea0](https://github.com/baz-scm/baz-cli/commit/58acea04792aefed0821219f1affa29c8f6dc4b1))
+* CR-2762 Add approve and merge options ([#37](https://github.com/baz-scm/baz-cli/issues/37)) ([a0c53ad](https://github.com/baz-scm/baz-cli/commit/a0c53ad5c81512ea2c5b4be2519b7c79894693b4))
+* CR-2812 align to new spec review response ([#49](https://github.com/baz-scm/baz-cli/issues/49)) ([dbbd95b](https://github.com/baz-scm/baz-cli/commit/dbbd95bf0b61c5b8bade264b3fc1fb0d748e9cb5))
+* CR-2814 menu and narrate pr flow ([#42](https://github.com/baz-scm/baz-cli/issues/42)) ([9dfc0f3](https://github.com/baz-scm/baz-cli/commit/9dfc0f37704e830856d76e3cf5d1a7d4dccbf975))
+* CR-2849 typing performance improvements ([#51](https://github.com/baz-scm/baz-cli/issues/51)) ([27ca86f](https://github.com/baz-scm/baz-cli/commit/27ca86f6f063a7e1229e55bf675f6940b5072cbd))
+* create and upload binary ([#8](https://github.com/baz-scm/baz-cli/issues/8)) ([ffb69a0](https://github.com/baz-scm/baz-cli/commit/ffb69a042837c2b731545a5e737b3972876b6a03))
+* Full pr data impl tokens mode ([#58](https://github.com/baz-scm/baz-cli/issues/58)) ([85dcd65](https://github.com/baz-scm/baz-cli/commit/85dcd65e7fb0ac6bb4fe76b66a41908df7464e4c))
+* handle new walkthrough data ([#96](https://github.com/baz-scm/baz-cli/issues/96)) ([cb8866a](https://github.com/baz-scm/baz-cli/commit/cb8866a568545f3c03b2a88ab117ead134d5c653))
+* Implement spec requirement support in terminal ([#54](https://github.com/baz-scm/baz-cli/issues/54)) ([61d8ed2](https://github.com/baz-scm/baz-cli/commit/61d8ed2b32d46e70047688f576ef4a5556a2b0b7))
+* init auth flow on 401 ([#26](https://github.com/baz-scm/baz-cli/issues/26)) ([f7cb0dd](https://github.com/baz-scm/baz-cli/commit/f7cb0ddddbcb937f711ff127b7ec7179ad6f0284))
+* Migrate conversation types and get latest walkthrough ([#92](https://github.com/baz-scm/baz-cli/issues/92)) ([1562c4f](https://github.com/baz-scm/baz-cli/commit/1562c4f1f40942ec103b3ab1b1a50593d797d327))
+* Move baz reviewer to a separate category from other reviewers ([#99](https://github.com/baz-scm/baz-cli/issues/99)) ([594ce8f](https://github.com/baz-scm/baz-cli/commit/594ce8fbf9f67f8a965c25aa6364d055c3c7ae09))
+* Ready to merge ([#94](https://github.com/baz-scm/baz-cli/issues/94)) ([722b13a](https://github.com/baz-scm/baz-cli/commit/722b13a5d8b05359c711cd39716cc9ae92e6a0e3))
+* replace ctrl with tab ([#70](https://github.com/baz-scm/baz-cli/issues/70)) ([11e4859](https://github.com/baz-scm/baz-cli/commit/11e485966f4fdeb5a2afd2265e6013783516ccba))
+* require authentication on startup ([#61](https://github.com/baz-scm/baz-cli/issues/61)) ([9e8b525](https://github.com/baz-scm/baz-cli/commit/9e8b525f22facfc3d259044bd2b3cec5a54fbbb4))
+* Send pr context for tokens ([#69](https://github.com/baz-scm/baz-cli/issues/69)) ([3b0f9ab](https://github.com/baz-scm/baz-cli/commit/3b0f9ab7afd57a9c2217987e23785987c0b17c36))
+* set the review command as default ([#20](https://github.com/baz-scm/baz-cli/issues/20)) ([64199c0](https://github.com/baz-scm/baz-cli/commit/64199c0643c1ceecb907a07e97f37d852676024b))
+* set up production credentials ([#15](https://github.com/baz-scm/baz-cli/issues/15)) ([8411aa8](https://github.com/baz-scm/baz-cli/commit/8411aa8c4f058246f1f3edba865fdbab55c215b8))
+* Skip repo selection step ([#41](https://github.com/baz-scm/baz-cli/issues/41)) ([ad8fca9](https://github.com/baz-scm/baz-cli/commit/ad8fca978bb7d0f481484afebafe90c788c3dc32))
+* stop agent after sending prompt ([#90](https://github.com/baz-scm/baz-cli/issues/90)) ([50c5b42](https://github.com/baz-scm/baz-cli/commit/50c5b42ffc4ee5c532105f74ff40649a858d9d91))
+* support chat component ([#9](https://github.com/baz-scm/baz-cli/issues/9)) ([175d9e6](https://github.com/baz-scm/baz-cli/commit/175d9e67be283f749b4486e81fd6ee97b0c70528))
+* support mentions ([#10](https://github.com/baz-scm/baz-cli/issues/10)) ([1ab9c53](https://github.com/baz-scm/baz-cli/commit/1ab9c532648ae4c8b6f1e6cae8ce0417fcb0a311))
+* support pagination for PRs ([#82](https://github.com/baz-scm/baz-cli/issues/82)) ([5e3dbbd](https://github.com/baz-scm/baz-cli/commit/5e3dbbd872fcc9630ff1effca940347ec8cba2fe))
+* Support tokens mode ([#57](https://github.com/baz-scm/baz-cli/issues/57)) ([1894e4d](https://github.com/baz-scm/baz-cli/commit/1894e4dbbef8b27afaad8fa74f714cbbc20048d9))
+* Tool call rendering ([#55](https://github.com/baz-scm/baz-cli/issues/55)) ([a44cfd8](https://github.com/baz-scm/baz-cli/commit/a44cfd837930a60bd328aaad41701f5d990002e2))
+* update compiler options to ES2024 ([#18](https://github.com/baz-scm/baz-cli/issues/18)) ([3a0cc97](https://github.com/baz-scm/baz-cli/commit/3a0cc9761c4628df1868061b84ddcfc2ef76f4ef))
+
+
+### 📚 Documentation
+
+* Enhance README with project details and installation info ([#53](https://github.com/baz-scm/baz-cli/issues/53)) ([dca9017](https://github.com/baz-scm/baz-cli/commit/dca901707919fb27491d89e4a1a72a8ece70670d))
+* expand README for installation and usage ([#40](https://github.com/baz-scm/baz-cli/issues/40)) ([948be54](https://github.com/baz-scm/baz-cli/commit/948be547be74501f16c434632576b86928c1bac9))
+* Improve GH PAT permissions documentation ([#75](https://github.com/baz-scm/baz-cli/issues/75)) ([7df6769](https://github.com/baz-scm/baz-cli/commit/7df6769e29c2338f44f5a2971841559410e2b848))
+* README update and assets ([#74](https://github.com/baz-scm/baz-cli/issues/74)) ([7afdd89](https://github.com/baz-scm/baz-cli/commit/7afdd89a01e85c2decfe9b64a9f39f98fb673cf6))
+
 ## [0.3.16](https://github.com/baz-scm/baz-cli/compare/v0.3.14...v0.3.16) (2026-04-13)
 
 

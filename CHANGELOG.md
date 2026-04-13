@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.15](https://github.com/baz-scm/baz-cli/compare/v0.3.14...v0.3.15) (2026-04-13)
+## [0.3.16](https://github.com/baz-scm/baz-cli/compare/v0.3.14...v0.3.16) (2026-04-13)
 
 
 ### ✨ New Features

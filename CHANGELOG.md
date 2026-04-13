@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.15](https://github.com/baz-scm/baz-cli/compare/v0.3.14...v0.3.15) (2026-04-13)
+
+
+### ✨ New Features
+
+* Add support for review of local changes ([#109](https://github.com/baz-scm/baz-cli/issues/109)) ([1dfebd6](https://github.com/baz-scm/baz-cli/commit/1dfebd69580a5087d21a7f65439d2ccd009bf703))
+
 ## [0.3.14](https://github.com/baz-scm/baz-cli/compare/v0.3.13...v0.3.14) (2026-03-07)
 
 

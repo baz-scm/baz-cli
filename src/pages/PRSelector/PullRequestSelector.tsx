@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import type { PullRequest } from "../../lib/providers/index.js";
+import type { ChangeSummary } from "../../lib/git.js";
 import { updatedTimeAgo } from "../../lib/date.js";
 import { PullRequestCard } from "./PullRequestCard.js";
 import { useFetchUser } from "../../hooks/useFetchUser.js";
@@ -17,13 +18,19 @@ interface PullRequestSearchKeywords {
 interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
   onSelect: (pr: PullRequest) => void;
+  onLocalSelect?: () => void;
+  changeSummary?: ChangeSummary;
   initialPrId?: string;
   updateData: (updater: (prev: PullRequest[]) => PullRequest[]) => void;
 }
 
+const LOCAL_CHANGES_INDEX = -1;
+
 const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   pullRequests,
   onSelect,
+  onLocalSelect,
+  changeSummary,
   initialPrId,
   updateData,
 }) => {
@@ -44,12 +51,17 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
       updatedAt: updatedTimeAgo(pr.updatedAt),
     }));
 
+  const hasLocal = !!onLocalSelect;
+  const minIndex = hasLocal ? LOCAL_CHANGES_INDEX : 0;
+
   const initialIndex = initialPrId
     ? sanitizedPRs.findIndex((pr) => pr.id === initialPrId)
-    : 0;
+    : hasLocal
+      ? LOCAL_CHANGES_INDEX
+      : 0;
 
   const [selectedIndex, setSelectedIndex] = useState(
-    initialIndex >= 0 ? initialIndex : 0,
+    initialIndex >= minIndex ? initialIndex : minIndex,
   );
 
   const searchKeywords = extractSearchKeywords(searchQuery.toLowerCase());
@@ -85,7 +97,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
       isFirstRender.current = false;
       return;
     }
-    setSelectedIndex(0);
+    setSelectedIndex(searchQuery ? 0 : minIndex);
   }, [searchQuery]);
 
   useInput((input, key) => {
@@ -94,7 +106,7 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     }
 
     if (key.upArrow) {
-      setSelectedIndex((prev) => Math.max(0, prev - 1));
+      setSelectedIndex((prev) => Math.max(minIndex, prev - 1));
     } else if (key.downArrow) {
       setSelectedIndex((prev) => Math.min(filteredPRs.length - 1, prev + 1));
     } else if (key.return) {
@@ -112,7 +124,11 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   });
 
   const handleSubmit = () => {
-    if (filteredPRs.length > 0) {
+    if (selectedIndex === LOCAL_CHANGES_INDEX && onLocalSelect) {
+      onLocalSelect();
+      return;
+    }
+    if (filteredPRs.length > 0 && selectedIndex >= 0) {
       onSelect(filteredPRs[selectedIndex]);
     }
   };
@@ -126,7 +142,8 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     );
   };
 
-  const selectedPr = filteredPRs[selectedIndex];
+  const selectedPr =
+    selectedIndex >= 0 ? filteredPRs[selectedIndex] : undefined;
   const canMergeSelectedPr = selectedPr ? canMergePR(selectedPr) : false;
 
   if (showMergePrompt && prToMerge) {
@@ -179,6 +196,22 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
           <Text color="yellow">No pull requests match your search.</Text>
         ) : (
           <>
+            {hasLocal && (
+              <Box marginBottom={1}>
+                <Text
+                  color={
+                    selectedIndex === LOCAL_CHANGES_INDEX ? "cyan" : "gray"
+                  }
+                  bold={selectedIndex === LOCAL_CHANGES_INDEX}
+                >
+                  {selectedIndex === LOCAL_CHANGES_INDEX ? "❯ " : "  "}
+                  Review local changes
+                </Text>
+                {changeSummary && (
+                  <Text dimColor> ({formatChangeSummary(changeSummary)})</Text>
+                )}
+              </Box>
+            )}
             <Text dimColor>
               Found {filteredPRs.length}{" "}
               {filteredPRs.length === 1 ? "pull request" : "pull requests"}:
@@ -284,6 +317,20 @@ function extractSearchKeywords(query: string): PullRequestSearchKeywords {
   }
 
   return { author, authorNot, repo, repoNot, freetext: freeText.join(" ") };
+}
+
+function formatChangeSummary(summary: ChangeSummary): string {
+  const parts: string[] = [];
+  if (summary.modified > 0) {
+    parts.push(`${summary.modified} modified`);
+  }
+  if (summary.added > 0) {
+    parts.push(`${summary.added} added`);
+  }
+  if (summary.deleted > 0) {
+    parts.push(`${summary.deleted} deleted`);
+  }
+  return parts.join(", ");
 }
 
 export default PullRequestSelector;

@@ -7,6 +7,9 @@ import IntegrationsCheck from "../Integration/IntegrationsCheck.js";
 import PostReviewPrompt, { PostReviewAction } from "./PostReviewPrompt.js";
 import { logger } from "../../lib/logger.js";
 import PullRequestReview from "../../components/PullRequestReview.js";
+import LocalDiffPrompt from "../LocalReview/LocalDiffPrompt.js";
+import LocalPullRequestReview from "../LocalReview/LocalPullRequestReview.js";
+import { getRepoName } from "../../lib/git.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { REVIEW_COMPLETE_TEXT } from "../../theme/banners.js";
 import { useAppMode } from "../../lib/config/index.js";
@@ -45,12 +48,26 @@ type FlowState =
       step: "complete";
       selectedPR: PullRequest;
       skippedIntegration?: boolean;
+    }
+  | {
+      step: "localDiffPrompt";
+    }
+  | {
+      step: "localReview";
+      diffText: string;
+    }
+  | {
+      step: "localReviewComplete";
     };
 
-const InternalReviewFlow: React.FC = () => {
-  const [flowState, setFlowState] = useState<FlowState>({
-    step: "handlePRSelect",
-  });
+interface InternalReviewFlowProps {
+  isLocal?: boolean;
+}
+
+const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({ isLocal }) => {
+  const [flowState, setFlowState] = useState<FlowState>(
+    isLocal ? { step: "localDiffPrompt" } : { step: "handlePRSelect" },
+  );
   const [hasIntegration, setHasIntegration] = useState<boolean | null>(null);
   const appMode = useAppMode();
 
@@ -163,12 +180,42 @@ const InternalReviewFlow: React.FC = () => {
     });
   };
 
+  // Local review handlers
+  const handleLocalSelect = () => {
+    setFlowState({ step: "localDiffPrompt" });
+  };
+
+  const handleLocalDiffReady = (diffText: string) => {
+    setFlowState({ step: "localReview", diffText });
+  };
+
+  const handleLocalDiffError = (message: string) => {
+    // Fall back to PR selector with error shown
+    logger.debug({ message }, "Local diff error");
+    setFlowState({ step: "handlePRSelect" });
+  };
+
+  const handleLocalReviewComplete = () => {
+    setFlowState({ step: "localReviewComplete" });
+  };
+
+  const handleLocalReviewBack = () => {
+    if (isLocal) {
+      // If launched with --local, go back to diff prompt
+      setFlowState({ step: "localDiffPrompt" });
+    } else {
+      // If entered from PR selector, go back to selector
+      setFlowState({ step: "handlePRSelect" });
+    }
+  };
+
   switch (flowState.step) {
     case "handlePRSelect":
       return (
         <Box flexDirection="column">
           <PullRequestSelectorContainer
             onSelect={handlePRSelect}
+            onLocalSelect={handleLocalSelect}
             initialPrId={flowState.selectedPR?.id}
           />
         </Box>
@@ -209,6 +256,42 @@ const InternalReviewFlow: React.FC = () => {
     case "complete":
       return <CompleteMessage flowState={flowState} />;
 
+    case "localDiffPrompt":
+      return (
+        <Box flexDirection="column">
+          <LocalDiffPrompt
+            onReady={handleLocalDiffReady}
+            onError={handleLocalDiffError}
+          />
+        </Box>
+      );
+
+    case "localReview":
+      return (
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="green">✓ Reviewing local changes </Text>
+            <Text color="yellow">[{getRepoName()}]</Text>
+          </Box>
+          <LocalPullRequestReview
+            diffText={flowState.diffText}
+            repoName={getRepoName()}
+            onComplete={handleLocalReviewComplete}
+            onBack={handleLocalReviewBack}
+          />
+        </Box>
+      );
+
+    case "localReviewComplete":
+      return (
+        <Box flexDirection="column">
+          <Box flexDirection="column" marginBottom={1}>
+            <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
+            <Text>Local review completed</Text>
+          </Box>
+        </Box>
+      );
+
     default:
       return <Text color="red">Unknown step</Text>;
   }
@@ -242,11 +325,15 @@ const CompleteMessage: React.FC<{
   );
 };
 
-const ReviewFlow = () => (
+interface ReviewFlowProps {
+  isLocal?: boolean;
+}
+
+const ReviewFlow: React.FC<ReviewFlowProps> = ({ isLocal }) => (
   <>
     <HeaderDisplay />
 
-    <InternalReviewFlow />
+    <InternalReviewFlow isLocal={isLocal} />
   </>
 );
 export default ReviewFlow;

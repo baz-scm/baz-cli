@@ -22,7 +22,8 @@ program.name("Baz CLI").version(VERSION);
 program
   .command("review", { isDefault: true })
   .description("Start a review")
-  .action(async () => {
+  .option("--local", "Review local git changes instead of a GitHub PR")
+  .action(async (options: { local?: boolean }) => {
     try {
       getAppConfig(); // Validate early before rendering
     } catch (e) {
@@ -44,7 +45,7 @@ program
       React.createElement(
         AppModeProvider,
         null,
-        React.createElement(ReviewFlow),
+        React.createElement(ReviewFlow, { isLocal: options.local }),
       ),
     );
   });

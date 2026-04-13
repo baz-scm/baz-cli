@@ -1,19 +1,32 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import type { PullRequest } from "../../lib/providers/index.js";
 import { usePullRequests } from "../../hooks/usePullRequests.js";
+import { getChangeSummary, type ChangeSummary } from "../../lib/git.js";
 import PullRequestSelector from "./PullRequestSelector.js";
 
 interface PullRequestSelectorContainerProps {
   onSelect: (pr: PullRequest) => void;
+  onLocalSelect?: () => void;
   initialPrId?: string;
 }
 
 const PullRequestSelectorContainer: React.FC<
   PullRequestSelectorContainerProps
-> = ({ onSelect, initialPrId }) => {
+> = ({ onSelect, onLocalSelect, initialPrId }) => {
   const { data, loading, error, updateData } = usePullRequests();
+  const [changeSummary, setChangeSummary] = useState<ChangeSummary | null>(
+    null,
+  );
+
+  useEffect(() => {
+    try {
+      setChangeSummary(getChangeSummary());
+    } catch {
+      // Not a git repo or git not available — don't show local option
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -44,6 +57,8 @@ const PullRequestSelectorContainer: React.FC<
     <PullRequestSelector
       pullRequests={data}
       onSelect={onSelect}
+      onLocalSelect={changeSummary ? onLocalSelect : undefined}
+      changeSummary={changeSummary ?? undefined}
       initialPrId={initialPrId}
       updateData={updateData}
     />

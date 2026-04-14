@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import type { PullRequest } from "../../lib/providers/index.js";
 import { usePullRequests } from "../../hooks/usePullRequests.js";
-import { getChangeSummary, type ChangeSummary } from "../../lib/git.js";
+import { getDiff, isOnNonDefaultBranch } from "../../lib/git.js";
 import PullRequestSelector from "./PullRequestSelector.js";
 
 interface PullRequestSelectorContainerProps {
@@ -16,13 +16,16 @@ const PullRequestSelectorContainer: React.FC<
   PullRequestSelectorContainerProps
 > = ({ onSelect, onLocalSelect, initialPrId }) => {
   const { data, loading, error, updateData } = usePullRequests();
-  const [changeSummary, setChangeSummary] = useState<ChangeSummary | null>(
-    null,
-  );
+  const [hasLocalReviewOption, setHasLocalReviewOption] = useState(false);
 
   useEffect(() => {
     try {
-      setChangeSummary(getChangeSummary());
+      const { onFeatureBranch } = isOnNonDefaultBranch();
+      if (onFeatureBranch) {
+        setHasLocalReviewOption(true);
+        return;
+      }
+      setHasLocalReviewOption(!!getDiff());
     } catch {
       // Not a git repo or git not available — don't show local option
     }
@@ -57,8 +60,7 @@ const PullRequestSelectorContainer: React.FC<
     <PullRequestSelector
       pullRequests={data}
       onSelect={onSelect}
-      onLocalSelect={changeSummary ? onLocalSelect : undefined}
-      changeSummary={changeSummary ?? undefined}
+      onLocalSelect={hasLocalReviewOption ? onLocalSelect : undefined}
       initialPrId={initialPrId}
       updateData={updateData}
     />

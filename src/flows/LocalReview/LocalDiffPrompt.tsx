@@ -1,9 +1,5 @@
 import React, { useEffect } from "react";
-import {
-  getDiff,
-  getBranchDiff,
-  isOnNonDefaultBranch,
-} from "../../lib/git.js";
+import { getDiff, getBranchDiff, isOnNonDefaultBranch } from "../../lib/git.js";
 
 export interface DiffResult {
   diffText: string;

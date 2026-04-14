@@ -7,7 +7,9 @@ import IntegrationsCheck from "../Integration/IntegrationsCheck.js";
 import PostReviewPrompt, { PostReviewAction } from "./PostReviewPrompt.js";
 import { logger } from "../../lib/logger.js";
 import PullRequestReview from "../../components/PullRequestReview.js";
-import LocalDiffPrompt, { type DiffResult } from "../LocalReview/LocalDiffPrompt.js";
+import LocalDiffPrompt, {
+  type DiffResult,
+} from "../LocalReview/LocalDiffPrompt.js";
 import LocalPullRequestReview from "../LocalReview/LocalPullRequestReview.js";
 import { getRepoName } from "../../lib/git.js";
 import { MAIN_COLOR } from "../../theme/colors.js";

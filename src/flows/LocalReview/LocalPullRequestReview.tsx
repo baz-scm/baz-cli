@@ -122,8 +122,16 @@ const LocalPullRequestReview: React.FC<LocalPullRequestReviewProps> = ({
           prId={LOCAL_PR_ID}
           fullRepoName={repoName}
           prNumber={LOCAL_PR_NUMBER}
-          chatTitle={currentBranch ? `${currentBranch} vs ${defaultBranch}` : "Uncommitted Changes Walkthrough"}
-          chatDescription={currentBranch ? `Walkthrough of changes on ${currentBranch} vs ${defaultBranch}. Press ESC to go back.` : "Walkthrough of uncommitted changes. Press ESC to go back."}
+          chatTitle={
+            currentBranch
+              ? `${currentBranch} vs ${defaultBranch}`
+              : "Uncommitted Changes Walkthrough"
+          }
+          chatDescription={
+            currentBranch
+              ? `Walkthrough of changes on ${currentBranch} vs ${defaultBranch}. Press ESC to go back.`
+              : "Walkthrough of uncommitted changes. Press ESC to go back."
+          }
           chatInput={LOCAL_WALKTHROUGH_PROMPT}
           outputInitialMessage={false}
           buildChatRequestOverride={buildLocalChatRequest}

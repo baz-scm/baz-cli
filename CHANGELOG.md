@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.17](https://github.com/baz-scm/baz-cli/compare/v0.3.16...v0.3.17) (2026-04-16)
+
+
+### ✨ New Features
+
+* Implement review all diff against main, including everything ([#112](https://github.com/baz-scm/baz-cli/issues/112)) ([5fdd304](https://github.com/baz-scm/baz-cli/commit/5fdd3045c3ba34e54d097e1c051849ee206cb125))
+
 ## [0.3.16](https://github.com/baz-scm/baz-cli/compare/v0.3.14...v0.3.16) (2026-04-13)
 
 

@@ -7,7 +7,9 @@ import IntegrationsCheck from "../Integration/IntegrationsCheck.js";
 import PostReviewPrompt, { PostReviewAction } from "./PostReviewPrompt.js";
 import { logger } from "../../lib/logger.js";
 import PullRequestReview from "../../components/PullRequestReview.js";
-import LocalDiffPrompt from "../LocalReview/LocalDiffPrompt.js";
+import LocalDiffPrompt, {
+  type DiffResult,
+} from "../LocalReview/LocalDiffPrompt.js";
 import LocalPullRequestReview from "../LocalReview/LocalPullRequestReview.js";
 import { getRepoName } from "../../lib/git.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
@@ -54,7 +56,7 @@ type FlowState =
     }
   | {
       step: "localReview";
-      diffText: string;
+      diffResult: DiffResult;
     }
   | {
       step: "localReviewComplete";
@@ -185,8 +187,8 @@ const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({ isLocal }) => {
     setFlowState({ step: "localDiffPrompt" });
   };
 
-  const handleLocalDiffReady = (diffText: string) => {
-    setFlowState({ step: "localReview", diffText });
+  const handleLocalDiffReady = (result: DiffResult) => {
+    setFlowState({ step: "localReview", diffResult: result });
   };
 
   const handleLocalDiffError = (message: string) => {
@@ -266,21 +268,28 @@ const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({ isLocal }) => {
         </Box>
       );
 
-    case "localReview":
+    case "localReview": {
+      const { diffResult } = flowState;
+      const reviewLabel = diffResult.currentBranch
+        ? `${diffResult.currentBranch} vs ${diffResult.defaultBranch}`
+        : "uncommitted changes";
       return (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text color="green">✓ Reviewing local changes </Text>
+            <Text color="green">✓ Reviewing {reviewLabel} </Text>
             <Text color="yellow">[{getRepoName()}]</Text>
           </Box>
           <LocalPullRequestReview
-            diffText={flowState.diffText}
+            diffText={diffResult.diffText}
             repoName={getRepoName()}
+            currentBranch={diffResult.currentBranch}
+            defaultBranch={diffResult.defaultBranch}
             onComplete={handleLocalReviewComplete}
             onBack={handleLocalReviewBack}
           />
         </Box>
       );
+    }
 
     case "localReviewComplete":
       return (

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import type { PullRequest } from "../../lib/providers/index.js";
-import type { ChangeSummary } from "../../lib/git.js";
 import { updatedTimeAgo } from "../../lib/date.js";
 import { PullRequestCard } from "./PullRequestCard.js";
 import { useFetchUser } from "../../hooks/useFetchUser.js";
@@ -19,7 +18,6 @@ interface PullRequestSelectorProps {
   pullRequests: PullRequest[];
   onSelect: (pr: PullRequest) => void;
   onLocalSelect?: () => void;
-  changeSummary?: ChangeSummary;
   initialPrId?: string;
   updateData: (updater: (prev: PullRequest[]) => PullRequest[]) => void;
 }
@@ -30,7 +28,6 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   pullRequests,
   onSelect,
   onLocalSelect,
-  changeSummary,
   initialPrId,
   updateData,
 }) => {
@@ -207,9 +204,6 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
                   {selectedIndex === LOCAL_CHANGES_INDEX ? "❯ " : "  "}
                   Review local changes
                 </Text>
-                {changeSummary && (
-                  <Text dimColor> ({formatChangeSummary(changeSummary)})</Text>
-                )}
               </Box>
             )}
             <Text dimColor>
@@ -317,20 +311,6 @@ function extractSearchKeywords(query: string): PullRequestSearchKeywords {
   }
 
   return { author, authorNot, repo, repoNot, freetext: freeText.join(" ") };
-}
-
-function formatChangeSummary(summary: ChangeSummary): string {
-  const parts: string[] = [];
-  if (summary.modified > 0) {
-    parts.push(`${summary.modified} modified`);
-  }
-  if (summary.added > 0) {
-    parts.push(`${summary.added} added`);
-  }
-  if (summary.deleted > 0) {
-    parts.push(`${summary.deleted} deleted`);
-  }
-  return parts.join(", ");
 }
 
 export default PullRequestSelector;

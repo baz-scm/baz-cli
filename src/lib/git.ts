@@ -22,17 +22,51 @@ function gitExec(args: string): string {
   }
 }
 
-export function getStagedDiff(): string {
-  return gitExec("diff --cached");
-}
-
-export function getUnstagedFiles(): string[] {
-  const output = gitExec("diff --name-only");
-  return output ? output.split("\n") : [];
-}
-
-export function getAllDiff(): string {
+export function getDiff(): string {
   return gitExec("diff HEAD");
+}
+
+export function getCurrentBranch(): string {
+  return gitExec("rev-parse --abbrev-ref HEAD");
+}
+
+export function getDefaultBranch(): string | null {
+  try {
+    const ref = gitExec("symbolic-ref refs/remotes/origin/HEAD");
+    return ref.split("/").pop() ?? null;
+  } catch {
+    // origin/HEAD not set — check for common defaults
+    for (const branch of ["main", "master"]) {
+      try {
+        gitExec(`rev-parse --verify refs/remotes/origin/${branch}`);
+        return branch;
+      } catch {
+        console.trace(`Branch ${branch} not found`);
+      }
+    }
+    return null;
+  }
+}
+
+export function getBranchDiff(baseBranch: string): string {
+  return gitExec(`diff origin/${baseBranch}...HEAD`);
+}
+
+export function isOnNonDefaultBranch(): {
+  onFeatureBranch: boolean;
+  currentBranch: string;
+  defaultBranch: string | null;
+} {
+  const currentBranch = getCurrentBranch();
+  if (currentBranch === "HEAD") {
+    return { onFeatureBranch: false, currentBranch, defaultBranch: null };
+  }
+  const defaultBranch = getDefaultBranch();
+  return {
+    onFeatureBranch: defaultBranch !== null && currentBranch !== defaultBranch,
+    currentBranch,
+    defaultBranch,
+  };
 }
 
 export function getRepoName(): string {
@@ -51,56 +85,4 @@ export function getRepoName(): string {
   } catch {
     return path.basename(process.cwd());
   }
-}
-
-export function hasStagedChanges(): boolean {
-  return getStagedDiff().length > 0;
-}
-
-export interface ChangeSummary {
-  modified: number;
-  added: number;
-  deleted: number;
-}
-
-export function getChangeSummary(): ChangeSummary | null {
-  const staged = gitExec("diff --cached --name-status");
-  const unstaged = gitExec("diff --name-status");
-
-  // Combine and deduplicate by filename (staged takes precedence)
-  const fileStatuses = new Map<string, string>();
-  for (const line of [...unstaged.split("\n"), ...staged.split("\n")]) {
-    if (!line.trim()) continue;
-    const [status, ...fileParts] = line.split("\t");
-    const file = fileParts.join("\t");
-    if (status && file) {
-      fileStatuses.set(file, status.charAt(0));
-    }
-  }
-
-  if (fileStatuses.size === 0) return null;
-
-  let modified = 0;
-  let added = 0;
-  let deleted = 0;
-
-  for (const status of fileStatuses.values()) {
-    switch (status) {
-      case "A":
-        added++;
-        break;
-      case "D":
-        deleted++;
-        break;
-      default:
-        modified++;
-        break;
-    }
-  }
-
-  return { modified, added, deleted };
-}
-
-export function hasAnyChanges(): boolean {
-  return getChangeSummary() !== null;
 }

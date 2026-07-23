@@ -80,7 +80,7 @@ export class BazDataProvider implements IDataProvider {
 
   async fetchUser(): Promise<User> {
     const userData = await bazFetchUser();
-    const firstLogin = userData.user_logins?.[0];
+    const firstLogin = userData.userLogins?.[0];
     return {
       login: firstLogin?.login,
     };

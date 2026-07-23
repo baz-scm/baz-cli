@@ -11,6 +11,7 @@ import {
 import {
   ChangeReviewer,
   CodeChangeReview,
+  Comment,
   Discussion,
   FileDiff,
   Integration,
@@ -34,30 +35,29 @@ const CHAT_URL = `${env.BAZ_BASE_URL}/api/v2/checkout/chat`;
 const INTEGRATIONS_URL = `${env.BAZ_BASE_URL}/api/v2/integrations`;
 const OAUTH_STATE_URL = `${env.BAZ_BASE_URL}/api/v2/integrations/state`;
 const SPEC_REVIEWS_URL = `${env.BAZ_BASE_URL}/api/v2/spec-reviews`;
-const USER_URL = `${env.BAZ_BASE_URL}/api/v1/auth/user`;
+const USER_URL = `${env.BAZ_BASE_URL}/api/v2/auth/user`;
 
 const getDiffUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/diff`;
 const getDiscussionsUrl = (prId: string) =>
-  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/discussions`;
+  `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/discussions`;
 const getDiscussionUrl = (discussionId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/discussions/${discussionId}`;
 const getEligibleReviewersUrl = (prId: string) =>
-  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/eligible-reviewers`;
+  `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/eligible-reviewers`;
 const getPullRequestUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}`;
-
 const getApprovalUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/approve`;
-
 const getMergeUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/merge`;
+const getMergeStatusUrl = (prId: string) =>
+  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/merge-status`;
 const getRepoWriteAccessUrl = (fullRepoName: string) =>
   `${env.BAZ_BASE_URL}/api/v2/installations/write-access/${encodeURIComponent(fullRepoName)}`;
 
 const axiosClient = createAxiosClient(env.BAZ_BASE_URL);
 
-// API Response wrapper types (baz-specific)
 export interface IntegrationsResponse {
   integrations: Integration[];
 }
@@ -260,7 +260,6 @@ export async function fetchPRs(): Promise<PullRequest[]> {
   return changes;
 }
 
-// API Response wrapper types
 export interface SpecReviewResult {
   summary: string;
   requirements: Requirement[];
@@ -288,22 +287,88 @@ export async function fetchPRDetails(
     });
 }
 
+interface CommentV2Response {
+  id: string;
+  commentBody: string;
+  bodyContentType: "html" | "markdown";
+  author: string;
+  authorUser?: { displayName: string };
+}
+
+interface DiscussionV2Response {
+  id: string;
+  author: string;
+  commitSha?: string;
+  outdated: boolean;
+  file?: string;
+  startLine?: number;
+  endLine?: number;
+  originalStartLine?: number;
+  originalEndLine?: number;
+  side?: "left" | "right";
+  commentedCode?: string;
+  discussionState: string;
+  resolvedBy?: unknown;
+  comments: CommentV2Response[];
+}
+
 export interface DiscussionsResponse {
-  discussions: Discussion[];
+  discussions: DiscussionV2Response[];
+}
+
+interface EligibleReviewerV2Response {
+  id: string;
+  reviewerType: string;
+  name: string;
+  login?: string;
+  avatarUrl?: string;
+  groupMembersCount?: number | null;
 }
 
 export interface CodeChangeReviewersResponse {
-  reviewers: ChangeReviewer[];
+  reviewers: EligibleReviewerV2Response[];
+}
+
+function mapV2Comment(comment: CommentV2Response): Comment {
+  return {
+    id: comment.id,
+    comment_body: comment.commentBody,
+    body_content_type: comment.bodyContentType,
+    author: comment.author,
+    author_user: comment.authorUser
+      ? { display_name: comment.authorUser.displayName }
+      : undefined,
+  };
+}
+
+function mapV2Discussion(discussion: DiscussionV2Response): Discussion {
+  return {
+    id: discussion.id,
+    author: discussion.author,
+    commit_sha: discussion.commitSha ?? "",
+    outdated: discussion.outdated,
+    file: discussion.file,
+    start_line: discussion.startLine,
+    end_line: discussion.endLine,
+    original_start_line: discussion.originalStartLine,
+    original_end_line: discussion.originalEndLine,
+    side: discussion.side,
+    commented_code: discussion.commentedCode,
+    comments: discussion.comments.map(mapV2Comment),
+  };
+}
+
+// v2 has no server-side "pending" filter (unlike v1); the frontend filters
+// client-side on discussionState/resolvedBy, so we mirror that here.
+function isOpenDiscussion(discussion: DiscussionV2Response): boolean {
+  return discussion.discussionState !== "resolved" && !discussion.resolvedBy;
 }
 
 export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
-  const repos = await axiosClient
+  const response = await axiosClient
     .get<DiscussionsResponse>(getDiscussionsUrl(prId), {
       headers: {
         "Content-Type": "application/json",
-      },
-      params: {
-        state: "pending",
       },
     })
     .then((value) => value.data)
@@ -312,7 +377,7 @@ export async function fetchDiscussions(prId: string): Promise<Discussion[]> {
       throw error;
     });
 
-  return repos.discussions;
+  return response.discussions.filter(isOpenDiscussion).map(mapV2Discussion);
 }
 
 export async function fetchEligibleReviewers(
@@ -330,7 +395,14 @@ export async function fetchEligibleReviewers(
       throw error;
     });
 
-  return response.reviewers;
+  return response.reviewers.map((reviewer) => ({
+    id: reviewer.id,
+    reviewer_type: reviewer.reviewerType,
+    name: reviewer.name,
+    login: reviewer.login,
+    avatar_url: reviewer.avatarUrl,
+    group_members_count: reviewer.groupMembersCount ?? undefined,
+  }));
 }
 
 export async function postDiscussionReply(
@@ -416,7 +488,7 @@ export async function mergePR(prId: string, mergeStrategy: MergeMethod) {
 
 export async function fetchMergeStatus(prId: string): Promise<MergeStatus> {
   return await axiosClient
-    .get(`${env.BAZ_BASE_URL}/api/v1/changes/${prId}/merge-status`, {
+    .get(getMergeStatusUrl(prId), {
       headers: {
         "Content-Type": "application/json",
       },
@@ -521,7 +593,7 @@ export async function fetchFileDiffs(
   commit: string,
   files: string[],
 ): Promise<FileDiff[]> {
-  const repos = await axiosClient
+  const response = await axiosClient
     .get<FileDiffsResponse>(getDiffUrl(prId), {
       headers: {
         "Content-Type": "application/json",
@@ -540,7 +612,7 @@ export async function fetchFileDiffs(
       throw error;
     });
 
-  return repos.fileDiffs;
+  return response.fileDiffs;
 }
 
 export async function fetchRepoWriteAccess(
@@ -632,7 +704,6 @@ export async function* streamChatResponse(
     let buffer = "";
 
     for await (const chunk of response.data) {
-      // Check if aborted before processing chunk
       if (abortSignal?.aborted) {
         throw new StreamAbortError();
       }

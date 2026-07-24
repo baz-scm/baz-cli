@@ -2,7 +2,7 @@ import { pino } from "pino";
 import { env } from "./env-schema.js";
 
 export const loggerConfig = {
-  level: env.NODE_ENV === "development" ? "debug" : env.LOG_LEVEL,
+  level: env.NODE_ENV === "development" ? "debug" : env.BAZ_LOG_LEVEL,
   formatters: {
     level: (label: string, _number: number) => ({ level: label }),
   },

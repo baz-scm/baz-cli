@@ -5,7 +5,7 @@ config({ quiet: true });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("production"),
-  LOG_LEVEL: z
+  BAZ_LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug"])
     .default("warn"),
   BAZ_BASE_URL: z.string().default("https://baz.co"),

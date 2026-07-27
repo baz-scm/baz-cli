@@ -127,7 +127,7 @@ baz
 
 The CLI respects the following environment variables:
 
-- `LOG_LEVEL` – Set logging verbosity (`fatal`, `error`, `warn`, `info`, `debug`)
+- `BAZ_LOG_LEVEL` – Set logging verbosity (`fatal`, `error`, `warn`, `info`, `debug`)
 - `NODE_ENV` – Environment mode (`development`, `production`)
 - All configuration variables above
 

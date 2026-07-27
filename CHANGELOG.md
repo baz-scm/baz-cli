@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.0](https://github.com/baz-scm/baz-cli/compare/v0.3.17...v0.4.0) (2026-07-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* use BAZ_LOG_LEVEL ([#115](https://github.com/baz-scm/baz-cli/issues/115))
+
+### 🐛 Bug Fixes
+
+* use BAZ_LOG_LEVEL ([#115](https://github.com/baz-scm/baz-cli/issues/115)) ([916978a](https://github.com/baz-scm/baz-cli/commit/916978a03aabe8bac4edeb2184828bbed92c1226))
+
+
+### ✨ New Features
+
+* migrate baz-cli API routes from v1 to v2 ([#114](https://github.com/baz-scm/baz-cli/issues/114)) ([9c35181](https://github.com/baz-scm/baz-cli/commit/9c35181bdb1cbbb52d9cd9fbdd1d85c25cf10b49))
+
 ## [0.3.17](https://github.com/baz-scm/baz-cli/compare/v0.3.16...v0.3.17) (2026-04-16)
 
 

@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
-import TextInput from "ink-text-input";
+import LineInput from "../../components/LineInput.js";
 
 const CHAT_ITEM_LABEL = "Chat with PR";
 
@@ -226,12 +226,12 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
           if (label === CHAT_ITEM_LABEL && chatMode) {
             return (
               <Box>
-                <TextInput
+                <LineInput
                   value={chatInput}
                   onChange={setChatInput}
                   onSubmit={handleChatSubmit}
                   placeholder={CHAT_ITEM_LABEL}
-                  focus={true}
+                  isActive={chatMode}
                 />
               </Box>
             );

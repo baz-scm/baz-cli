@@ -6,13 +6,17 @@ import React, {
   useMemo,
   memo,
 } from "react";
-import { Box, Text, useStdin } from "ink";
+import { Box, Text } from "ink";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
 import type { ChangeReviewer } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/index.js";
 import MentionAutocomplete from "../../components/MentionAutocomplete.js";
-import { applyEditorAction, parseKeySequence } from "./input-keys.js";
+import { useKeySequences } from "../../hooks/useKeySequences.js";
+import {
+  applyEditorAction,
+  parseKeySequence,
+} from "../../lib/input/line-editor.js";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -52,8 +56,6 @@ const ChatInput = memo<ChatInputProps>((props) => {
 
   const appMode = useAppMode();
   const dataProvider = appMode.mode.dataProvider;
-
-  const { setRawMode, internal_eventEmitter: inputEmitter } = useStdin();
 
   const visibleWidth = Math.max(10, terminalWidth - 6);
 
@@ -255,26 +257,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
     ],
   );
 
-  // Ink's `useInput` drops Home/End entirely and collapses the Alt/Cmd
-  // modifiers, so subscribe to the raw stdin chunks Ink reads instead. Raw mode
-  // has to be enabled here too, exactly as `useInput` would do it.
-  useEffect(() => {
-    setRawMode(true);
-    return () => {
-      setRawMode(false);
-    };
-  }, [setRawMode]);
-
-  useEffect(() => {
-    const onData = (chunk: string | Buffer) => {
-      handleKeySequence(chunk.toString());
-    };
-
-    inputEmitter?.on("input", onData);
-    return () => {
-      inputEmitter?.removeListener("input", onData);
-    };
-  }, [inputEmitter, handleKeySequence]);
+  useKeySequences(handleKeySequence);
 
   const defaultHints = useMemo(() => {
     const hints: string[] = [];

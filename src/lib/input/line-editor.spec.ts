@@ -5,7 +5,7 @@ import {
   parseKeySequence,
   type EditorAction,
   type EditorState,
-} from "./input-keys.js";
+} from "./line-editor.js";
 
 const ESC = "\u001B";
 const BACKSPACE = "\u007F";

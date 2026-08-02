@@ -1,11 +1,11 @@
 /**
- * Terminal key handling for the chat input.
+ * Single line editing for the terminal inputs: maps raw key sequences to
+ * editing actions and applies them to a text buffer.
  *
  * Ink's `useInput` normalises keypresses into a small set of flags that cannot
  * express Home/End at all (they arrive with an empty `input` and no key flags)
- * and cannot tell Alt+Arrow apart from Cmd+Arrow. Both are needed for the usual
- * command line editing shortcuts, so the chat input reads the raw escape
- * sequences from stdin instead and maps them here.
+ * and cannot tell Alt+Arrow apart from Cmd+Arrow, so the inputs read the raw
+ * escape sequences from stdin (see `useKeySequences`) and map them here.
  */
 
 export type EditorState = {
@@ -126,6 +126,10 @@ const KEY_BINDINGS: Record<string, Exclude<EditorActionType, "insert">> = {
   [`${ESC}[1;9C`]: "moveLineEnd",
   [ctrl("e")]: "moveLineEnd",
 };
+
+/** True when `sequence` is the given Ctrl+letter chord, e.g. Ctrl+G. */
+export const isCtrlChord = (sequence: string, letter: string): boolean =>
+  sequence === ctrl(letter);
 
 const isControlCharacter = (character: string): boolean => {
   const code = character.codePointAt(0) ?? 0;

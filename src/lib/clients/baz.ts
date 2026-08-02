@@ -14,6 +14,7 @@ import {
   Comment,
   Discussion,
   FileDiff,
+  FileViewed,
   Integration,
   IntegrationType,
   MergeMethod,
@@ -46,7 +47,7 @@ const getDiscussionUrl = (discussionId: string) =>
 const getEligibleReviewersUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v2/changes/${prId}/eligible-reviewers`;
 const getPullRequestUrl = (prId: string) =>
-  `${env.BAZ_BASE_URL}/api/v1/changes/${prId}`;
+  `${env.BAZ_BASE_URL}/api/v2/changes/${prId}`;
 const getApprovalUrl = (prId: string) =>
   `${env.BAZ_BASE_URL}/api/v1/changes/${prId}/approve`;
 const getMergeUrl = (prId: string) =>
@@ -271,16 +272,67 @@ export interface SpecReviewsResponse {
   specReviews: SpecReview[];
 }
 
+interface ChangeReviewV2Response {
+  reviewState: string;
+  assignee: string;
+}
+
+interface ChangeV2Response {
+  id: string;
+  prNumber: number;
+  title: string;
+  description?: string;
+  linesAdded: number;
+  linesDeleted: number;
+  filesChanged: number;
+  filesAdded: number;
+  filesDeleted: number;
+  filesViewed?: FileViewed[];
+  specReviews?: SpecReview[];
+  authorName: string;
+  reviews?: ChangeReviewV2Response[];
+  repositoryId: string;
+}
+
+// The detail endpoint spells the review fields differently to the list endpoint
+function mapV2ChangeReviews(
+  reviews: ChangeReviewV2Response[],
+): CodeChangeReview[] {
+  return reviews.map((review) => ({
+    review_state: review.reviewState.toLowerCase(),
+    assignee: review.assignee,
+  }));
+}
+
+function mapV2Change(change: ChangeV2Response): PullRequestDetails {
+  return {
+    id: change.id,
+    pr_number: change.prNumber,
+    title: change.title,
+    description: change.description,
+    lines_added: change.linesAdded,
+    lines_deleted: change.linesDeleted,
+    files_changed: change.filesChanged,
+    files_added: change.filesAdded,
+    files_deleted: change.filesDeleted,
+    files_viewed: change.filesViewed ?? [],
+    spec_reviews: change.specReviews ?? [],
+    author_name: change.authorName,
+    reviews: mapV2ChangeReviews(change.reviews ?? []),
+    repository_id: change.repositoryId,
+  };
+}
+
 export async function fetchPRDetails(
   prId: string,
 ): Promise<PullRequestDetails> {
   return await axiosClient
-    .get<PullRequestDetails>(getPullRequestUrl(prId), {
+    .get<ChangeV2Response>(getPullRequestUrl(prId), {
       headers: {
         "Content-Type": "application/json",
       },
     })
-    .then((value) => value.data)
+    .then((value) => mapV2Change(value.data))
     .catch((error: unknown) => {
       logger.debug(`Axios error while fetching pull requests: ${error}`);
       throw error;

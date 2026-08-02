@@ -3,6 +3,7 @@ import {
   applyEditorAction,
   findWordBoundary,
   parseKeySequence,
+  tokenizeKeySequences,
   type EditorAction,
   type EditorState,
 } from "./line-editor.js";
@@ -113,6 +114,63 @@ describe("parseKeySequence", () => {
     expect(parseKeySequence(CTRL_C)).toBeNull(); // Ink exits on Ctrl+C itself
     expect(parseKeySequence(`${ESC}[15~`)).toBeNull(); // F5
     expect(parseKeySequence(`${ESC}[200~`)).toBeNull();
+  });
+});
+
+describe("tokenizeKeySequences", () => {
+  it("keeps a single keypress whole", () => {
+    expect(tokenizeKeySequences("a")).toEqual(["a"]);
+    expect(tokenizeKeySequences(HOME)).toEqual([HOME]);
+    expect(tokenizeKeySequences(ALT_LEFT)).toEqual([ALT_LEFT]);
+    expect(tokenizeKeySequences(`${ESC}${ESC}[D`)).toEqual([`${ESC}${ESC}[D`]);
+    expect(tokenizeKeySequences(`${ESC}b`)).toEqual([`${ESC}b`]);
+    expect(tokenizeKeySequences(ESC)).toEqual([ESC]);
+  });
+
+  it("splits keypresses that arrive in one chunk", () => {
+    expect(tokenizeKeySequences(`a${ESC}[D`)).toEqual(["a", `${ESC}[D`]);
+    expect(tokenizeKeySequences(`${ESC}[D${ESC}[C`)).toEqual([
+      `${ESC}[D`,
+      `${ESC}[C`,
+    ]);
+    expect(tokenizeKeySequences(`ab${CTRL_W}cd`)).toEqual(["ab", CTRL_W, "cd"]);
+    expect(tokenizeKeySequences(`${HOME}fix ${END}`)).toEqual([
+      HOME,
+      "fix ",
+      END,
+    ]);
+  });
+
+  it("unwraps bracketed paste and keeps the payload as text", () => {
+    expect(tokenizeKeySequences(`${ESC}[200~hello there${ESC}[201~`)).toEqual([
+      "hello there",
+    ]);
+    expect(
+      tokenizeKeySequences(`${ESC}[200~first\r\nsecond${ESC}[201~`),
+    ).toEqual(["first second"]);
+    // An unterminated paste still yields its text rather than being dropped
+    expect(tokenizeKeySequences(`${ESC}[200~hello`)).toEqual(["hello"]);
+  });
+
+  it("treats a newline inside pasted text as a space, and a trailing one as Enter", () => {
+    expect(tokenizeKeySequences("first\nsecond")).toEqual(["first second"]);
+    expect(tokenizeKeySequences("done\r")).toEqual(["done", "\r"]);
+    expect(tokenizeKeySequences("\r")).toEqual(["\r"]);
+    expect(tokenizeKeySequences("\r\n")).toEqual(["\r"]);
+  });
+
+  it("never drops typed text next to an unknown escape sequence", () => {
+    const tokens = tokenizeKeySequences(`ab${ESC}[15~cd`);
+    expect(tokens).toEqual(["ab", `${ESC}[15~`, "cd"]);
+    expect(tokens.map(parseKeySequence)).toEqual([
+      { type: "insert", text: "ab" },
+      null,
+      { type: "insert", text: "cd" },
+    ]);
+  });
+
+  it("returns nothing for an empty chunk", () => {
+    expect(tokenizeKeySequences("")).toEqual([]);
   });
 });
 

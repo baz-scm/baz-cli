@@ -141,6 +141,99 @@ const toInsertableText = (sequence: string): string =>
     .filter((character) => !isControlCharacter(character))
     .join("");
 
+const PASTE_START = `${ESC}[200~`;
+const PASTE_END = `${ESC}[201~`;
+
+const isNewline = (character: string): boolean =>
+  character === "\r" || character === "\n";
+
+/** The full escape sequence starting at `start`, e.g. `ESC [ 1 ; 3 D`. */
+const readEscapeSequence = (chunk: string, start: number): string => {
+  let index = start + 1;
+
+  // Alt+Arrow arrives as a second ESC in front of the sequence
+  if (chunk[index] === ESC) index++;
+
+  if (chunk[index] === "[") {
+    index++;
+    while (index < chunk.length && /[0-9;:<=>?]/.test(chunk[index])) index++;
+    if (index < chunk.length) index++; // final byte
+  } else if (chunk[index] === "O") {
+    index += 2;
+  } else if (index < chunk.length) {
+    index++; // ESC + one character, e.g. Alt+B
+  }
+
+  return chunk.slice(start, Math.min(index, chunk.length));
+};
+
+/**
+ * Splits a stdin chunk into one string per keypress. Chunk boundaries are not
+ * key boundaries: typing quickly coalesces `a` and Left into `a ESC [ D`, and a
+ * paste arrives as one chunk (bracketed by `ESC [ 200~` when the terminal
+ * supports it), so each has to be picked apart before it can be mapped.
+ *
+ * Newlines within pasted text become spaces — this is a single line input — but
+ * a newline that ends the chunk is Enter, so typing quickly and hitting return
+ * still submits.
+ */
+export const tokenizeKeySequences = (chunk: string): string[] => {
+  const tokens: string[] = [];
+  let text = "";
+
+  const flushText = () => {
+    if (text) tokens.push(text);
+    text = "";
+  };
+
+  let index = 0;
+  while (index < chunk.length) {
+    const character = chunk[index];
+
+    if (chunk.startsWith(PASTE_START, index)) {
+      const start = index + PASTE_START.length;
+      const end = chunk.indexOf(PASTE_END, start);
+      text += toInsertableText(
+        end === -1 ? chunk.slice(start) : chunk.slice(start, end),
+      );
+      index = end === -1 ? chunk.length : end + PASTE_END.length;
+      continue;
+    }
+
+    if (character === ESC) {
+      flushText();
+      const sequence = readEscapeSequence(chunk, index);
+      tokens.push(sequence);
+      index += sequence.length;
+      continue;
+    }
+
+    if (isNewline(character)) {
+      if ([...chunk.slice(index)].every(isNewline)) {
+        flushText();
+        tokens.push("\r");
+        return tokens;
+      }
+      text += " ";
+      index++;
+      continue;
+    }
+
+    if (isControlCharacter(character)) {
+      flushText();
+      tokens.push(character);
+      index++;
+      continue;
+    }
+
+    text += character;
+    index++;
+  }
+
+  flushText();
+  return tokens;
+};
+
 /**
  * Maps a raw stdin chunk to an editing action, or `null` when the chunk should
  * be ignored: unbound control keys (Ctrl+C, which Ink handles) and escape

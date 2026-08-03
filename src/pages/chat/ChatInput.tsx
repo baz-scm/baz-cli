@@ -15,7 +15,9 @@ import MentionAutocomplete from "../../components/MentionAutocomplete.js";
 import { useKeySequences } from "../../hooks/useKeySequences.js";
 import {
   applyEditorAction,
+  charAt,
   parseKeySequence,
+  snapToCharBoundary,
 } from "../../lib/input/line-editor.js";
 
 interface ChatInputProps {
@@ -317,8 +319,9 @@ const ChatInput = memo<ChatInputProps>((props) => {
     // If text fits, render all
     if (textLen <= visibleWidth) {
       const before = text.slice(0, cursor);
-      const cursorChar = text[cursor] ?? " ";
-      const after = text.slice(cursor + 1);
+      // The cursor sits on a whole grapheme, which can be several code units
+      const cursorChar = charAt(text, cursor) || " ";
+      const after = text.slice(cursor + cursorChar.length);
       return (
         <Text>
           {before}
@@ -328,20 +331,23 @@ const ChatInput = memo<ChatInputProps>((props) => {
       );
     }
 
-    // Sliding window around cursor
+    // Sliding window around cursor, clipped so a glyph is never cut in half
     const halfWidth = Math.floor(visibleWidth / 2);
     let start = Math.max(0, cursor - halfWidth);
-    const end = Math.min(textLen, start + visibleWidth);
+    let end = Math.min(textLen, start + visibleWidth);
 
     if (end === textLen && end - start < visibleWidth) {
       start = Math.max(0, end - visibleWidth);
     }
 
+    start = snapToCharBoundary(text, start);
+    end = snapToCharBoundary(text, end);
+
     const visibleText = text.slice(start, end);
     const visibleCursor = cursor - start;
     const before = visibleText.slice(0, visibleCursor);
-    const cursorChar = visibleText[visibleCursor] ?? " ";
-    const after = visibleText.slice(visibleCursor + 1);
+    const cursorChar = charAt(visibleText, visibleCursor) || " ";
+    const after = visibleText.slice(visibleCursor + cursorChar.length);
 
     const leftEllipsis = start > 0 ? "…" : "";
     const rightEllipsis = end < textLen ? "…" : "";

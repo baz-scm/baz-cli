@@ -49,6 +49,13 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   const [chatMode, setChatMode] = useState(false);
   const [chatInput, setChatInput] = useState("");
 
+  // Highlighting the chat item opens its input, but an empty box leaves the
+  // menu in charge of the arrow keys so you can still move off the item. Once
+  // there is something to send, the box takes the keyboard: the two never act
+  // on the same key, since the menu only reads arrows and Enter and the box
+  // ignores arrows.
+  const menuOwnsKeys = !(chatMode && chatInput);
+
   useInput((_input, key) => {
     // ignore input in chat mode
     if (chatMode) {
@@ -211,7 +218,7 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
 
       <SelectInput
         items={items}
-        isFocused={!(chatMode && chatInput)} // override the built-in input handler
+        isFocused={menuOwnsKeys}
         onSelect={handleSelect}
         onHighlight={handleHighlight}
         indicatorComponent={({ isSelected: isHighlighted }) => (

@@ -147,43 +147,70 @@ const PASTE_END = `${ESC}[201~`;
 const isNewline = (character: string): boolean =>
   character === "\r" || character === "\n";
 
-/** The full escape sequence starting at `start`, e.g. `ESC [ 1 ; 3 D`. */
-const readEscapeSequence = (chunk: string, start: number): string => {
+/**
+ * The full escape sequence starting at `start`, e.g. `ESC [ 1 ; 3 D`, or
+ * `null` when the chunk ends mid-sequence and the rest is yet to arrive.
+ */
+const readEscapeSequence = (chunk: string, start: number): string | null => {
   let index = start + 1;
 
   // Alt+Arrow arrives as a second ESC in front of the sequence
   if (chunk[index] === ESC) index++;
+  if (index >= chunk.length) return null;
 
   if (chunk[index] === "[") {
     index++;
     while (index < chunk.length && /[0-9;:<=>?]/.test(chunk[index])) index++;
-    if (index < chunk.length) index++; // final byte
+    if (index >= chunk.length) return null; // no final byte yet
+    index++;
   } else if (chunk[index] === "O") {
+    if (index + 1 >= chunk.length) return null;
     index += 2;
-  } else if (index < chunk.length) {
+  } else {
     index++; // ESC + one character, e.g. Alt+B
   }
 
-  return chunk.slice(start, Math.min(index, chunk.length));
+  return chunk.slice(start, index);
 };
+
+export interface TokenizedKeys {
+  /** One string per keypress, ready for `parseKeySequence`. */
+  tokens: string[];
+  /** A trailing sequence that is not complete yet; prepend it to the next chunk. */
+  remainder: string;
+}
 
 /**
  * Splits a stdin chunk into one string per keypress. Chunk boundaries are not
- * key boundaries: typing quickly coalesces `a` and Left into `a ESC [ D`, and a
- * paste arrives as one chunk (bracketed by `ESC [ 200~` when the terminal
- * supports it), so each has to be picked apart before it can be mapped.
+ * key boundaries: typing quickly coalesces `a` and Left into `a ESC [ D`, a
+ * paste arrives in one piece (bracketed by `ESC [ 200~` when the terminal
+ * supports it), and a single sequence can equally be split across two reads.
+ *
+ * An incomplete trailing sequence is returned as `remainder` rather than
+ * guessed at, so the caller can prepend it to the next chunk. Pass
+ * `flush: true` once no more input is coming — a lone `ESC` is only the Escape
+ * key rather than the start of a sequence when nothing follows it.
  *
  * Newlines within pasted text become spaces — this is a single line input — but
  * a newline that ends the chunk is Enter, so typing quickly and hitting return
  * still submits.
  */
-export const tokenizeKeySequences = (chunk: string): string[] => {
+export const tokenizeKeySequences = (
+  chunk: string,
+  options: { flush?: boolean } = {},
+): TokenizedKeys => {
+  const flush = options.flush ?? false;
   const tokens: string[] = [];
   let text = "";
 
   const flushText = () => {
     if (text) tokens.push(text);
     text = "";
+  };
+
+  const withRemainder = (remainder: string): TokenizedKeys => {
+    flushText();
+    return { tokens, remainder };
   };
 
   let index = 0;
@@ -193,16 +220,28 @@ export const tokenizeKeySequences = (chunk: string): string[] => {
     if (chunk.startsWith(PASTE_START, index)) {
       const start = index + PASTE_START.length;
       const end = chunk.indexOf(PASTE_END, start);
-      text += toInsertableText(
-        end === -1 ? chunk.slice(start) : chunk.slice(start, end),
-      );
-      index = end === -1 ? chunk.length : end + PASTE_END.length;
+      if (end === -1) {
+        // Wait for the closing marker so the paste lands in one go
+        if (!flush) return withRemainder(chunk.slice(index));
+        text += toInsertableText(chunk.slice(start));
+        index = chunk.length;
+        continue;
+      }
+      text += toInsertableText(chunk.slice(start, end));
+      index = end + PASTE_END.length;
       continue;
     }
 
     if (character === ESC) {
-      flushText();
       const sequence = readEscapeSequence(chunk, index);
+      if (sequence === null) {
+        if (!flush) return withRemainder(chunk.slice(index));
+        flushText();
+        tokens.push(chunk.slice(index));
+        index = chunk.length;
+        continue;
+      }
+      flushText();
       tokens.push(sequence);
       index += sequence.length;
       continue;
@@ -212,7 +251,7 @@ export const tokenizeKeySequences = (chunk: string): string[] => {
       if ([...chunk.slice(index)].every(isNewline)) {
         flushText();
         tokens.push("\r");
-        return tokens;
+        return { tokens, remainder: "" };
       }
       text += " ";
       index++;
@@ -231,7 +270,7 @@ export const tokenizeKeySequences = (chunk: string): string[] => {
   }
 
   flushText();
-  return tokens;
+  return { tokens, remainder: "" };
 };
 
 /**
@@ -250,6 +289,52 @@ export const parseKeySequence = (sequence: string): EditorAction | null => {
 
   const text = toInsertableText(sequence);
   return text ? { type: "insert", text } : null;
+};
+
+const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+
+const graphemeBoundaries = (text: string): number[] => {
+  const boundaries: number[] = [0];
+  for (const { index, segment } of segmenter.segment(text)) {
+    boundaries.push(index + segment.length);
+  }
+  return boundaries;
+};
+
+/**
+ * The grapheme boundary one step left or right of the cursor. Stepping by a
+ * single UTF-16 code unit would land between the halves of an emoji, or between
+ * a letter and its combining accent, and render a broken glyph.
+ */
+export const findCharBoundary = (
+  text: string,
+  cursor: number,
+  direction: "left" | "right",
+): number => {
+  const boundaries = graphemeBoundaries(text);
+
+  if (direction === "right") {
+    return boundaries.find((boundary) => boundary > cursor) ?? text.length;
+  }
+
+  return boundaries.filter((boundary) => boundary < cursor).pop() ?? 0;
+};
+
+/** Rounds an arbitrary index down to the grapheme boundary at or before it. */
+export const snapToCharBoundary = (text: string, index: number): number => {
+  if (index <= 0) return 0;
+  if (index >= text.length) return text.length;
+  const boundaries = graphemeBoundaries(text);
+  return boundaries.filter((boundary) => boundary <= index).pop() ?? 0;
+};
+
+/**
+ * The whole grapheme starting at `index`, for rendering the cursor cell — a
+ * single code unit there could be half of an emoji.
+ */
+export const charAt = (text: string, index: number): string => {
+  if (index >= text.length) return "";
+  return text.slice(index, findCharBoundary(text, index, "right"));
 };
 
 /**
@@ -306,10 +391,14 @@ export const applyEditorAction = (
       };
 
     case "moveCharLeft":
-      return cursor > 0 ? { text, cursor: cursor - 1 } : state;
+      return cursor > 0
+        ? { text, cursor: findCharBoundary(text, cursor, "left") }
+        : state;
 
     case "moveCharRight":
-      return cursor < text.length ? { text, cursor: cursor + 1 } : state;
+      return cursor < text.length
+        ? { text, cursor: findCharBoundary(text, cursor, "right") }
+        : state;
 
     case "moveWordLeft": {
       const target = findWordBoundary(text, cursor, "left");
@@ -328,11 +417,16 @@ export const applyEditorAction = (
       return cursor < text.length ? { text, cursor: text.length } : state;
 
     case "deleteCharLeft":
-      return deleteRange(state, Math.max(0, cursor - 1), cursor);
+      return deleteRange(state, findCharBoundary(text, cursor, "left"), cursor);
 
     case "deleteCharRight":
       return cursor < text.length
-        ? { text: text.slice(0, cursor) + text.slice(cursor + 1), cursor }
+        ? {
+            text:
+              text.slice(0, cursor) +
+              text.slice(findCharBoundary(text, cursor, "right")),
+            cursor,
+          }
         : state;
 
     case "deleteWordLeft":

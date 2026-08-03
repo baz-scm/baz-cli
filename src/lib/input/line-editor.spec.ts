@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   applyEditorAction,
+  charAt,
+  findCharBoundary,
   findWordBoundary,
   parseKeySequence,
   tokenizeKeySequences,
@@ -118,51 +120,88 @@ describe("parseKeySequence", () => {
 });
 
 describe("tokenizeKeySequences", () => {
+  const tokens = (chunk: string, flush = false) =>
+    tokenizeKeySequences(chunk, { flush }).tokens;
+
   it("keeps a single keypress whole", () => {
-    expect(tokenizeKeySequences("a")).toEqual(["a"]);
-    expect(tokenizeKeySequences(HOME)).toEqual([HOME]);
-    expect(tokenizeKeySequences(ALT_LEFT)).toEqual([ALT_LEFT]);
-    expect(tokenizeKeySequences(`${ESC}${ESC}[D`)).toEqual([`${ESC}${ESC}[D`]);
-    expect(tokenizeKeySequences(`${ESC}b`)).toEqual([`${ESC}b`]);
-    expect(tokenizeKeySequences(ESC)).toEqual([ESC]);
+    expect(tokens("a")).toEqual(["a"]);
+    expect(tokens(HOME)).toEqual([HOME]);
+    expect(tokens(ALT_LEFT)).toEqual([ALT_LEFT]);
+    expect(tokens(`${ESC}${ESC}[D`)).toEqual([`${ESC}${ESC}[D`]);
+    expect(tokens(`${ESC}b`)).toEqual([`${ESC}b`]);
   });
 
   it("splits keypresses that arrive in one chunk", () => {
-    expect(tokenizeKeySequences(`a${ESC}[D`)).toEqual(["a", `${ESC}[D`]);
-    expect(tokenizeKeySequences(`${ESC}[D${ESC}[C`)).toEqual([
-      `${ESC}[D`,
-      `${ESC}[C`,
-    ]);
-    expect(tokenizeKeySequences(`ab${CTRL_W}cd`)).toEqual(["ab", CTRL_W, "cd"]);
-    expect(tokenizeKeySequences(`${HOME}fix ${END}`)).toEqual([
-      HOME,
-      "fix ",
-      END,
-    ]);
+    expect(tokens(`a${ESC}[D`)).toEqual(["a", `${ESC}[D`]);
+    expect(tokens(`${ESC}[D${ESC}[C`)).toEqual([`${ESC}[D`, `${ESC}[C`]);
+    expect(tokens(`ab${CTRL_W}cd`)).toEqual(["ab", CTRL_W, "cd"]);
+    expect(tokens(`${HOME}fix ${END}`)).toEqual([HOME, "fix ", END]);
+  });
+
+  it("holds an incomplete sequence back for the next chunk", () => {
+    expect(tokenizeKeySequences(`ab${ESC}[`)).toEqual({
+      tokens: ["ab"],
+      remainder: `${ESC}[`,
+    });
+    expect(tokenizeKeySequences(`${ESC}O`)).toEqual({
+      tokens: [],
+      remainder: `${ESC}O`,
+    });
+    expect(tokenizeKeySequences(`${ESC}[1;`)).toEqual({
+      tokens: [],
+      remainder: `${ESC}[1;`,
+    });
+    // ...and picks it up again once the rest arrives
+    expect(tokens(`${ESC}[` + "D")).toEqual([`${ESC}[D`]);
+  });
+
+  it("holds back a lone ESC until it is known not to be a prefix", () => {
+    expect(tokenizeKeySequences(ESC)).toEqual({ tokens: [], remainder: ESC });
+    expect(tokenizeKeySequences(`${ESC}${ESC}`)).toEqual({
+      tokens: [],
+      remainder: `${ESC}${ESC}`,
+    });
+    // Flushing is what turns it into the Escape key
+    expect(tokens(ESC, true)).toEqual([ESC]);
+    expect(parseKeySequence(ESC)).toEqual({ type: "escape" });
+  });
+
+  it("drops an incomplete sequence on flush rather than typing it", () => {
+    const flushed = tokens(`${ESC}[1;`, true);
+    expect(flushed).toEqual([`${ESC}[1;`]);
+    expect(flushed.map(parseKeySequence)).toEqual([null]);
   });
 
   it("unwraps bracketed paste and keeps the payload as text", () => {
-    expect(tokenizeKeySequences(`${ESC}[200~hello there${ESC}[201~`)).toEqual([
+    expect(tokens(`${ESC}[200~hello there${ESC}[201~`)).toEqual([
       "hello there",
     ]);
-    expect(
-      tokenizeKeySequences(`${ESC}[200~first\r\nsecond${ESC}[201~`),
-    ).toEqual(["first second"]);
+    expect(tokens(`${ESC}[200~first\r\nsecond${ESC}[201~`)).toEqual([
+      "first second",
+    ]);
+  });
+
+  it("waits for the end of a paste that spans chunks", () => {
+    expect(tokenizeKeySequences(`${ESC}[200~hel`)).toEqual({
+      tokens: [],
+      remainder: `${ESC}[200~hel`,
+    });
+    expect(tokens(`${ESC}[200~hello${ESC}[201~`)).toEqual(["hello"]);
     // An unterminated paste still yields its text rather than being dropped
-    expect(tokenizeKeySequences(`${ESC}[200~hello`)).toEqual(["hello"]);
+    expect(tokens(`${ESC}[200~hello`, true)).toEqual(["hello"]);
   });
 
   it("treats a newline inside pasted text as a space, and a trailing one as Enter", () => {
-    expect(tokenizeKeySequences("first\nsecond")).toEqual(["first second"]);
-    expect(tokenizeKeySequences("done\r")).toEqual(["done", "\r"]);
-    expect(tokenizeKeySequences("\r")).toEqual(["\r"]);
-    expect(tokenizeKeySequences("\r\n")).toEqual(["\r"]);
+    expect(tokens("first\nsecond")).toEqual(["first second"]);
+    expect(tokens("done\r")).toEqual(["done", "\r"]);
+    expect(tokens("\r")).toEqual(["\r"]);
+    expect(tokens("\r\n")).toEqual(["\r"]);
   });
 
   it("never drops typed text next to an unknown escape sequence", () => {
-    const tokens = tokenizeKeySequences(`ab${ESC}[15~cd`);
-    expect(tokens).toEqual(["ab", `${ESC}[15~`, "cd"]);
-    expect(tokens.map(parseKeySequence)).toEqual([
+    const chunk = tokens(`ab${ESC}[15~cd`);
+    expect(chunk).toEqual(["ab", `${ESC}[15~`, "cd"]);
+    expect(chunk.map(parseKeySequence)).toEqual([
       { type: "insert", text: "ab" },
       null,
       { type: "insert", text: "cd" },
@@ -170,7 +209,40 @@ describe("tokenizeKeySequences", () => {
   });
 
   it("returns nothing for an empty chunk", () => {
-    expect(tokenizeKeySequences("")).toEqual([]);
+    expect(tokenizeKeySequences("")).toEqual({ tokens: [], remainder: "" });
+  });
+});
+
+describe("applying every token from one chunk in order", () => {
+  const feed = (state: EditorState, chunk: string): EditorState =>
+    tokenizeKeySequences(chunk, { flush: true }).tokens.reduce(
+      (current, sequence) => {
+        const action = parseKeySequence(sequence);
+        return action ? applyEditorAction(current, action) : current;
+      },
+      state,
+    );
+
+  it("edits with the result of the previous key, not the state before the chunk", () => {
+    // `ab`, Left, `X` coalesced into one read
+    expect(feed({ text: "", cursor: 0 }, `ab${ESC}[D` + "X")).toEqual({
+      text: "aXb",
+      cursor: 2,
+    });
+  });
+
+  it("submits the text typed earlier in the same chunk", () => {
+    const chunk = tokenizeKeySequences("fix\r", { flush: true }).tokens;
+    expect(chunk).toEqual(["fix", "\r"]);
+
+    let state: EditorState = { text: "", cursor: 0 };
+    let submitted: string | null = null;
+    for (const sequence of chunk) {
+      const action = parseKeySequence(sequence);
+      if (action?.type === "submit") submitted = state.text;
+      else if (action) state = applyEditorAction(state, action);
+    }
+    expect(submitted).toBe("fix");
   });
 });
 
@@ -190,6 +262,66 @@ describe("findWordBoundary", () => {
   it("clamps an out of range cursor", () => {
     expect(findWordBoundary("one two", 99, "left")).toBe(4);
     expect(findWordBoundary("one two", -5, "right")).toBe(3);
+  });
+});
+
+describe("grapheme boundaries", () => {
+  // "a😀é👨‍👩‍👧" — 1 code unit, then 2 (emoji), 2 (e + combining acute), 8 (ZWJ family)
+  const text = "a\u{1F600}e\u0301\u{1F468}\u200D\u{1F469}\u200D\u{1F467}";
+
+  it("steps over a whole emoji, accent or ZWJ sequence", () => {
+    expect(findCharBoundary(text, 0, "right")).toBe(1);
+    expect(findCharBoundary(text, 1, "right")).toBe(3);
+    expect(findCharBoundary(text, 3, "right")).toBe(5);
+    expect(findCharBoundary(text, 5, "right")).toBe(13);
+    expect(findCharBoundary(text, 13, "left")).toBe(5);
+    expect(findCharBoundary(text, 5, "left")).toBe(3);
+    expect(findCharBoundary(text, 3, "left")).toBe(1);
+    expect(findCharBoundary(text, 1, "left")).toBe(0);
+  });
+
+  it("returns the whole grapheme under the cursor", () => {
+    expect(charAt(text, 0)).toBe("a");
+    expect(charAt(text, 1)).toBe("\u{1F600}");
+    expect(charAt(text, 3)).toBe("e\u0301");
+    expect(charAt(text, 5)).toBe("\u{1F468}\u200D\u{1F469}\u200D\u{1F467}");
+    expect(charAt(text, text.length)).toBe("");
+  });
+
+  it("moves the cursor a glyph at a time, never onto half of one", () => {
+    let state: EditorState = { text, cursor: text.length };
+    for (const expected of [5, 3, 1, 0]) {
+      state = applyEditorAction(state, { type: "moveCharLeft" });
+      expect(state.cursor).toBe(expected);
+    }
+    for (const expected of [1, 3, 5, 13]) {
+      state = applyEditorAction(state, { type: "moveCharRight" });
+      expect(state.cursor).toBe(expected);
+    }
+  });
+
+  it("deletes a whole glyph in both directions", () => {
+    expect(
+      applyEditorAction(
+        { text: "hi\u{1F600}", cursor: 4 },
+        { type: "deleteCharLeft" },
+      ),
+    ).toEqual({ text: "hi", cursor: 2 });
+
+    expect(
+      applyEditorAction(
+        { text: "\u{1F600}hi", cursor: 0 },
+        { type: "deleteCharRight" },
+      ),
+    ).toEqual({ text: "hi", cursor: 0 });
+
+    // The combining accent goes with its letter
+    expect(
+      applyEditorAction(
+        { text: "cafe\u0301", cursor: 5 },
+        { type: "deleteCharLeft" },
+      ),
+    ).toEqual({ text: "caf", cursor: 3 });
   });
 });
 

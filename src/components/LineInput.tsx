@@ -3,8 +3,10 @@ import { Text } from "ink";
 import { useKeySequences } from "../hooks/useKeySequences.js";
 import {
   applyEditorAction,
+  charAt,
   parseKeySequence,
   type EditorAction,
+  type EditorState,
 } from "../lib/input/line-editor.js";
 
 interface LineInputProps {
@@ -36,8 +38,22 @@ const LineInput: React.FC<LineInputProps> = ({
   isActive = true,
   onKey,
 }) => {
-  const [cursor, setCursor] = useState(value.length);
-  const position = Math.min(cursor, value.length);
+  // Only a redraw trigger: the buffer below is the source of truth
+  const [, redraw] = useState(0);
+
+  // A single stdin chunk can carry several keys, and they are handled in one
+  // synchronous burst — before the parent has re-rendered with the new `value`.
+  // The buffer therefore lives in a ref, so each key sees the one before it.
+  const editorRef = useRef<EditorState>({ text: value, cursor: value.length });
+  const emittedRef = useRef(value);
+
+  // The parent changed the value itself (cleared it, picked a mention, …)
+  if (value !== emittedRef.current) {
+    emittedRef.current = value;
+    editorRef.current = { text: value, cursor: value.length };
+  }
+
+  const position = Math.min(editorRef.current.cursor, value.length);
 
   const handleSequence = useCallback(
     (sequence: string) => {
@@ -46,7 +62,7 @@ const LineInput: React.FC<LineInputProps> = ({
       if (!action) return;
 
       if (action.type === "submit") {
-        onSubmit?.(value);
+        onSubmit?.(editorRef.current.text);
         return;
       }
 
@@ -59,14 +75,18 @@ const LineInput: React.FC<LineInputProps> = ({
         return;
       }
 
-      const previous = { text: value, cursor: position };
+      const previous = editorRef.current;
       const next = applyEditorAction(previous, action);
       if (next === previous) return;
 
-      setCursor(next.cursor);
-      if (next.text !== previous.text) onChange(next.text);
+      editorRef.current = next;
+      redraw((tick) => tick + 1);
+      if (next.text !== previous.text) {
+        emittedRef.current = next.text;
+        onChange(next.text);
+      }
     },
-    [onChange, onKey, onSubmit, position, value],
+    [onChange, onKey, onSubmit],
   );
 
   // Keep the stdin subscription stable while still calling the latest handler
@@ -97,11 +117,14 @@ const LineInput: React.FC<LineInputProps> = ({
 
   if (!isActive) return <Text>{value}</Text>;
 
+  // The cursor sits on a whole grapheme, which can be several code units
+  const cursorChar = charAt(value, position) || " ";
+
   return (
     <Text>
       {value.slice(0, position)}
-      <Text inverse>{value[position] ?? " "}</Text>
-      {value.slice(position + 1)}
+      <Text inverse>{cursorChar}</Text>
+      {value.slice(position + cursorChar.length)}
     </Text>
   );
 };

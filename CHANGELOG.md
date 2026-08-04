@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/baz-scm/baz-cli/compare/v0.4.0...v0.4.1) (2026-08-04)
+
+
+### 🐛 Bug Fixes
+
+* support standard line editing keys in the CLI inputs, and load PR details from v2 ([#117](https://github.com/baz-scm/baz-cli/issues/117)) ([279ad78](https://github.com/baz-scm/baz-cli/commit/279ad780e4742f84afd3d87e5161ec89ede572ef))
+
 ## [0.4.0](https://github.com/baz-scm/baz-cli/compare/v0.3.17...v0.4.0) (2026-07-27)
 
 

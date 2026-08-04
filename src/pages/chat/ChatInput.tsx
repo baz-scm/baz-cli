@@ -6,12 +6,19 @@ import React, {
   useMemo,
   memo,
 } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import { MentionableUser } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
 import type { ChangeReviewer } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/index.js";
 import MentionAutocomplete from "../../components/MentionAutocomplete.js";
+import { useKeySequences } from "../../hooks/useKeySequences.js";
+import {
+  applyEditorAction,
+  charAt,
+  parseKeySequence,
+  snapToCharBoundary,
+} from "../../lib/input/line-editor.js";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -178,124 +185,81 @@ const ChatInput = memo<ChatInputProps>((props) => {
     syncDisplay(true);
   }, [mention, syncDisplay]);
 
-  const findNextWordBoundary = (
-    text: string,
-    pos: number,
-    forward: boolean,
-  ) => {
-    if (forward) {
-      while (pos < text.length && /\s/.test(text[pos])) pos++;
-      while (pos < text.length && !/\s/.test(text[pos])) pos++;
-      return pos;
-    } else {
-      while (pos > 0 && /\s/.test(text[pos - 1])) pos--;
-      while (pos > 0 && !/\s/.test(text[pos - 1])) pos--;
-      return pos;
-    }
-  };
+  const handleKeySequence = useCallback(
+    (sequence: string) => {
+      const action = parseKeySequence(sequence);
+      if (!action) return;
 
-  useInput((input, key) => {
-    if (input === "b" && (key.meta || key.ctrl)) {
-      cursorRef.current = findNextWordBoundary(
-        textRef.current,
-        cursorRef.current,
-        false,
-      );
-      syncDisplay();
-      return;
-    }
-    if (input === "f" && (key.meta || key.ctrl)) {
-      cursorRef.current = findNextWordBoundary(
-        textRef.current,
-        cursorRef.current,
-        true,
-      );
-      syncDisplay();
-      return;
-    }
-
-    if (key.escape) {
-      if (mention.show) {
-        textRef.current = textRef.current.slice(0, mention.startIndex);
-        cursorRef.current = mention.startIndex;
-        setMention({ show: false, query: "", startIndex: -1 });
-        syncDisplay(true);
-      } else if (isResponseActive && onInterrupt) {
-        onInterrupt();
-      } else {
-        onBack();
+      if (action.type === "escape") {
+        if (mention.show) {
+          textRef.current = textRef.current.slice(0, mention.startIndex);
+          cursorRef.current = mention.startIndex;
+          setMention({ show: false, query: "", startIndex: -1 });
+          syncDisplay(true);
+        } else if (isResponseActive && onInterrupt) {
+          onInterrupt();
+        } else {
+          onBack();
+        }
+        return;
       }
-      return;
-    }
 
-    if (key.tab && toolsExist) {
-      onToggleToolCallExpansion();
-      return;
-    }
-
-    if (key.return) {
-      const val = textRef.current;
-      if (val && !mention.show) {
-        onSubmit(val);
-        textRef.current = "";
-        cursorRef.current = 0;
-        setShowFullHelp(false);
-        syncDisplay(true);
+      if (action.type === "tab") {
+        if (toolsExist) onToggleToolCallExpansion();
+        return;
       }
-      return;
-    }
 
-    if (textRef.current === "" && input === "?") {
-      setShowFullHelp((prev) => !prev);
-      return;
-    }
-
-    if (key.backspace || key.delete) {
-      if (cursorRef.current > 0) {
-        textRef.current =
-          textRef.current.slice(0, cursorRef.current - 1) +
-          textRef.current.slice(cursorRef.current);
-        cursorRef.current--;
-        syncDisplay();
-        checkMention();
+      if (action.type === "submit") {
+        const val = textRef.current;
+        if (val && !mention.show) {
+          onSubmit(val);
+          textRef.current = "";
+          cursorRef.current = 0;
+          setShowFullHelp(false);
+          syncDisplay(true);
+        }
+        return;
       }
-      return;
-    }
 
-    // Skip up/down arrows when mention autocomplete is active
-    if (key.upArrow || key.downArrow) {
-      if (mention.show && reviewers.length > 0) {
-        return; // let MentionAutocomplete handle
+      // Up/down only drive the mention autocomplete, which handles them itself
+      if (action.type === "up" || action.type === "down") return;
+
+      if (action.type === "insert" && !textRef.current && action.text === "?") {
+        setShowFullHelp((prev) => !prev);
+        return;
       }
-    }
 
-    // Left/right arrows always work
-    if (key.leftArrow && cursorRef.current > 0) {
-      cursorRef.current--;
-      syncDisplay();
-      return;
-    }
-    if (key.rightArrow && cursorRef.current < textRef.current.length) {
-      cursorRef.current++;
-      syncDisplay();
-      return;
-    }
+      const previous = { text: textRef.current, cursor: cursorRef.current };
+      const next = applyEditorAction(previous, action);
+      if (next === previous) return;
 
-    if (input && !key.ctrl && !key.meta) {
-      textRef.current =
-        textRef.current.slice(0, cursorRef.current) +
-        input +
-        textRef.current.slice(cursorRef.current);
-      cursorRef.current += input.length;
+      const textChanged = next.text !== previous.text;
+      textRef.current = next.text;
+      cursorRef.current = next.cursor;
 
-      if (textRef.current.startsWith("/") && !textRef.current.includes(" "))
-        setShowFullHelp(true);
-      else if (!textRef.current.startsWith("/")) setShowFullHelp(false);
+      if (textChanged) {
+        if (next.text.startsWith("/") && !next.text.includes(" "))
+          setShowFullHelp(true);
+        else if (!next.text.startsWith("/")) setShowFullHelp(false);
+      }
 
       syncDisplay();
-      checkMention();
-    }
-  });
+      if (textChanged) checkMention();
+    },
+    [
+      checkMention,
+      isResponseActive,
+      mention,
+      onBack,
+      onInterrupt,
+      onSubmit,
+      onToggleToolCallExpansion,
+      syncDisplay,
+      toolsExist,
+    ],
+  );
+
+  useKeySequences(handleKeySequence);
 
   const defaultHints = useMemo(() => {
     const hints: string[] = [];
@@ -355,8 +319,9 @@ const ChatInput = memo<ChatInputProps>((props) => {
     // If text fits, render all
     if (textLen <= visibleWidth) {
       const before = text.slice(0, cursor);
-      const cursorChar = text[cursor] ?? " ";
-      const after = text.slice(cursor + 1);
+      // The cursor sits on a whole grapheme, which can be several code units
+      const cursorChar = charAt(text, cursor) || " ";
+      const after = text.slice(cursor + cursorChar.length);
       return (
         <Text>
           {before}
@@ -366,20 +331,23 @@ const ChatInput = memo<ChatInputProps>((props) => {
       );
     }
 
-    // Sliding window around cursor
+    // Sliding window around cursor, clipped so a glyph is never cut in half
     const halfWidth = Math.floor(visibleWidth / 2);
     let start = Math.max(0, cursor - halfWidth);
-    const end = Math.min(textLen, start + visibleWidth);
+    let end = Math.min(textLen, start + visibleWidth);
 
     if (end === textLen && end - start < visibleWidth) {
       start = Math.max(0, end - visibleWidth);
     }
 
+    start = snapToCharBoundary(text, start);
+    end = snapToCharBoundary(text, end);
+
     const visibleText = text.slice(start, end);
     const visibleCursor = cursor - start;
     const before = visibleText.slice(0, visibleCursor);
-    const cursorChar = visibleText[visibleCursor] ?? " ";
-    const after = visibleText.slice(visibleCursor + 1);
+    const cursorChar = charAt(visibleText, visibleCursor) || " ";
+    const after = visibleText.slice(visibleCursor + cursorChar.length);
 
     const leftEllipsis = start > 0 ? "…" : "";
     const rightEllipsis = end < textLen ? "…" : "";

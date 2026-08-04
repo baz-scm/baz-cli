@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
-import TextInput from "ink-text-input";
+import LineInput from "../../components/LineInput.js";
 
 const CHAT_ITEM_LABEL = "Chat with PR";
 
@@ -48,6 +48,13 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   const [isSelected, setIsSelected] = useState(false);
   const [chatMode, setChatMode] = useState(false);
   const [chatInput, setChatInput] = useState("");
+
+  // Highlighting the chat item opens its input, but an empty box leaves the
+  // menu in charge of the arrow keys so you can still move off the item. Once
+  // there is something to send, the box takes the keyboard: the two never act
+  // on the same key, since the menu only reads arrows and Enter and the box
+  // ignores arrows.
+  const menuOwnsKeys = !(chatMode && chatInput);
 
   useInput((_input, key) => {
     // ignore input in chat mode
@@ -211,7 +218,7 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
 
       <SelectInput
         items={items}
-        isFocused={!(chatMode && chatInput)} // override the built-in input handler
+        isFocused={menuOwnsKeys}
         onSelect={handleSelect}
         onHighlight={handleHighlight}
         indicatorComponent={({ isSelected: isHighlighted }) => (
@@ -226,12 +233,12 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
           if (label === CHAT_ITEM_LABEL && chatMode) {
             return (
               <Box>
-                <TextInput
+                <LineInput
                   value={chatInput}
                   onChange={setChatInput}
                   onSubmit={handleChatSubmit}
                   placeholder={CHAT_ITEM_LABEL}
-                  focus={true}
+                  isActive={chatMode}
                 />
               </Box>
             );

@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import type { PullRequest } from "../../lib/providers/index.js";
 import { updatedTimeAgo } from "../../lib/date.js";
 import { PullRequestCard } from "./PullRequestCard.js";
 import { useFetchUser } from "../../hooks/useFetchUser.js";
 import MergeConfirmationPrompt from "./MergeConfirmationPrompt.js";
+import LineInput from "../../components/LineInput.js";
+import { isCtrlChord, type EditorAction } from "../../lib/input/line-editor.js";
 
 interface PullRequestSearchKeywords {
   author?: string;
@@ -97,29 +99,6 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
     setSelectedIndex(searchQuery ? 0 : minIndex);
   }, [searchQuery]);
 
-  useInput((input, key) => {
-    if (showMergePrompt) {
-      return;
-    }
-
-    if (key.upArrow) {
-      setSelectedIndex((prev) => Math.max(minIndex, prev - 1));
-    } else if (key.downArrow) {
-      setSelectedIndex((prev) => Math.min(filteredPRs.length - 1, prev + 1));
-    } else if (key.return) {
-      handleSubmit();
-    } else if (key.ctrl && input === "g") {
-      if (canMergeSelectedPr && selectedPr) {
-        setPrToMerge(selectedPr);
-        setShowMergePrompt(true);
-      }
-    } else if (input && input.length === 1 && !key.ctrl && !key.meta) {
-      setSearchQuery((prev) => prev + input);
-    } else if (key.backspace || key.delete) {
-      setSearchQuery((prev) => prev.slice(0, -1));
-    }
-  });
-
   const handleSubmit = () => {
     if (selectedIndex === LOCAL_CHANGES_INDEX && onLocalSelect) {
       onLocalSelect();
@@ -142,6 +121,33 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   const selectedPr =
     selectedIndex >= 0 ? filteredPRs[selectedIndex] : undefined;
   const canMergeSelectedPr = selectedPr ? canMergePR(selectedPr) : false;
+
+  // Everything the search field itself doesn't own: list navigation and merge
+  const handleSearchKey = (sequence: string, action: EditorAction | null) => {
+    if (showMergePrompt) return true;
+
+    if (action?.type === "up") {
+      setSelectedIndex((prev) => Math.max(minIndex, prev - 1));
+      return true;
+    }
+    if (action?.type === "down") {
+      setSelectedIndex((prev) => Math.min(filteredPRs.length - 1, prev + 1));
+      return true;
+    }
+    if (action?.type === "submit") {
+      handleSubmit();
+      return true;
+    }
+    if (isCtrlChord(sequence, "g")) {
+      if (canMergeSelectedPr && selectedPr) {
+        setPrToMerge(selectedPr);
+        setShowMergePrompt(true);
+      }
+      return true;
+    }
+
+    return false;
+  };
 
   if (showMergePrompt && prToMerge) {
     return (
@@ -173,11 +179,12 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
       <Box flexDirection="column" marginBottom={1}>
         <Box>
           <Text color="gray">Search: </Text>
-          <Text>
-            {searchQuery || (
-              <Text dimColor>Try: repo:myrepo, author:username bug fix...</Text>
-            )}
-          </Text>
+          <LineInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onKey={handleSearchKey}
+            placeholder="Try: repo:myrepo, author:username bug fix..."
+          />
         </Box>
         {!searchQuery && (
           <Box marginTop={0}>

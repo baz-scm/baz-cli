@@ -3,6 +3,9 @@ import { Box, Text, useInput } from "ink";
 import type { ChangeReviewer } from "../lib/providers/index.js";
 import { MentionableUser } from "../models/chat.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../theme/symbols.js";
+import { getTheme } from "../theme/theme.js";
+
+const theme = getTheme();
 
 interface MentionAutocompleteProps {
   reviewers: ChangeReviewer[];
@@ -63,11 +66,11 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
       <Box
         flexDirection="column"
         borderStyle="round"
-        borderColor="yellow"
+        borderColor={theme.warning}
         paddingX={1}
         marginTop={1}
       >
-        <Text color="yellow">No reviewers match your search.</Text>
+        <Text color={theme.warning}>No reviewers match your search.</Text>
         <Text dimColor italic>
           ESC to cancel
         </Text>
@@ -100,9 +103,7 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
                   ? ITEM_SELECTOR
                   : ITEM_SELECTION_GAP}
                 {reviewer.name}
-                {reviewer.login && (
-                  <Text color="gray"> (@{reviewer.login})</Text>
-                )}
+                {reviewer.login && <Text dimColor> (@{reviewer.login})</Text>}
               </Text>
             </Box>
           );

@@ -5,6 +5,9 @@ import { useFileDiffs } from "../hooks/useFileDiffs.js";
 import DiffDisplay from "./DiffDisplay.js";
 import { FileSelectionLines } from "../models/Diff.js";
 import type { PRContext } from "../lib/providers/index.js";
+import { getTheme } from "../theme/theme.js";
+
+const theme = getTheme();
 
 interface DiffDisplayContainerProps {
   prContext: PRContext;
@@ -25,10 +28,10 @@ const DiffDisplayContainer: React.FC<DiffDisplayContainerProps> = ({
   if (loading) {
     return (
       <Box>
-        <Text color="blue">
+        <Text color={theme.info}>
           <Spinner type="dots" />
         </Text>
-        <Text color="blue"> Fetching diff...</Text>
+        <Text color={theme.info}> Fetching diff...</Text>
       </Box>
     );
   }
@@ -36,7 +39,7 @@ const DiffDisplayContainer: React.FC<DiffDisplayContainerProps> = ({
   if (error) {
     return (
       <Box flexDirection="column">
-        <Text color="red" bold>
+        <Text color={theme.error} bold>
           ❌ Error: {error}
         </Text>
       </Box>
@@ -46,7 +49,7 @@ const DiffDisplayContainer: React.FC<DiffDisplayContainerProps> = ({
   if (data.length === 0) {
     return (
       <Box flexDirection="column">
-        <Text color="green">✨ No diff related to issue!</Text>
+        <Text color={theme.success}>✨ No diff related to issue!</Text>
       </Box>
     );
   }

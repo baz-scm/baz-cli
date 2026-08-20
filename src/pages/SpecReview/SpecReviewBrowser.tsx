@@ -213,8 +213,8 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
     },
   ];
 
-  return (
-    <Box flexDirection="column">
+  const requirementHeader = (
+    <Box flexDirection="column" flexShrink={0}>
       <Box marginBottom={1}>
         <Text color={MAIN_COLOR} bold>
           Unmet requirement ({currentIndex + 1}/{unmetRequirements.length})
@@ -247,9 +247,15 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
           <Text>{currentRequirement.evidence}</Text>
         </Box>
       )}
+    </Box>
+  );
 
-      <Box marginTop={1}>
+  return (
+    <Box flexDirection="column">
+      <Box marginTop={1} flexDirection="column">
         <ChatDisplay
+          header={requirementHeader}
+          scrollable
           messages={chatMessages}
           isLoading={isLoading}
           onSubmit={handleSubmit}

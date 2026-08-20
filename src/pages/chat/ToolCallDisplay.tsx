@@ -4,6 +4,9 @@ import Spinner from "ink-spinner";
 import { ChatToolCall } from "../../models/chat.js";
 import { renderMarkdown } from "../../lib/markdown.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 const MIN_LOADER_TIME_MS = 3000;
 
@@ -52,20 +55,20 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
         <Box>
           {showLoader ? (
             <>
-              <Text color="magenta">
+              <Text color={theme.info}>
                 <Spinner type="arrow3" />
               </Text>
-              <Text color="cyan" bold>
+              <Text color={theme.main} bold>
                 {formattedToolName}
               </Text>
-              {message && <Text color="gray"> ({message})</Text>}
+              {message && <Text dimColor> ({message})</Text>}
             </>
           ) : (
             <>
-              <Text color="cyan" bold>
+              <Text color={theme.main} bold>
                 🔧 {formattedToolName}
               </Text>
-              {message && <Text color="gray"> ({message})</Text>}
+              {message && <Text dimColor> ({message})</Text>}
               {!isExpanded && showExpandHint && (
                 <Text dimColor italic>
                   {" "}
@@ -82,7 +85,7 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
             marginTop={1}
             paddingLeft={2}
             borderStyle="single"
-            borderColor="gray"
+            borderColor={theme.lineNumber.color}
           >
             <Box paddingLeft={1}>
               <Text>{renderedResult}</Text>

@@ -2,12 +2,9 @@ import React, { memo } from "react";
 import { Box, Text } from "ink";
 import type { FileDiff } from "../lib/providers/index.js";
 import { FileSelectionLines } from "../models/Diff.js";
-import {
-  DIFF_ADDED_LINE_COLOR,
-  DIFF_DELETED_LINE_COLOR,
-  DIFF_SELECTED_LINE_COLOR,
-  TABLE_HEADER_COLOR,
-} from "../theme/colors.js";
+import { getTheme, type TextStyle } from "../theme/theme.js";
+
+const theme = getTheme();
 
 const MAX_ADDED_VIEW_LINES = 3;
 const ADDED_LINE_PREFIX = "+";
@@ -18,50 +15,74 @@ interface DiffRowProps {
   leftNumber?: number;
   leftPrefix?: string;
   leftLine: string;
-  leftColor?: string;
+  leftStyle?: TextStyle;
   rightNumber?: number;
   rightPrefix?: string;
   rightLine: string;
-  rightColor?: string;
+  rightStyle?: TextStyle;
 }
+
+/**
+ * One side of a diff row.
+ *
+ * The background and the foreground are always set together - a background
+ * without a matching text color is what made these rows unreadable on dark
+ * terminals, since the terminal's own foreground stayed light.
+ */
+const DiffSide: React.FC<{
+  number?: number;
+  prefix?: string;
+  line: string;
+  style: TextStyle;
+}> = ({ number, prefix, line, style }) => (
+  <Box width="50%" backgroundColor={style.backgroundColor}>
+    <Text
+      color={style.color ?? theme.lineNumber.color}
+      backgroundColor={style.backgroundColor}
+      bold={style.bold}
+      dimColor={!style.color && !style.backgroundColor}
+    >
+      {(number ?? "").toString().padStart(5)}
+      {prefix ? ` ${prefix} ` : "   "}
+    </Text>
+    <Box>
+      <Text
+        color={style.color}
+        backgroundColor={style.backgroundColor}
+        bold={style.bold}
+      >
+        {line}
+      </Text>
+    </Box>
+  </Box>
+);
 
 const DiffRow = memo<DiffRowProps>(
   ({
     leftNumber,
     leftPrefix,
     leftLine,
-    leftColor,
+    leftStyle,
     rightNumber,
     rightPrefix,
     rightLine,
-    rightColor,
-  }) => {
-    const leftNum = (leftNumber ?? "").toString().padStart(5);
-    const rightNum = (rightNumber ?? "").toString().padStart(5);
-
-    return (
-      <Box>
-        <Box width="50%" backgroundColor={leftColor}>
-          <Text>
-            {leftNum}
-            {leftPrefix ? ` ${leftPrefix} ` : "   "}
-          </Text>
-          <Box>
-            <Text>{leftLine}</Text>
-          </Box>
-        </Box>
-        <Box width="50%" backgroundColor={rightColor}>
-          <Text>
-            {rightNum}
-            {rightPrefix ? ` ${rightPrefix} ` : "   "}
-          </Text>
-          <Box>
-            <Text>{rightLine}</Text>
-          </Box>
-        </Box>
-      </Box>
-    );
-  },
+    rightStyle,
+  }) => (
+    <Box>
+      <DiffSide
+        number={leftNumber}
+        prefix={leftPrefix}
+        line={leftLine}
+        style={leftStyle ?? theme.diffContext}
+      />
+      <DiffSide
+        number={rightNumber}
+        prefix={rightPrefix}
+        line={rightLine}
+        style={rightStyle ?? theme.diffContext}
+      />
+    </Box>
+  ),
 );
 
 // Memoized file header
@@ -71,10 +92,19 @@ interface FileHeaderProps {
 }
 
 const FileHeader = memo<FileHeaderProps>(({ filePath, outdated }) => (
-  <Box paddingX={1} backgroundColor={TABLE_HEADER_COLOR}>
-    <Text>{`☰ ${filePath}`}</Text>
+  <Box paddingX={1} backgroundColor={theme.fileHeader.backgroundColor}>
+    <Text
+      color={theme.fileHeader.color}
+      backgroundColor={theme.fileHeader.backgroundColor}
+      bold={theme.fileHeader.bold}
+    >{`☰ ${filePath}`}</Text>
     {outdated && (
-      <Text bold color="red">
+      <Text
+        bold
+        color={theme.error}
+        backgroundColor={theme.fileHeader.backgroundColor}
+      >
+        {" "}
         outdated
       </Text>
     )}
@@ -99,7 +129,7 @@ const DiffDisplayInternal: React.FC<DiffDisplayProps> = ({
 
         if (!selectionLines || selectionLines.end === undefined) {
           return (
-            <Text color="red">
+            <Text color={theme.error}>
               No range info for {file.diff.file_relative_path}
             </Text>
           );
@@ -160,36 +190,36 @@ const DiffDisplayInternal: React.FC<DiffDisplayProps> = ({
                   .map((line) => {
                     let leftPrefix = "";
                     let rightPrefix = "";
-                    let leftColor: string | undefined;
-                    let rightColor: string | undefined;
+                    let leftStyle: TextStyle | undefined;
+                    let rightStyle: TextStyle | undefined;
 
                     if (line.line_type === "Added") {
                       rightPrefix = ADDED_LINE_PREFIX;
-                      rightColor = DIFF_ADDED_LINE_COLOR;
+                      rightStyle = theme.diffAdded;
                     } else if (line.line_type === "Deleted") {
                       leftPrefix = DELETED_LINE_PREFIX;
-                      leftColor = DIFF_DELETED_LINE_COLOR;
+                      leftStyle = theme.diffDeleted;
                     } else if (line.line_type === "Changed") {
                       // in this case we have old and new content
                       if (line.content != null) {
                         leftPrefix = DELETED_LINE_PREFIX;
-                        leftColor = DIFF_DELETED_LINE_COLOR;
+                        leftStyle = theme.diffDeleted;
                       }
                       if (line.new_content != null) {
                         rightPrefix = ADDED_LINE_PREFIX;
-                        rightColor = DIFF_ADDED_LINE_COLOR;
+                        rightStyle = theme.diffAdded;
                       }
                     }
 
                     if (selectionSide === "left") {
                       const num = line.number ?? 0;
                       if (num >= selectionStart && num <= selectionEnd) {
-                        leftColor = DIFF_SELECTED_LINE_COLOR;
+                        leftStyle = theme.diffSelected;
                       }
                     } else {
                       const newNum = line.new_line_number ?? 0;
                       if (newNum >= selectionStart && newNum <= selectionEnd) {
-                        rightColor = DIFF_SELECTED_LINE_COLOR;
+                        rightStyle = theme.diffSelected;
                       }
                     }
 
@@ -199,11 +229,11 @@ const DiffDisplayInternal: React.FC<DiffDisplayProps> = ({
                         leftNumber={line.number}
                         leftPrefix={leftPrefix}
                         leftLine={line.content ?? ""}
-                        leftColor={leftColor}
+                        leftStyle={leftStyle}
                         rightNumber={line.new_line_number}
                         rightPrefix={rightPrefix}
                         rightLine={line.new_content ?? ""}
-                        rightColor={rightColor}
+                        rightStyle={rightStyle}
                       />
                     );
                   })}

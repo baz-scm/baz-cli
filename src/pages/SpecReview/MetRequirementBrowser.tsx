@@ -210,8 +210,8 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
     },
   ];
 
-  return (
-    <Box flexDirection="column">
+  const requirementHeader = (
+    <Box flexDirection="column" flexShrink={0}>
       <Box marginBottom={1}>
         <Text color={MAIN_COLOR} bold>
           Met requirement ({currentIndex + 1}/{metRequirements.length})
@@ -244,9 +244,15 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
           <Text>{currentRequirement.evidence}</Text>
         </Box>
       )}
+    </Box>
+  );
 
-      <Box marginTop={1}>
+  return (
+    <Box flexDirection="column">
+      <Box marginTop={1} flexDirection="column">
         <ChatDisplay
+          header={requirementHeader}
+          scrollable
           messages={chatMessages}
           isLoading={isLoading}
           onSubmit={handleSubmit}

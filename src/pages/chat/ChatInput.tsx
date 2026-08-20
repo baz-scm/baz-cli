@@ -19,6 +19,10 @@ import {
   parseKeySequence,
   snapToCharBoundary,
 } from "../../lib/input/line-editor.js";
+import { useCompactChrome } from "../../hooks/useTerminalSize.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -58,6 +62,9 @@ const ChatInput = memo<ChatInputProps>((props) => {
 
   const appMode = useAppMode();
   const dataProvider = appMode.mode.dataProvider;
+  // In a short window the hints collapse onto one line so the conversation
+  // keeps the rows instead.
+  const compact = useCompactChrome();
 
   const visibleWidth = Math.max(10, terminalWidth - 6);
 
@@ -367,7 +374,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
     <Box flexDirection="column">
       <Box
         borderStyle="round"
-        borderColor="cyan"
+        borderColor={theme.main}
         paddingX={1}
         width={terminalWidth}
         flexShrink={1}
@@ -385,9 +392,11 @@ const ChatInput = memo<ChatInputProps>((props) => {
       )}
 
       {!mention.show && (
-        <Box marginTop={1}>
+        <Box marginTop={compact ? 0 : 1}>
           <Text dimColor>
-            {showFullHelp ? commandHints.join("\n") : defaultHints.join("\n")}
+            {showFullHelp
+              ? commandHints.join(compact ? " · " : "\n")
+              : defaultHints.join(compact ? " · " : "\n")}
           </Text>
         </Box>
       )}

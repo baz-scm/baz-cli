@@ -286,27 +286,33 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
     }
   }, []);
 
-  return (
-    <Box flexDirection="column">
+  // The comment and its diff scroll together with the conversation, so a short
+  // window still shows the input box and the hints.
+  const issueHeader = (
+    <Box flexDirection="column" flexShrink={0}>
       <ExplainComponent issue={currentIssue} />
 
       <DisplayComponent issue={currentIssue} context={context} />
+    </Box>
+  );
 
-      <Box marginTop={1}>
-        <ChatDisplay
-          messages={chatMessages}
-          isLoading={isLoading}
-          onSubmit={handleSubmit}
-          availableCommands={availableCommands}
-          prId={prId}
-          fullRepoName={fullRepoName}
-          prNumber={prNumber}
-          enableMentions={currentIssue.type === "discussion"}
-          onBack={onBack}
-          onInterrupt={handleInterrupt}
-          isResponseActive={isResponseActive}
-        />
-      </Box>
+  return (
+    <Box flexDirection="column" flexGrow={1} flexShrink={1} minHeight={0}>
+      <ChatDisplay
+        header={issueHeader}
+        scrollable
+        messages={chatMessages}
+        isLoading={isLoading}
+        onSubmit={handleSubmit}
+        availableCommands={availableCommands}
+        prId={prId}
+        fullRepoName={fullRepoName}
+        prNumber={prNumber}
+        enableMentions={currentIssue.type === "discussion"}
+        onBack={onBack}
+        onInterrupt={handleInterrupt}
+        isResponseActive={isResponseActive}
+      />
     </Box>
   );
 };

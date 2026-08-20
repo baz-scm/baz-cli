@@ -7,6 +7,9 @@ import type {
   SpecReview,
 } from "../../lib/providers/index.js";
 import { Issue } from "../../issues/types.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 const CHECKBOX_PLACEHOLDER = " □ ";
 
@@ -68,9 +71,9 @@ const LinesSummary: React.FC<{
   return (
     <Text>
       <Text>{CHECKBOX_PLACEHOLDER}</Text>
-      <Text color="green">+{pr.lines_added} lines added</Text>
+      <Text color={theme.success}>+{pr.lines_added} lines added</Text>
       <Text> / </Text>
-      <Text color="red">-{pr.lines_deleted} lines removed</Text>
+      <Text color={theme.error}>-{pr.lines_deleted} lines removed</Text>
     </Text>
   );
 };

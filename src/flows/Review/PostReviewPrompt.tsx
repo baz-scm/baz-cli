@@ -8,6 +8,9 @@ import LoadingSpinner from "../../components/LoadingSpinner.js";
 import { PRContext } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 export type PostReviewAction =
   | "approve"
@@ -151,10 +154,10 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
       <Box marginBottom={1}>
         {actionError && (
           <Box marginBottom={1}>
-            <Text color="red">✗ {actionError}</Text>
+            <Text color={theme.error}>✗ {actionError}</Text>
           </Box>
         )}
-        <Text bold color="cyan">
+        <Text bold color={theme.main}>
           What would you like to do next?
         </Text>
       </Box>
@@ -162,12 +165,15 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
         items={items}
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
-          <Text color={isSelected ? "green" : "gray"}>
+          <Text
+            color={isSelected ? theme.success : undefined}
+            dimColor={!isSelected}
+          >
             {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
+          <Text color={isSelected ? theme.main : theme.text}>{label}</Text>
         )}
       />
       <Box marginTop={1}>

@@ -10,16 +10,19 @@ interface ScrollableViewportProps {
   /** Ignore scroll keys while another component owns them. */
   isActive?: boolean;
   /**
-   * Rows to keep visible even in a window with almost no room left. Ink
-   * mismeasures a one-row viewport, so two is the floor.
+   * Scrolling starts from the top again whenever this changes - use the
+   * identity of the thing being reviewed, so moving to the next comment does
+   * not open partway down it.
    */
-  minHeight?: number;
+  resetKey?: string | number;
 }
 
 // One row for the scroll status line plus one so the terminal itself never
 // scrolls the frame away.
 const STATUS_ROWS = 1;
 const SLACK_ROWS = 1;
+// Below this the status line gives its row back to the content.
+const MIN_ROWS_FOR_STATUS = 3;
 
 /**
  * Clips its children to the rows the terminal has left and lets the user
@@ -34,7 +37,7 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
   children,
   followContent = false,
   isActive = true,
-  minHeight = 2,
+  resetKey,
 }) => {
   const contentRef = useRef<DOMElement | null>(null);
   const { rows } = useTerminalSize();
@@ -44,10 +47,14 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
   const [offset, setOffset] = useState(0);
   const [pinnedToBottom, setPinnedToBottom] = useState(followContent);
 
-  const viewportHeight = Math.max(
-    minHeight,
-    rows - reservedRows - STATUS_ROWS - SLACK_ROWS,
-  );
+  // Never claim rows the terminal does not have: overflowing the window is the
+  // very thing this component exists to prevent. If chrome alone fills the
+  // window the viewport collapses to nothing rather than pushing it off screen.
+  const budgetRows = Math.max(0, rows - reservedRows - SLACK_ROWS);
+  // With almost nothing to spare, content is worth more than the status line -
+  // and a one-row viewport is measured wrongly by Ink, which breaks scrolling.
+  const showStatus = budgetRows >= MIN_ROWS_FOR_STATUS;
+  const viewportHeight = showStatus ? budgetRows - STATUS_ROWS : budgetRows;
   const maxOffset = Math.max(0, contentHeight - viewportHeight);
 
   // Re-measure after every render: content grows while a reply streams in.
@@ -58,6 +65,13 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
       previous === measured ? previous : measured,
     );
   });
+
+  // A different comment or requirement starts from the top, however far the
+  // user had scrolled through the previous one.
+  useEffect(() => {
+    setOffset(0);
+    setPinnedToBottom(false);
+  }, [resetKey]);
 
   // Following was just switched on (the first chat reply arrives): jump down.
   const wasFollowing = useRef(followContent);
@@ -121,14 +135,17 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
         </Box>
       </Box>
 
-      {/* Always one row, so showing the hint can never change the layout. */}
-      <Box flexShrink={0}>
-        <Text dimColor>
-          {canScroll
-            ? `${offset > 0 ? "↑" : " "}${offset < maxOffset ? "↓" : " "} lines ${firstVisibleLine}-${lastVisibleLine} of ${contentHeight} · ↑/↓ PgUp/PgDn to scroll`
-            : " "}
-        </Text>
-      </Box>
+      {/* A fixed row whenever it is shown, so the hint appearing cannot
+          change the layout. */}
+      {showStatus && (
+        <Box flexShrink={0}>
+          <Text dimColor>
+            {canScroll
+              ? `${offset > 0 ? "↑" : " "}${offset < maxOffset ? "↓" : " "} lines ${firstVisibleLine}-${lastVisibleLine} of ${contentHeight} · ↑/↓ PgUp/PgDn to scroll`
+              : " "}
+          </Text>
+        </Box>
+      )}
     </>
   );
 };

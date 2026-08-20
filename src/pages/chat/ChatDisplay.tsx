@@ -145,6 +145,11 @@ interface ChatDisplayProps {
    * scrollable, keeping the input pinned to the bottom of the window.
    */
   scrollable?: boolean;
+  /**
+   * Identity of what is being discussed. Scrolling restarts from the top when
+   * it changes, so the next comment does not open partway down.
+   */
+  scrollResetKey?: string | number;
 }
 
 const ChatDisplay = memo<ChatDisplayProps>(
@@ -164,10 +169,14 @@ const ChatDisplay = memo<ChatDisplayProps>(
     isResponseActive = false,
     header,
     scrollable = false,
+    scrollResetKey,
   }) => {
     const { stdout } = useStdout();
     const [terminalWidth, setTerminalWidth] = useState(stdout?.columns ?? 80);
     const [toolsExpanded, setToolsExpanded] = useState(false);
+    // The mention list takes over Up/Down while it is open; the viewport must
+    // not scroll behind it.
+    const [composerOwnsArrows, setComposerOwnsArrows] = useState(false);
 
     useEffect(() => {
       if (!stdout) return;
@@ -254,7 +263,11 @@ const ChatDisplay = memo<ChatDisplayProps>(
         minHeight={0}
       >
         {scrollable ? (
-          <ScrollableViewport followContent={messages.length > 0}>
+          <ScrollableViewport
+            followContent={messages.length > 0}
+            isActive={!composerOwnsArrows}
+            resetKey={scrollResetKey}
+          >
             {scrollableContent}
           </ScrollableViewport>
         ) : (
@@ -277,6 +290,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
               onToggleToolCallExpansion={toggleTools}
               onInterrupt={onInterrupt}
               isResponseActive={isResponseActive}
+              onNavigationCaptureChange={setComposerOwnsArrows}
             />
           </InputChrome>
         )}

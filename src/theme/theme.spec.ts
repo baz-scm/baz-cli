@@ -107,5 +107,33 @@ describe("resolveTheme", () => {
     });
     expect(theme.colorsEnabled).toBe(true);
     expect(theme.diffSelected.backgroundColor).toBe("#222200");
+    // A background always comes with a foreground, even in colorless mode.
+    expect(theme.diffSelected.color).toBeTruthy();
+  });
+
+  it("drops a background whose foreground was turned off", () => {
+    const theme = resolveTheme({
+      ...noFile,
+      BAZ_COLOR_DIFF_ADDED_FG: "none",
+    });
+    expect(theme.diffAdded.color).toBeUndefined();
+    expect(theme.diffAdded.backgroundColor).toBeUndefined();
+  });
+
+  it("ignores non-string values in a theme file", () => {
+    const file = path.join(
+      fs.mkdtempSync(path.join(os.tmpdir(), "baz-theme-")),
+      "theme.json",
+    );
+    fs.writeFileSync(
+      file,
+      JSON.stringify({ theme: 42, diffAddedBg: ["#fff"], main: "#123456" }),
+    );
+
+    const theme = resolveTheme({ BAZ_THEME_FILE: file, COLORFGBG: "15;0" });
+    // The bad theme name and color fall back to the detected defaults.
+    expect(theme.name).toBe("dark");
+    expect(theme.diffAdded.backgroundColor).toBe("#1e3b26");
+    expect(theme.main).toBe("#123456");
   });
 });

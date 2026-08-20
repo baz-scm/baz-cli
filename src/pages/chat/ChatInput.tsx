@@ -38,6 +38,11 @@ interface ChatInputProps {
   terminalWidth: number;
   onInterrupt?: () => void;
   isResponseActive?: boolean;
+  /**
+   * Called when the composer takes over the arrow keys (the mention list is
+   * open), so the surrounding view can stop scrolling on them.
+   */
+  onNavigationCaptureChange?: (captured: boolean) => void;
 }
 
 // Throttle updates ~60fps
@@ -58,6 +63,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
     terminalWidth,
     onInterrupt,
     isResponseActive = false,
+    onNavigationCaptureChange,
   } = props;
 
   const appMode = useAppMode();
@@ -111,6 +117,14 @@ const ChatInput = memo<ChatInputProps>((props) => {
       if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
     };
   }, []);
+
+  // While the mention list is open it owns Up/Down, so tell the surrounding
+  // view to leave those keys alone.
+  const mentionOwnsArrows =
+    enableMentions && mention.show && reviewers.length > 0;
+  useEffect(() => {
+    onNavigationCaptureChange?.(mentionOwnsArrows);
+  }, [mentionOwnsArrows, onNavigationCaptureChange]);
 
   const checkMention = useCallback(() => {
     if (!enableMentions) return;
@@ -382,7 +396,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
         {renderInput}
       </Box>
 
-      {enableMentions && mention.show && reviewers.length > 0 && (
+      {mentionOwnsArrows && (
         <MentionAutocomplete
           reviewers={reviewers}
           searchQuery={mention.query}

@@ -6,6 +6,9 @@ import type { PullRequest, PRContext } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface MergeConfirmationPromptProps {
   pr: PullRequest;
@@ -78,7 +81,7 @@ const MergeConfirmationPrompt: React.FC<MergeConfirmationPromptProps> = ({
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold color="yellow">
+          <Text bold color={theme.warning}>
             Merge {pr.title}?
           </Text>
         </Box>
@@ -86,12 +89,15 @@ const MergeConfirmationPrompt: React.FC<MergeConfirmationPromptProps> = ({
           items={items}
           onSelect={handleConfirm}
           indicatorComponent={({ isSelected }) => (
-            <Text color={isSelected ? "green" : "gray"}>
+            <Text
+              color={isSelected ? theme.success : undefined}
+              dimColor={!isSelected}
+            >
               {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
             </Text>
           )}
           itemComponent={({ isSelected, label }) => (
-            <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
+            <Text color={isSelected ? theme.main : theme.text}>{label}</Text>
           )}
         />
         <Box marginTop={1}>
@@ -117,7 +123,7 @@ const MergeConfirmationPrompt: React.FC<MergeConfirmationPromptProps> = ({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="red" bold>
+        <Text color={theme.error} bold>
           ✗ Failed to merge PR: {error}
         </Text>
       </Box>

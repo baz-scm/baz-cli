@@ -4,6 +4,9 @@ import SelectInput from "ink-select-input";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import LineInput from "../../components/LineInput.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 const CHAT_ITEM_LABEL = "Chat with PR";
 
@@ -222,7 +225,10 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
         onSelect={handleSelect}
         onHighlight={handleHighlight}
         indicatorComponent={({ isSelected: isHighlighted }) => (
-          <Text color={isHighlighted ? "green" : "gray"}>
+          <Text
+            color={isHighlighted ? theme.success : undefined}
+            dimColor={!isHighlighted}
+          >
             {isHighlighted ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
@@ -249,13 +255,15 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
               <Text
                 strikethrough
                 dimColor={!isHighlighted}
-                color={isHighlighted ? "cyan" : undefined}
+                color={isHighlighted ? theme.main : undefined}
               >
                 {label}
               </Text>
             );
           }
-          return <Text color={isHighlighted ? "cyan" : "white"}>{label}</Text>;
+          return (
+            <Text color={isHighlighted ? theme.main : theme.text}>{label}</Text>
+          );
         }}
       />
 

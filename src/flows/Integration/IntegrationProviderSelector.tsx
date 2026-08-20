@@ -3,6 +3,9 @@ import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { IntegrationProvider } from "../../integrations/types.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface IntegrationProviderSelectorProps {
   providers: IntegrationProvider[];
@@ -52,7 +55,7 @@ const IntegrationProviderSelector: React.FC<
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text color="yellow">ℹ️ {notImplementedMessage}</Text>
+          <Text color={theme.warning}>ℹ️ {notImplementedMessage}</Text>
         </Box>
         <Box>
           <Text dimColor italic>
@@ -66,7 +69,7 @@ const IntegrationProviderSelector: React.FC<
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text bold color="cyan">
+        <Text bold color={theme.main}>
           🔧 Select an integration provider:
         </Text>
       </Box>
@@ -74,12 +77,15 @@ const IntegrationProviderSelector: React.FC<
         items={items}
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
-          <Text color={isSelected ? "green" : "gray"}>
+          <Text
+            color={isSelected ? theme.success : undefined}
+            dimColor={!isSelected}
+          >
             {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
+          <Text color={isSelected ? theme.main : theme.text}>{label}</Text>
         )}
       />
       <Box marginTop={1}>

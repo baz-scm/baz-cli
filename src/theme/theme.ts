@@ -24,6 +24,8 @@ export interface ThemeColors {
   main?: string;
   /** Secondary/emphasis color, e.g. selected PR title. */
   accent?: string;
+  /** Normal body text, for places that must not inherit the terminal's own. */
+  text?: string;
   success?: string;
   warning?: string;
   error?: string;
@@ -57,6 +59,7 @@ export interface Theme extends ThemeColors {
 const DARK_COLORS: ThemeColors = {
   main: "#9d9df0",
   accent: "#f2c96b",
+  text: "#e6e6f0",
   success: "#5fd7a0",
   warning: "#e5c07b",
   error: "#ff6b81",
@@ -76,6 +79,7 @@ const DARK_COLORS: ThemeColors = {
 const LIGHT_COLORS: ThemeColors = {
   main: "#5656c4",
   accent: "#a35a00",
+  text: "#1c1c22",
   success: "#137333",
   warning: "#8a6100",
   error: "#c5221f",
@@ -157,9 +161,13 @@ export function detectTerminalBackground(
   return "dark";
 }
 
+/**
+ * Reads the first theme file that exists, keeping only string values - a
+ * hand-edited file can hold anything, and a bad value must not break startup.
+ */
 function readOverridesFile(
   environment: NodeJS.ProcessEnv,
-): Partial<ThemeColors> & { theme?: string } {
+): Record<string, string> {
   const candidates = [
     environment.BAZ_THEME_FILE,
     path.join(process.cwd(), ".baz", "theme.json"),
@@ -172,7 +180,11 @@ function readOverridesFile(
       if (!fs.existsSync(file)) continue;
       const parsed: unknown = JSON.parse(fs.readFileSync(file, "utf8"));
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Partial<ThemeColors> & { theme?: string };
+        return Object.fromEntries(
+          Object.entries(parsed).filter(
+            (entry): entry is [string, string] => typeof entry[1] === "string",
+          ),
+        );
       }
     } catch {
       // A broken theme file must never break the CLI - fall through to defaults.
@@ -182,9 +194,25 @@ function readOverridesFile(
   return {};
 }
 
-function styleOf(fg?: string, bg?: string, boldWhenPlain = false): TextStyle {
-  if (!fg && !bg) return boldWhenPlain ? { bold: true } : {};
-  return { color: fg, backgroundColor: bg };
+/**
+ * Builds a style, never emitting a background without a foreground - that
+ * combination is what made diffs unreadable on dark terminals.
+ *
+ * A background with no color of its own borrows `fallbackFg` (from the
+ * detected palette). A foreground explicitly turned off drops the background
+ * with it, since the user asked for unstyled text.
+ */
+function styleOf(
+  fg: string | undefined,
+  bg: string | undefined,
+  options: { fallbackFg?: string; boldWhenPlain?: boolean } = {},
+): TextStyle {
+  const { fallbackFg, boldWhenPlain = false } = options;
+  const color = fg ?? (bg ? fallbackFg : undefined);
+  const backgroundColor = color ? bg : undefined;
+
+  if (!color && !backgroundColor) return boldWhenPlain ? { bold: true } : {};
+  return { color, backgroundColor };
 }
 
 export function resolveTheme(
@@ -212,13 +240,30 @@ export function resolveTheme(
   const base: ThemeColors =
     name === "none" ? {} : name === "light" ? LIGHT_COLORS : DARK_COLORS;
 
+  // Backgrounds that survive into colorless mode still need a legible
+  // foreground, so keep the palette the terminal would have used.
+  const fallback: ThemeColors =
+    detectTerminalBackground(environment) === "light"
+      ? LIGHT_COLORS
+      : DARK_COLORS;
+
   const colors: ThemeColors = {};
+  const turnedOff = new Set<keyof ThemeColors>();
   for (const key of COLOR_KEYS) {
     const fromEnv = environment[envVarNameFor(key)];
-    const override =
-      fromEnv !== undefined ? fromEnv : (fileOverrides[key] as unknown);
-    colors[key] = override !== undefined ? normalizeColor(override) : base[key];
+    const override = fromEnv !== undefined ? fromEnv : fileOverrides[key];
+    if (override === undefined) {
+      colors[key] = base[key];
+      continue;
+    }
+    colors[key] = normalizeColor(override);
+    if (colors[key] === undefined) turnedOff.add(key);
   }
+
+  // A foreground the user turned off explicitly has no fallback: the paired
+  // background goes with it.
+  const fallbackFor = (key: keyof ThemeColors): string | undefined =>
+    turnedOff.has(key) ? undefined : fallback[key];
 
   const colorsEnabled = COLOR_KEYS.some((key) => Boolean(colors[key]));
 
@@ -226,13 +271,23 @@ export function resolveTheme(
     ...colors,
     name,
     colorsEnabled,
-    fileHeader: styleOf(colors.fileHeaderFg, colors.fileHeaderBg, true),
-    diffAdded: styleOf(colors.diffAddedFg, colors.diffAddedBg),
-    diffDeleted: styleOf(colors.diffDeletedFg, colors.diffDeletedBg),
+    fileHeader: styleOf(colors.fileHeaderFg, colors.fileHeaderBg, {
+      fallbackFg: fallbackFor("fileHeaderFg"),
+      boldWhenPlain: true,
+    }),
+    diffAdded: styleOf(colors.diffAddedFg, colors.diffAddedBg, {
+      fallbackFg: fallbackFor("diffAddedFg"),
+    }),
+    diffDeleted: styleOf(colors.diffDeletedFg, colors.diffDeletedBg, {
+      fallbackFg: fallbackFor("diffDeletedFg"),
+    }),
     // Without colors, the commented-on lines still need to stand out.
-    diffSelected: styleOf(colors.diffSelectedFg, colors.diffSelectedBg, true),
-    diffContext: styleOf(colors.diffContextFg),
-    lineNumber: styleOf(colors.lineNumberFg),
+    diffSelected: styleOf(colors.diffSelectedFg, colors.diffSelectedBg, {
+      fallbackFg: fallbackFor("diffSelectedFg"),
+      boldWhenPlain: true,
+    }),
+    diffContext: styleOf(colors.diffContextFg, undefined),
+    lineNumber: styleOf(colors.lineNumberFg, undefined),
   };
 }
 

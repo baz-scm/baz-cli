@@ -3,6 +3,9 @@ import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { AxiosError } from "axios";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface ErrorPromptProps {
   error: unknown;
@@ -64,25 +67,28 @@ const ErrorPrompt: React.FC<ErrorPromptProps> = ({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="red" bold>
+        <Text color={theme.error} bold>
           ✗ Error{context ? `: ${context}` : ""}
         </Text>
       </Box>
 
       <Box marginBottom={1}>
-        <Text color="red">{errorMessage}</Text>
+        <Text color={theme.error}>{errorMessage}</Text>
       </Box>
 
       <SelectInput
         items={items}
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
-          <Text color={isSelected ? "green" : "gray"}>
+          <Text
+            color={isSelected ? theme.success : undefined}
+            dimColor={!isSelected}
+          >
             {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
+          <Text color={isSelected ? theme.main : theme.text}>{label}</Text>
         )}
       />
 

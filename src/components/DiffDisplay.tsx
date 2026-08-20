@@ -37,10 +37,12 @@ const DiffSide: React.FC<{
 }> = ({ number, prefix, line, style }) => (
   <Box width="50%" backgroundColor={style.backgroundColor}>
     <Text
-      color={style.color ?? theme.lineNumber.color}
+      // Gutters follow lineNumberFg, except on a highlighted row where the
+      // row's own foreground is what stays readable against its background.
+      color={style.backgroundColor ? style.color : theme.lineNumber.color}
       backgroundColor={style.backgroundColor}
       bold={style.bold}
-      dimColor={!style.color && !style.backgroundColor}
+      dimColor={!style.backgroundColor && !theme.lineNumber.color}
     >
       {(number ?? "").toString().padStart(5)}
       {prefix ? ` ${prefix} ` : "   "}

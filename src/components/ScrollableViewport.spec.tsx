@@ -51,7 +51,13 @@ function createStdin() {
   return stream;
 }
 
-const Harness: React.FC = () => (
+interface HarnessProps {
+  /** Extra rows of chrome, standing in for an open mention list. */
+  footerRows?: number;
+  resetKey?: string | number;
+}
+
+const Harness: React.FC<HarnessProps> = ({ footerRows = 1, resetKey }) => (
   <ScreenLayoutProvider>
     <ReservedRows id="banner">
       <Box>
@@ -59,16 +65,16 @@ const Harness: React.FC = () => (
       </Box>
     </ReservedRows>
 
-    <ScrollableViewport>
+    <ScrollableViewport resetKey={resetKey}>
       {Array.from({ length: CONTENT_LINES }, (_, index) => (
         <Text key={index}>line {index}</Text>
       ))}
     </ScrollableViewport>
 
     <ReservedRows id="footer">
-      <Box>
-        <Text>FOOTER</Text>
-      </Box>
+      {Array.from({ length: footerRows }, (_, index) => (
+        <Text key={index}>{index === 0 ? "FOOTER" : `footer ${index}`}</Text>
+      ))}
     </ReservedRows>
   </ScreenLayoutProvider>
 );
@@ -78,10 +84,10 @@ async function settle() {
   await new Promise((resolve) => setTimeout(resolve, 60));
 }
 
-async function renderHarness(rows: number) {
+async function renderHarness(rows: number, props: HarnessProps = {}) {
   const stdout = createStdout(rows);
   const stdin = createStdin();
-  const instance = render(<Harness />, {
+  const instance = render(<Harness {...props} />, {
     stdout: stdout.stream as unknown as NodeJS.WriteStream,
     stdin: stdin as unknown as NodeJS.ReadStream,
     patchConsole: false,
@@ -94,6 +100,10 @@ async function renderHarness(rows: number) {
     frame: () => stdout.lastFrame().join("\n"),
     press: async (sequence: string) => {
       stdin.write(sequence);
+      await settle();
+    },
+    rerender: async (next: HarnessProps) => {
+      instance.rerender(<Harness {...next} />);
       await settle();
     },
     cleanup: () => instance.unmount(),
@@ -141,6 +151,30 @@ describe("ScrollableViewport", () => {
     expect(harness.frame()).toContain(`line ${CONTENT_LINES - 1}`);
     expect(harness.lines().length).toBeLessThanOrEqual(12);
     expect(harness.lines().at(-1)).toContain("FOOTER");
+
+    harness.cleanup();
+  });
+
+  it("never grows past the window, even when chrome fills it", async () => {
+    // 8 rows of footer chrome (an open mention list) in a 12-row window leaves
+    // the viewport nothing; it must collapse rather than push chrome off screen.
+    const harness = await renderHarness(12, { footerRows: 8 });
+
+    expect(harness.lines().length).toBeLessThanOrEqual(12);
+    expect(harness.lines()[0]).toContain("BANNER");
+    expect(harness.frame()).toContain("footer 7");
+
+    harness.cleanup();
+  });
+
+  it("returns to the top when the reviewed item changes", async () => {
+    const harness = await renderHarness(12, { resetKey: "first" });
+
+    await harness.press(PAGE_DOWN);
+    expect(harness.lines()).not.toContain("line 0");
+
+    await harness.rerender({ resetKey: "second" });
+    expect(harness.lines()).toContain("line 0");
 
     harness.cleanup();
   });

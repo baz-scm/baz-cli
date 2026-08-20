@@ -49,7 +49,7 @@ const DiffDisplayContainer: React.FC<DiffDisplayContainerProps> = ({
   if (data.length === 0) {
     return (
       <Box flexDirection="column">
-        <Text color={theme.success}>✨ No diff related to issue!</Text>
+        <Text color={theme.success}>✨ No diff related to the issue!</Text>
       </Box>
     );
   }

@@ -5,6 +5,9 @@ import type { PullRequest } from "../../lib/providers/index.js";
 import { usePullRequests } from "../../hooks/usePullRequests.js";
 import { getDiff, isOnNonDefaultBranch } from "../../lib/git.js";
 import PullRequestSelector from "./PullRequestSelector.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface PullRequestSelectorContainerProps {
   onSelect: (pr: PullRequest) => void;
@@ -34,10 +37,10 @@ const PullRequestSelectorContainer: React.FC<
   if (loading) {
     return (
       <Box>
-        <Text color="blue">
+        <Text color={theme.info}>
           <Spinner type="dots" />
         </Text>
-        <Text color="blue"> Fetching pull requests...</Text>
+        <Text color={theme.info}> Fetching pull requests...</Text>
       </Box>
     );
   }
@@ -45,7 +48,7 @@ const PullRequestSelectorContainer: React.FC<
   if (error) {
     return (
       <Box flexDirection="column">
-        <Text color="red" bold>
+        <Text color={theme.error} bold>
           ❌ Error: {error}
         </Text>
       </Box>
@@ -77,7 +80,7 @@ const EmptyPRState: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="yellow">📭 No open pull requests found</Text>
+        <Text color={theme.warning}>📭 No open pull requests found</Text>
       </Box>
       <Box>
         <Text dimColor italic>

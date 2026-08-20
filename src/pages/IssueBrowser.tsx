@@ -301,6 +301,7 @@ const IssueBrowser: React.FC<IssueBrowserProps> = ({
       <ChatDisplay
         header={issueHeader}
         scrollable
+        scrollResetKey={currentIssue.data.id}
         messages={chatMessages}
         isLoading={isLoading}
         onSubmit={handleSubmit}

@@ -189,11 +189,13 @@ The same keys can live in a theme file, checked in this order:
 }
 ```
 
-Available keys: `main`, `accent`, `success`, `warning`, `error`, `info`,
+Available keys: `main`, `accent`, `text`, `success`, `warning`, `error`, `info`,
 `fileHeaderBg`, `fileHeaderFg`, `diffAddedBg`, `diffAddedFg`, `diffDeletedBg`,
 `diffDeletedFg`, `diffSelectedBg`, `diffSelectedFg`, `diffContextFg`,
-`lineNumberFg`. Environment variables win over the file. With colors off, the
-lines a comment points at are shown in bold instead.
+`lineNumberFg`. Environment variables win over the file, non-string values in
+the file are ignored, and a background is never used without a readable
+foreground - setting a `*Fg` key to `none` drops its background too. With
+colors off, the lines a comment points at are shown in bold instead.
 
 
 ## 🛠️ Development

@@ -3,6 +3,9 @@ import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 export type ReviewStatusAction =
   | "viewMetRequirements"
@@ -108,7 +111,7 @@ const ReviewStatusPrompt: React.FC<ReviewStatusPromptProps> = ({
       </Box>
 
       <Box marginBottom={1}>
-        <Text bold color="cyan">
+        <Text bold color={theme.main}>
           What would you like to do next?
         </Text>
       </Box>
@@ -117,12 +120,15 @@ const ReviewStatusPrompt: React.FC<ReviewStatusPromptProps> = ({
         items={items}
         onSelect={handleSelect}
         indicatorComponent={({ isSelected }) => (
-          <Text color={isSelected ? "green" : "gray"}>
+          <Text
+            color={isSelected ? theme.success : undefined}
+            dimColor={!isSelected}
+          >
             {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
           </Text>
         )}
         itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
+          <Text color={isSelected ? theme.main : theme.text}>{label}</Text>
         )}
       />
 

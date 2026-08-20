@@ -3,7 +3,6 @@ import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { ChatToolCall } from "../../models/chat.js";
 import { renderMarkdown } from "../../lib/markdown.js";
-import { MAIN_COLOR } from "../../theme/colors.js";
 import { getTheme } from "../../theme/theme.js";
 
 const theme = getTheme();
@@ -50,7 +49,7 @@ const ToolCallDisplay = memo<ToolCallDisplayProps>(
         marginY={1}
         paddingLeft={1}
         borderStyle="single"
-        borderColor={isExpanded ? MAIN_COLOR : "gray"}
+        borderColor={isExpanded ? theme.main : theme.lineNumber.color}
       >
         <Box>
           {showLoader ? (

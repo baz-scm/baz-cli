@@ -7,6 +7,9 @@ import ChatDisplay from "../chat/ChatDisplay.js";
 import { ChatMessage, IssueType } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
 import { processStream, StreamAbortError } from "../../lib/chat-stream.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface SpecReviewBrowserProps {
   unmetRequirements: Requirement[];
@@ -235,7 +238,7 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
 
       <Box marginBottom={1} flexDirection="column">
         <Text bold>Verdict:</Text>
-        <Text color="red">{currentRequirement.verdict}</Text>
+        <Text color={theme.error}>{currentRequirement.verdict}</Text>
         {currentRequirement.verdict_explanation && (
           <Text>{renderMarkdown(currentRequirement.verdict_explanation)}</Text>
         )}
@@ -256,6 +259,7 @@ const SpecReviewBrowser: React.FC<SpecReviewBrowserProps> = ({
         <ChatDisplay
           header={requirementHeader}
           scrollable
+          scrollResetKey={currentRequirement.id}
           messages={chatMessages}
           isLoading={isLoading}
           onSubmit={handleSubmit}

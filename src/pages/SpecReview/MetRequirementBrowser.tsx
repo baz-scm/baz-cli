@@ -6,6 +6,9 @@ import ChatDisplay from "../chat/ChatDisplay.js";
 import { ChatMessage, IssueType } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
 import { processStream, StreamAbortError } from "../../lib/chat-stream.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface MetRequirementBrowserProps {
   metRequirements: Requirement[];
@@ -232,7 +235,7 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
 
       <Box marginBottom={1} flexDirection="column">
         <Text bold>Verdict:</Text>
-        <Text color="green">{currentRequirement.verdict}</Text>
+        <Text color={theme.success}>{currentRequirement.verdict}</Text>
         {currentRequirement.verdict_explanation && (
           <Text dimColor>{currentRequirement.verdict_explanation}</Text>
         )}
@@ -253,6 +256,7 @@ const MetRequirementBrowser: React.FC<MetRequirementBrowserProps> = ({
         <ChatDisplay
           header={requirementHeader}
           scrollable
+          scrollResetKey={currentRequirement.id}
           messages={chatMessages}
           isLoading={isLoading}
           onSubmit={handleSubmit}

@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import { IntegrationProvider } from "../../integrations/types.js";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import { getTheme } from "../../theme/theme.js";
+import {
+  SelectIndicator,
+  SelectItem,
+} from "../../components/SelectRenderers.js";
 
 const theme = getTheme();
 
@@ -76,17 +79,8 @@ const IntegrationProviderSelector: React.FC<
       <SelectInput
         items={items}
         onSelect={handleSelect}
-        indicatorComponent={({ isSelected }) => (
-          <Text
-            color={isSelected ? theme.success : undefined}
-            dimColor={!isSelected}
-          >
-            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
-          </Text>
-        )}
-        itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? theme.main : theme.text}>{label}</Text>
-        )}
+        indicatorComponent={SelectIndicator}
+        itemComponent={SelectItem}
       />
       <Box marginTop={1}>
         <Text dimColor italic>

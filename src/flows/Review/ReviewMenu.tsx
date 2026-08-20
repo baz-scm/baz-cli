@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import { MAIN_COLOR } from "../../theme/colors.js";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import LineInput from "../../components/LineInput.js";
 import { getTheme } from "../../theme/theme.js";
+import { SelectIndicator } from "../../components/SelectRenderers.js";
 
 const theme = getTheme();
 
@@ -224,14 +224,7 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
         isFocused={menuOwnsKeys}
         onSelect={handleSelect}
         onHighlight={handleHighlight}
-        indicatorComponent={({ isSelected: isHighlighted }) => (
-          <Text
-            color={isHighlighted ? theme.success : undefined}
-            dimColor={!isHighlighted}
-          >
-            {isHighlighted ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
-          </Text>
-        )}
+        indicatorComponent={SelectIndicator}
         itemComponent={({ isSelected: isHighlighted, label }) => {
           const completed = completionByLabel.get(label) ?? false;
 

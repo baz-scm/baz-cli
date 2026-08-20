@@ -157,7 +157,8 @@ describe("ScrollableViewport", () => {
 
   it("never grows past the window, even when chrome fills it", async () => {
     // 8 rows of footer chrome (an open mention list) in a 12-row window leaves
-    // the viewport nothing; it must collapse rather than push chrome off screen.
+    // no room for the viewport; it must collapse rather than push chrome off
+    // screen.
     const harness = await renderHarness(12, { footerRows: 8 });
 
     expect(harness.lines().length).toBeLessThanOrEqual(12);

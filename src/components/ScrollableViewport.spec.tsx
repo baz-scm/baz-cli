@@ -155,18 +155,36 @@ describe("ScrollableViewport", () => {
     harness.cleanup();
   });
 
-  it("never grows past the window, even when chrome fills it", async () => {
-    // 8 rows of footer chrome (an open mention list) in a 12-row window leaves
-    // no room for the viewport; it must collapse rather than push chrome off
-    // screen.
-    const harness = await renderHarness(12, { footerRows: 8 });
+  // In a 12-row window the banner takes 1 row and SLACK_ROWS takes another, so
+  // the rows left for the viewport and its status line are 10 - footerRows.
+  // These are the sizes where chrome crowds the viewport out entirely, e.g. an
+  // open mention list.
+  it.each([
+    { footerRows: 8, budget: 2 },
+    { footerRows: 9, budget: 1 },
+    { footerRows: 10, budget: 0 },
+    { footerRows: 11, budget: -1 },
+  ])(
+    "never grows past the window with $footerRows footer rows (budget $budget)",
+    async ({ footerRows, budget }) => {
+      const harness = await renderHarness(12, { footerRows });
 
-    expect(harness.lines().length).toBeLessThanOrEqual(12);
-    expect(harness.lines()[0]).toContain("BANNER");
-    expect(harness.frame()).toContain("footer 7");
+      // Chrome stays whole and the frame still fits the window.
+      expect(harness.lines().length).toBeLessThanOrEqual(12);
+      expect(harness.lines()[0]).toContain("BANNER");
+      expect(harness.frame()).toContain(`footer ${footerRows - 1}`);
 
-    harness.cleanup();
-  });
+      if (budget > 0) {
+        expect(harness.frame()).toContain("line 0");
+      } else {
+        // Nothing left to show: the viewport collapses instead of pushing the
+        // chrome off screen.
+        expect(harness.frame()).not.toContain("line 0");
+      }
+
+      harness.cleanup();
+    },
+  );
 
   it("returns to the top when the reviewed item changes", async () => {
     const harness = await renderHarness(12, { resetKey: "first" });

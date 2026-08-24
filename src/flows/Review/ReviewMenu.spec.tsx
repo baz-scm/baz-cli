@@ -85,6 +85,15 @@ describe("ReviewMenu inline chat", () => {
     expect(submissions).toEqual([{ action: "prChat", input: "123abcdef" }]);
   });
 
+  it("drops the draft when Escape arrives", async () => {
+    const { chat, submissions } = await openChat();
+
+    await type(chat, ["draft text", ESC]);
+
+    expect(chat.lastFrame()).not.toContain("draft text");
+    expect(submissions).toEqual([]);
+  });
+
   it("trims the text it sends", async () => {
     const { chat, submissions } = await openChat();
 

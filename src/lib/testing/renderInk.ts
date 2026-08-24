@@ -10,6 +10,7 @@
 import { EventEmitter } from "node:events";
 import type { ReactElement } from "react";
 import { render } from "ink";
+import { INCOMPLETE_SEQUENCE_MS } from "../../hooks/useKeySequences.js";
 
 class FakeStdout extends EventEmitter {
   readonly frames: string[] = [];
@@ -55,7 +56,11 @@ export interface InkTestRender {
   /** The most recently rendered frame. */
   lastFrame: () => string | undefined;
   unmount: () => void;
-  /** Lets React and Ink settle after an input chunk. */
+  /**
+   * Lets React and Ink settle after an input chunk, including a key sequence
+   * held back as possibly incomplete — a lone Escape waits out
+   * `INCOMPLETE_SEQUENCE_MS` before it is delivered.
+   */
   flush: () => Promise<void>;
 }
 
@@ -79,6 +84,9 @@ export const renderInk = (element: ReactElement): InkTestRender => {
     unmount: () => {
       instance.unmount();
     },
-    flush: () => new Promise((resolve) => setTimeout(resolve, 20)),
+    flush: () =>
+      new Promise((resolve) =>
+        setTimeout(resolve, INCOMPLETE_SEQUENCE_MS + 30),
+      ),
   };
 };

@@ -7,6 +7,13 @@ import { authConfig } from "../../../auth/config.js";
 import { getAppConfig } from "../../config/app-mode.js";
 import { env } from "../../env-schema.js";
 
+declare module "axios" {
+  interface InternalAxiosRequestConfig {
+    /** Set once we've retried a request after a 401 re-auth, to avoid loops. */
+    _bazAuthRetried?: boolean;
+  }
+}
+
 export interface TokenManager {
   getToken: () => string;
   resetToken: () => void;
@@ -51,6 +58,27 @@ export const createAxiosClient = (baseURL: string) => {
     },
     async function (error) {
       if (error?.response?.status === 401) {
+        // If we already re-authenticated for this request and it still 401s,
+        // the credentials are being rejected by the server. Re-running the
+        // login flow would loop forever (and collide on the callback port),
+        // so surface a clear error instead of retrying again.
+        if (error.config?._bazAuthRetried) {
+          console.error(
+            chalk.red(
+              "❌ The Baz API rejected your credentials even after re-authenticating.",
+            ),
+          );
+          console.error(
+            chalk.red(
+              "   Your login succeeded but your account may not have access to this API. " +
+                "Please contact Baz support.",
+            ),
+          );
+          return Promise.reject(error);
+        }
+
+        // Guard against concurrent requests all kicking off their own
+        // interactive login (which would collide on the OAuth callback port).
         if (isAuthenticating) {
           return Promise.reject(error);
         }
@@ -71,19 +99,18 @@ export const createAxiosClient = (baseURL: string) => {
           const token = oauthFlow.getAccessToken();
           if (token && error.config) {
             error.config.headers.Authorization = `Bearer ${token}`;
-            isAuthenticating = false;
+            error.config._bazAuthRetried = true;
             return axiosClient.request(error.config);
           }
         } catch (authError) {
-          isAuthenticating = false;
           console.error(
             chalk.red("❌ Authentication failed:"),
             authError instanceof Error ? authError.message : "Unknown error",
           );
           return Promise.reject(error);
+        } finally {
+          isAuthenticating = false;
         }
-
-        isAuthenticating = false;
       }
       if (error?.response?.status === 402) {
         tokenMgr.resetToken();

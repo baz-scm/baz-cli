@@ -85,28 +85,38 @@ export const createAxiosClient = (baseURL: string) => {
 
         isAuthenticating = true;
 
+        // Keep isAuthenticating held until the replayed request settles, not
+        // just until authenticate() resolves. Otherwise the guard clears while
+        // the replay is still in flight, letting a concurrent 401 start a
+        // second OAuth flow that overwrites the token the replay is using.
         try {
-          console.log(
-            chalk.yellow(
-              "⚠️  Authentication required. Initiating login flow...",
-            ),
-          );
-          tokenMgr.resetToken();
-
           const oauthFlow = OAuthFlow.getInstance();
-          await oauthFlow.authenticate(authConfig);
+
+          try {
+            console.log(
+              chalk.yellow(
+                "⚠️  Authentication required. Initiating login flow...",
+              ),
+            );
+            tokenMgr.resetToken();
+            await oauthFlow.authenticate(authConfig);
+          } catch (authError) {
+            console.error(
+              chalk.red("❌ Authentication failed:"),
+              authError instanceof Error ? authError.message : "Unknown error",
+            );
+            return Promise.reject(error);
+          }
 
           const token = oauthFlow.getAccessToken();
           if (token && error.config) {
             error.config.headers.Authorization = `Bearer ${token}`;
             error.config._bazAuthRetried = true;
-            return axiosClient.request(error.config);
+            // Awaited so the guard (cleared in finally) stays set until the
+            // replay resolves. A repeat 401 is handled by the _bazAuthRetried
+            // branch above and propagates without re-triggering login.
+            return await axiosClient.request(error.config);
           }
-        } catch (authError) {
-          console.error(
-            chalk.red("❌ Authentication failed:"),
-            authError instanceof Error ? authError.message : "Unknown error",
-          );
           return Promise.reject(error);
         } finally {
           isAuthenticating = false;

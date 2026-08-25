@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # These jobs run code from the pull request (install scripts,
+          # tests, the packaged CLI) and never push, so the checkout must
+          # not leave the job token readable in .git/config.
+          persist-credentials: false
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
@@ -32,12 +37,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # These jobs run code from the pull request (install scripts,
+          # tests, the packaged CLI) and never push, so the checkout must
+          # not leave the job token readable in .git/config.
+          persist-credentials: false
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+      - name: Run tests
+        run: npm test
       - name: Build project
         run: npm run build
       - name: Create package

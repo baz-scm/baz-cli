@@ -90,6 +90,9 @@ async function renderHarness(rows: number, props: HarnessProps = {}) {
   const instance = render(<Harness {...props} />, {
     stdout: stdout.stream as unknown as NodeJS.WriteStream,
     stdin: stdin as unknown as NodeJS.ReadStream,
+    // Without this Ink detects `CI` and writes nothing until unmount, so the
+    // frames below come back empty on the runner.
+    debug: true,
     patchConsole: false,
   });
 

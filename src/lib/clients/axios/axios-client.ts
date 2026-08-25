@@ -7,6 +7,13 @@ import { authConfig } from "../../../auth/config.js";
 import { getAppConfig } from "../../config/app-mode.js";
 import { env } from "../../env-schema.js";
 
+declare module "axios" {
+  interface InternalAxiosRequestConfig {
+    /** Set once we've retried a request after a 401 re-auth, to avoid loops. */
+    _bazAuthRetried?: boolean;
+  }
+}
+
 export interface TokenManager {
   getToken: () => string;
   resetToken: () => void;
@@ -51,39 +58,69 @@ export const createAxiosClient = (baseURL: string) => {
     },
     async function (error) {
       if (error?.response?.status === 401) {
+        // If we already re-authenticated for this request and it still 401s,
+        // the credentials are being rejected by the server. Re-running the
+        // login flow would loop forever (and collide on the callback port),
+        // so surface a clear error instead of retrying again.
+        if (error.config?._bazAuthRetried) {
+          console.error(
+            chalk.red(
+              "❌ The Baz API rejected your credentials even after re-authenticating.",
+            ),
+          );
+          console.error(
+            chalk.red(
+              "   Your login succeeded but your account may not have access to this API. " +
+                "Please contact Baz support.",
+            ),
+          );
+          return Promise.reject(error);
+        }
+
+        // Guard against concurrent requests all kicking off their own
+        // interactive login (which would collide on the OAuth callback port).
         if (isAuthenticating) {
           return Promise.reject(error);
         }
 
         isAuthenticating = true;
 
+        // Keep isAuthenticating held until the replayed request settles, not
+        // just until authenticate() resolves. Otherwise the guard clears while
+        // the replay is still in flight, letting a concurrent 401 start a
+        // second OAuth flow that overwrites the token the replay is using.
         try {
-          console.log(
-            chalk.yellow(
-              "⚠️  Authentication required. Initiating login flow...",
-            ),
-          );
-          tokenMgr.resetToken();
-
           const oauthFlow = OAuthFlow.getInstance();
-          await oauthFlow.authenticate(authConfig);
+
+          try {
+            console.log(
+              chalk.yellow(
+                "⚠️  Authentication required. Initiating login flow...",
+              ),
+            );
+            tokenMgr.resetToken();
+            await oauthFlow.authenticate(authConfig);
+          } catch (authError) {
+            console.error(
+              chalk.red("❌ Authentication failed:"),
+              authError instanceof Error ? authError.message : "Unknown error",
+            );
+            return Promise.reject(error);
+          }
 
           const token = oauthFlow.getAccessToken();
           if (token && error.config) {
             error.config.headers.Authorization = `Bearer ${token}`;
-            isAuthenticating = false;
-            return axiosClient.request(error.config);
+            error.config._bazAuthRetried = true;
+            // Awaited so the guard (cleared in finally) stays set until the
+            // replay resolves. A repeat 401 is handled by the _bazAuthRetried
+            // branch above and propagates without re-triggering login.
+            return await axiosClient.request(error.config);
           }
-        } catch (authError) {
-          isAuthenticating = false;
-          console.error(
-            chalk.red("❌ Authentication failed:"),
-            authError instanceof Error ? authError.message : "Unknown error",
-          );
           return Promise.reject(error);
+        } finally {
+          isAuthenticating = false;
         }
-
-        isAuthenticating = false;
       }
       if (error?.response?.status === 402) {
         tokenMgr.resetToken();

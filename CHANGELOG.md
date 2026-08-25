@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/baz-scm/baz-cli/compare/v0.4.2...v0.4.3) (2026-08-25)
+
+
+### 🐛 Bug Fixes
+
+* stop infinite interactive-login loop on repeated 401s ([#121](https://github.com/baz-scm/baz-cli/issues/121)) ([28f76d4](https://github.com/baz-scm/baz-cli/commit/28f76d4f25f39bf1323c53a69fcaafdd0d8ca4c2))
+
 ## [0.4.2](https://github.com/baz-scm/baz-cli/compare/v0.4.1...v0.4.2) (2026-08-25)
 
 

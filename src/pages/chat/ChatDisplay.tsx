@@ -5,23 +5,28 @@ import { ChatMessage } from "../../models/chat.js";
 import { IssueCommand } from "../../issues/types.js";
 import { renderMarkdown } from "../../lib/markdown.js";
 import ChatInput from "./ChatInput.js";
+import ScrollableViewport from "../../components/ScrollableViewport.js";
+import { ReservedRows } from "../../components/layout/ScreenLayout.js";
+import { getTheme } from "../../theme/theme.js";
 import ToolCallDisplay from "./ToolCallDisplay.js";
+
+const theme = getTheme();
 
 const MessageAuthor = memo(({ role }: { role: ChatMessage["role"] }) => {
   if (role === "user")
     return (
-      <Text bold color="cyan">
+      <Text bold color={theme.info}>
         You:
       </Text>
     );
   if (role === "assistant")
     return (
-      <Text bold color="yellow">
+      <Text bold color={theme.accent}>
         Baz:
       </Text>
     );
   return (
-    <Text bold color="red">
+    <Text bold color={theme.error}>
       Error:
     </Text>
   );
@@ -100,6 +105,22 @@ const MessageRow = memo(
   },
 );
 
+/**
+ * The input box must stay on screen, so its height counts against the
+ * scrollable area when the conversation is scrollable.
+ */
+const InputChrome: React.FC<{
+  reserve: boolean;
+  children: React.ReactNode;
+}> = ({ reserve, children }) =>
+  reserve ? (
+    <ReservedRows id="chat-input">{children}</ReservedRows>
+  ) : (
+    <Box flexDirection="column" flexShrink={0}>
+      {children}
+    </Box>
+  );
+
 interface ChatDisplayProps {
   messages: ChatMessage[];
   isLoading: boolean;
@@ -114,6 +135,21 @@ interface ChatDisplayProps {
   onBack: () => void;
   onInterrupt?: () => void;
   isResponseActive?: boolean;
+  /**
+   * Rendered above the messages, inside the scrollable area (e.g. the comment
+   * being reviewed and its diff).
+   */
+  header?: React.ReactNode;
+  /**
+   * Clip the header and messages to the terminal height and make them
+   * scrollable, keeping the input pinned to the bottom of the window.
+   */
+  scrollable?: boolean;
+  /**
+   * Identity of what is being discussed. Scrolling restarts from the top when
+   * it changes, so the next comment does not open partway down.
+   */
+  scrollResetKey?: string | number;
 }
 
 const ChatDisplay = memo<ChatDisplayProps>(
@@ -131,10 +167,16 @@ const ChatDisplay = memo<ChatDisplayProps>(
     onBack,
     onInterrupt,
     isResponseActive = false,
+    header,
+    scrollable = false,
+    scrollResetKey,
   }) => {
     const { stdout } = useStdout();
     const [terminalWidth, setTerminalWidth] = useState(stdout?.columns ?? 80);
     const [toolsExpanded, setToolsExpanded] = useState(false);
+    // The mention list takes over Up/Down while it is open; the viewport must
+    // not scroll behind it.
+    const [composerOwnsArrows, setComposerOwnsArrows] = useState(false);
 
     useEffect(() => {
       if (!stdout) return;
@@ -181,8 +223,10 @@ const ChatDisplay = memo<ChatDisplayProps>(
       { isActive: isLoading || hasPendingToolCalls },
     );
 
-    return (
-      <Box flexDirection="column">
+    const scrollableContent = (
+      <>
+        {header}
+
         <Box flexDirection="column">
           {messages.map((msg, i) => (
             <MessageRow
@@ -197,7 +241,7 @@ const ChatDisplay = memo<ChatDisplayProps>(
         {(isLoading || hasPendingToolCalls) && (
           <Box flexDirection="column" marginBottom={1}>
             <Box>
-              <Text color="magenta">
+              <Text color={theme.info}>
                 <Spinner type="dots" /> Thinking...
               </Text>
             </Box>
@@ -208,23 +252,47 @@ const ChatDisplay = memo<ChatDisplayProps>(
             )}
           </Box>
         )}
+      </>
+    );
+
+    return (
+      <Box
+        flexDirection="column"
+        flexGrow={scrollable ? 1 : 0}
+        flexShrink={1}
+        minHeight={0}
+      >
+        {scrollable ? (
+          <ScrollableViewport
+            followContent={messages.length > 0}
+            isActive={!composerOwnsArrows}
+            resetKey={scrollResetKey}
+          >
+            {scrollableContent}
+          </ScrollableViewport>
+        ) : (
+          scrollableContent
+        )}
 
         {!disabled && !isLoading && !hasPendingToolCalls && (
-          <ChatInput
-            onSubmit={handleSubmit}
-            placeholder={placeholder}
-            availableCommands={availableCommands}
-            enableMentions={enableMentions}
-            prId={prId}
-            fullRepoName={fullRepoName}
-            prNumber={prNumber}
-            onBack={onBack}
-            terminalWidth={terminalWidth}
-            toolsExist={activeToolCalls.length > 0}
-            onToggleToolCallExpansion={toggleTools}
-            onInterrupt={onInterrupt}
-            isResponseActive={isResponseActive}
-          />
+          <InputChrome reserve={scrollable}>
+            <ChatInput
+              onSubmit={handleSubmit}
+              placeholder={placeholder}
+              availableCommands={availableCommands}
+              enableMentions={enableMentions}
+              prId={prId}
+              fullRepoName={fullRepoName}
+              prNumber={prNumber}
+              onBack={onBack}
+              terminalWidth={terminalWidth}
+              toolsExist={activeToolCalls.length > 0}
+              onToggleToolCallExpansion={toggleTools}
+              onInterrupt={onInterrupt}
+              isResponseActive={isResponseActive}
+              onNavigationCaptureChange={setComposerOwnsArrows}
+            />
+          </InputChrome>
         )}
       </Box>
     );

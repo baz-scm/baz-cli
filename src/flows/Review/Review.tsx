@@ -12,19 +12,28 @@ import LocalDiffPrompt, {
 } from "../LocalReview/LocalDiffPrompt.js";
 import LocalPullRequestReview from "../LocalReview/LocalPullRequestReview.js";
 import { getRepoName } from "../../lib/git.js";
-import { MAIN_COLOR } from "../../theme/colors.js";
+import { getTheme } from "../../theme/theme.js";
 import { REVIEW_COMPLETE_TEXT } from "../../theme/banners.js";
 import { useAppMode } from "../../lib/config/index.js";
+import {
+  ReservedRows,
+  ScreenLayoutProvider,
+} from "../../components/layout/ScreenLayout.js";
+
+const theme = getTheme();
 
 const SelectedPRHeader: React.FC<{ pullRequest: PullRequest }> = ({
   pullRequest,
 }) => (
-  <Box marginBottom={1}>
-    <Text color="green">✓ Selected PR: </Text>
-    <Text color="yellow">
-      #{pullRequest.prNumber} {pullRequest.title} [{pullRequest.repositoryName}]
-    </Text>
-  </Box>
+  <ReservedRows id="selected-pr">
+    <Box marginBottom={1}>
+      <Text color={theme.success}>✓ Selected PR: </Text>
+      <Text color={theme.accent}>
+        #{pullRequest.prNumber} {pullRequest.title} [
+        {pullRequest.repositoryName}]
+      </Text>
+    </Box>
+  </ReservedRows>
 );
 
 type FlowState =
@@ -276,8 +285,8 @@ const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({ isLocal }) => {
       return (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text color="green">✓ Reviewing {reviewLabel} </Text>
-            <Text color="yellow">[{getRepoName()}]</Text>
+            <Text color={theme.success}>✓ Reviewing {reviewLabel} </Text>
+            <Text color={theme.accent}>[{getRepoName()}]</Text>
           </Box>
           <LocalPullRequestReview
             diffText={diffResult.diffText}
@@ -295,14 +304,14 @@ const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({ isLocal }) => {
       return (
         <Box flexDirection="column">
           <Box flexDirection="column" marginBottom={1}>
-            <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
+            <Text color={theme.main}>{REVIEW_COMPLETE_TEXT}</Text>
             <Text>Local review completed</Text>
           </Box>
         </Box>
       );
 
     default:
-      return <Text color="red">Unknown step</Text>;
+      return <Text color={theme.error}>Unknown step</Text>;
   }
 };
 
@@ -317,7 +326,7 @@ const CompleteMessage: React.FC<{
     <Box flexDirection="column">
       <SelectedPRHeader pullRequest={flowState.selectedPR} />
       <Box flexDirection="column" marginBottom={1}>
-        <Text color={MAIN_COLOR}>{REVIEW_COMPLETE_TEXT}</Text>
+        <Text color={theme.main}>{REVIEW_COMPLETE_TEXT}</Text>
         <Text>PR Review completed</Text>
       </Box>
       {onSelect && (
@@ -339,10 +348,12 @@ interface ReviewFlowProps {
 }
 
 const ReviewFlow: React.FC<ReviewFlowProps> = ({ isLocal }) => (
-  <>
-    <HeaderDisplay />
+  <ScreenLayoutProvider>
+    <ReservedRows id="banner">
+      <HeaderDisplay />
+    </ReservedRows>
 
     <InternalReviewFlow isLocal={isLocal} />
-  </>
+  </ScreenLayoutProvider>
 );
 export default ReviewFlow;

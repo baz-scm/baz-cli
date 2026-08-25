@@ -243,8 +243,8 @@ const PRChat: React.FC<PRChatProps> = ({
     abortControllerRef.current = null;
   }, []);
 
-  return (
-    <Box flexDirection="column">
+  const chatHeader = (
+    <Box flexDirection="column" flexShrink={0}>
       <Box marginBottom={1}>
         <Text color={MAIN_COLOR} bold>
           {chatTitle ?? "PR Chat"}
@@ -257,8 +257,14 @@ const PRChat: React.FC<PRChatProps> = ({
             "Chat about the pull request with Baz. Press ESC to go back."}
         </Text>
       </Box>
+    </Box>
+  );
 
+  return (
+    <Box flexDirection="column">
       <ChatDisplay
+        header={chatHeader}
+        scrollable
         messages={chatMessages}
         isLoading={isLoading}
         onSubmit={handleChatSubmit}

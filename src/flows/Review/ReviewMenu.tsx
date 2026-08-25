@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
-import { MAIN_COLOR } from "../../theme/colors.js";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import LineInput from "../../components/LineInput.js";
+import { getTheme } from "../../theme/theme.js";
+import { SelectIndicator } from "../../components/SelectRenderers.js";
+
+const theme = getTheme();
 
 const CHAT_ITEM_LABEL = "Chat with PR";
 
@@ -24,14 +26,6 @@ interface MenuItemData {
 }
 
 const MenuItemContext = createContext<MenuItemData | null>(null);
-
-const MenuIndicator: React.FC<{ readonly isSelected?: boolean }> = ({
-  isSelected: isHighlighted,
-}) => (
-  <Text color={isHighlighted ? "green" : "gray"}>
-    {isHighlighted ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
-  </Text>
-);
 
 const MenuItem: React.FC<{
   readonly isSelected?: boolean;
@@ -60,14 +54,14 @@ const MenuItem: React.FC<{
       <Text
         strikethrough
         dimColor={!isHighlighted}
-        color={isHighlighted ? "cyan" : undefined}
+        color={isHighlighted ? theme.main : undefined}
       >
         {label}
       </Text>
     );
   }
 
-  return <Text color={isHighlighted ? "cyan" : "white"}>{label}</Text>;
+  return <Text color={isHighlighted ? theme.main : theme.text}>{label}</Text>;
 };
 
 export type ReviewMenuAction =
@@ -260,7 +254,7 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color={MAIN_COLOR} bold>
+        <Text color={theme.main} bold>
           Review status
         </Text>
       </Box>
@@ -293,7 +287,7 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
           isFocused={menuOwnsKeys}
           onSelect={handleSelect}
           onHighlight={handleHighlight}
-          indicatorComponent={MenuIndicator}
+          indicatorComponent={SelectIndicator}
           itemComponent={MenuItem}
         />
       </MenuItemContext.Provider>

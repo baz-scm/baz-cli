@@ -1,5 +1,8 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface CredentialsFlowProps {
   providerName: string;
@@ -10,7 +13,7 @@ const CredentialsFlow: React.FC<CredentialsFlowProps> = ({ providerName }) => {
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="yellow" bold>
+        <Text color={theme.warning} bold>
           ℹ️ Credentials Flow Not Yet Implemented
         </Text>
       </Box>

@@ -14,13 +14,15 @@ import ReviewMenu, {
 import TriggerSpecReviewPrompt from "../pages/SpecReview/TriggerSpecReviewPrompt.js";
 import MetRequirementBrowser from "../pages/SpecReview/MetRequirementBrowser.js";
 import PRWalkthrough from "../pages/PRWalkthrough/PRWalkthrough.js";
-import { MAIN_COLOR } from "../theme/colors.js";
+import { getTheme } from "../theme/theme.js";
 import { useAppMode } from "../lib/config/index.js";
 import type { Requirement } from "../lib/providers/index.js";
 import { PRContext } from "../lib/providers/index.js";
 import { useRepoWriteAccess } from "../hooks/useRepoWriteAccess.js";
 import PRChat from "../pages/PRChat/PRChat.js";
 import { IssueType } from "../models/chat.js";
+
+const theme = getTheme();
 
 interface MenuStateData {
   unmetRequirements: Requirement[];
@@ -75,10 +77,10 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
   if (loading) {
     return (
       <Box>
-        <Text color={MAIN_COLOR}>
+        <Text color={theme.main}>
           <Spinner type="dots" />
         </Text>
-        <Text color={MAIN_COLOR}> Fetching details...</Text>
+        <Text color={theme.main}> Fetching details...</Text>
       </Box>
     );
   }
@@ -87,7 +89,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
     return (
       <StateMessage
         message={`Error: ${error}`}
-        color="red"
+        color={theme.error}
         bold
         onComplete={onComplete}
         onBack={onBack}
@@ -365,7 +367,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
       return (
         <StateMessage
           message="Spec review is currently in progress. Continuing to review menu..."
-          color="yellow"
+          color={theme.warning}
           onComplete={handleSpecReviewInProgressContinue}
           onBack={onBack}
         />
@@ -452,7 +454,7 @@ const PullRequestReview: React.FC<PullRequestReviewProps> = ({
 
 const StateMessage: React.FC<{
   message: string;
-  color: string;
+  color?: string;
   bold?: boolean;
   onComplete: () => void;
   onBack: () => void;

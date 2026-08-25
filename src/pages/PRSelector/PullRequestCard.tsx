@@ -6,8 +6,10 @@ import type {
   CodeChangeReview,
 } from "../../lib/providers/index.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
-import { MAIN_COLOR } from "../../theme/colors.js";
 import { isBazReviewer } from "../../lib/reviewer.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface PullRequestCardProps {
   pr: PullRequest;
@@ -45,17 +47,17 @@ function getCIIcon(status: CIStatus):
   | {
       text: string;
       icon: string;
-      color: string;
+      color?: string;
     }
   | undefined {
   if (status === "success") {
-    return { text: "passed", icon: "✓", color: "green" };
+    return { text: "passed", icon: "✓", color: theme.success };
   }
   if (status === "pending") {
-    return { text: "pending", icon: "●", color: "yellow" };
+    return { text: "pending", icon: "●", color: theme.warning };
   }
   if (status === "failure") {
-    return { text: "failed", icon: "✗", color: "red" };
+    return { text: "failed", icon: "✗", color: theme.error };
   }
   return undefined;
 }
@@ -112,31 +114,31 @@ function getReviewStatus(
 
 function getReviewStatusDisplay(status: ReviewStatus): {
   text: string;
-  color: string;
+  color?: string;
 } {
   switch (status) {
     case "waiting_review":
-      return { text: "● Awaiting review", color: "black" };
+      return { text: "● Awaiting review", color: theme.text };
     case "reviewed":
-      return { text: "◐ Reviewed", color: "yellow" };
+      return { text: "◐ Reviewed", color: theme.warning };
     case "reviewed_by_me":
-      return { text: "◐ Reviewed by me", color: "yellow" };
+      return { text: "◐ Reviewed by me", color: theme.warning };
     case "approved":
-      return { text: "✓ Approved", color: "green" };
+      return { text: "✓ Approved", color: theme.success };
     case "approved_by_me":
-      return { text: "✓ Approved by me", color: "green" };
+      return { text: "✓ Approved by me", color: theme.success };
   }
 }
 
 function getBazBadge(status: "approved" | "reviewed" | "none"): {
   text: string;
-  color: string;
+  color?: string;
 } | null {
   switch (status) {
     case "approved":
-      return { text: "[✓ baz]", color: "cyan" };
+      return { text: "[✓ baz]", color: theme.main };
     case "reviewed":
-      return { text: "[◐ baz]", color: "yellow" };
+      return { text: "[◐ baz]", color: theme.warning };
     case "none":
       return null;
   }
@@ -156,15 +158,15 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
   const bazBadge = getBazBadge(bazStatus);
   const updatedTime = pr.updatedAt;
 
-  const titleColor = isSelected ? "cyan" : "white";
-  const metadataColor = isSelected ? MAIN_COLOR : "white";
+  const titleColor = isSelected ? theme.main : theme.text;
+  const metadataColor = isSelected ? theme.main : theme.text;
 
   return (
     <Box flexDirection="column">
       <Box>
         <Text bold={isSelected} color={titleColor}>
           {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}#{pr.prNumber}{" "}
-          {pr.title} <Text color="gray">[{pr.repositoryName}]</Text>{" "}
+          {pr.title} <Text dimColor>[{pr.repositoryName}]</Text>{" "}
           {ciIcon?.icon && (
             <Text bold color={ciIcon.color}>
               {ciIcon.icon}
@@ -191,7 +193,7 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({
         {ciIcon?.text && <Text> • CI {ciIcon.text}</Text>}
       </Text>
       {canMerge && (
-        <Text bold color="green">
+        <Text bold color={theme.success}>
           {"    "}Want to merge? Ctrl+G and let's go!
         </Text>
       )}

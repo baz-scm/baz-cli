@@ -19,6 +19,10 @@ import {
   parseKeySequence,
   snapToCharBoundary,
 } from "../../lib/input/line-editor.js";
+import { useCompactChrome } from "../../hooks/useTerminalSize.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -34,6 +38,11 @@ interface ChatInputProps {
   terminalWidth: number;
   onInterrupt?: () => void;
   isResponseActive?: boolean;
+  /**
+   * Called when the composer takes over the arrow keys (the mention list is
+   * open), so the surrounding view can stop scrolling on them.
+   */
+  onNavigationCaptureChange?: (captured: boolean) => void;
 }
 
 // Throttle updates ~60fps
@@ -54,10 +63,14 @@ const ChatInput = memo<ChatInputProps>((props) => {
     terminalWidth,
     onInterrupt,
     isResponseActive = false,
+    onNavigationCaptureChange,
   } = props;
 
   const appMode = useAppMode();
   const dataProvider = appMode.mode.dataProvider;
+  // In a short window the hints collapse onto one line so the conversation
+  // keeps the rows instead.
+  const compact = useCompactChrome();
 
   const visibleWidth = Math.max(10, terminalWidth - 6);
 
@@ -104,6 +117,14 @@ const ChatInput = memo<ChatInputProps>((props) => {
       if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
     };
   }, []);
+
+  // While the mention list is open it owns Up/Down, so tell the surrounding
+  // view to leave those keys alone.
+  const mentionOwnsArrows =
+    enableMentions && mention.show && reviewers.length > 0;
+  useEffect(() => {
+    onNavigationCaptureChange?.(mentionOwnsArrows);
+  }, [mentionOwnsArrows, onNavigationCaptureChange]);
 
   const checkMention = useCallback(() => {
     if (!enableMentions) return;
@@ -367,7 +388,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
     <Box flexDirection="column">
       <Box
         borderStyle="round"
-        borderColor="cyan"
+        borderColor={theme.main}
         paddingX={1}
         width={terminalWidth}
         flexShrink={1}
@@ -375,7 +396,7 @@ const ChatInput = memo<ChatInputProps>((props) => {
         {renderInput}
       </Box>
 
-      {enableMentions && mention.show && reviewers.length > 0 && (
+      {mentionOwnsArrows && (
         <MentionAutocomplete
           reviewers={reviewers}
           searchQuery={mention.query}
@@ -385,9 +406,11 @@ const ChatInput = memo<ChatInputProps>((props) => {
       )}
 
       {!mention.show && (
-        <Box marginTop={1}>
+        <Box marginTop={compact ? 0 : 1}>
           <Text dimColor>
-            {showFullHelp ? commandHints.join("\n") : defaultHints.join("\n")}
+            {showFullHelp
+              ? commandHints.join(compact ? " · " : "\n")
+              : defaultHints.join(compact ? " · " : "\n")}
           </Text>
         </Box>
       )}

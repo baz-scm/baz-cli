@@ -4,8 +4,14 @@ import SelectInput from "ink-select-input";
 import Spinner from "ink-spinner";
 import type { PullRequest, PRContext } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
+import { getTheme } from "../../theme/theme.js";
+import {
+  SelectIndicator,
+  SelectItem,
+} from "../../components/SelectRenderers.js";
+
+const theme = getTheme();
 
 interface MergeConfirmationPromptProps {
   pr: PullRequest;
@@ -78,21 +84,15 @@ const MergeConfirmationPrompt: React.FC<MergeConfirmationPromptProps> = ({
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold color="yellow">
+          <Text bold color={theme.warning}>
             Merge {pr.title}?
           </Text>
         </Box>
         <SelectInput
           items={items}
           onSelect={handleConfirm}
-          indicatorComponent={({ isSelected }) => (
-            <Text color={isSelected ? "green" : "gray"}>
-              {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
-            </Text>
-          )}
-          itemComponent={({ isSelected, label }) => (
-            <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
-          )}
+          indicatorComponent={SelectIndicator}
+          itemComponent={SelectItem}
         />
         <Box marginTop={1}>
           <Text dimColor italic>
@@ -117,7 +117,7 @@ const MergeConfirmationPrompt: React.FC<MergeConfirmationPromptProps> = ({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="red" bold>
+        <Text color={theme.error} bold>
           ✗ Failed to merge PR: {error}
         </Text>
       </Box>

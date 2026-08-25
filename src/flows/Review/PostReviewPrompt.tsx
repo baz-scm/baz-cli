@@ -7,7 +7,13 @@ import { useFetchMergeStatus } from "../../hooks/useFetchMergeStatus.js";
 import LoadingSpinner from "../../components/LoadingSpinner.js";
 import { PRContext } from "../../lib/providers/index.js";
 import { useAppMode } from "../../lib/config/AppModeContext.js";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { getTheme } from "../../theme/theme.js";
+import {
+  SelectIndicator,
+  SelectItem,
+} from "../../components/SelectRenderers.js";
+
+const theme = getTheme();
 
 export type PostReviewAction =
   | "approve"
@@ -151,24 +157,18 @@ const PostReviewPrompt: React.FC<PostReviewPromptProps> = ({
       <Box marginBottom={1}>
         {actionError && (
           <Box marginBottom={1}>
-            <Text color="red">✗ {actionError}</Text>
+            <Text color={theme.error}>✗ {actionError}</Text>
           </Box>
         )}
-        <Text bold color="cyan">
+        <Text bold color={theme.main}>
           What would you like to do next?
         </Text>
       </Box>
       <SelectInput
         items={items}
         onSelect={handleSelect}
-        indicatorComponent={({ isSelected }) => (
-          <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
-          </Text>
-        )}
-        itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
-        )}
+        indicatorComponent={SelectIndicator}
+        itemComponent={SelectItem}
       />
       <Box marginTop={1}>
         <Text dimColor italic>

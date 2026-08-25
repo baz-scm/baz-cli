@@ -7,6 +7,9 @@ import { useFetchUser } from "../../hooks/useFetchUser.js";
 import MergeConfirmationPrompt from "./MergeConfirmationPrompt.js";
 import LineInput from "../../components/LineInput.js";
 import { isCtrlChord, type EditorAction } from "../../lib/input/line-editor.js";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface PullRequestSearchKeywords {
   author?: string;
@@ -171,14 +174,14 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text bold color="cyan">
+        <Text bold color={theme.main}>
           🔍 Search for a Pull Request:
         </Text>
       </Box>
 
       <Box flexDirection="column" marginBottom={1}>
         <Box>
-          <Text color="gray">Search: </Text>
+          <Text dimColor>Search: </Text>
           <LineInput
             value={searchQuery}
             onChange={setSearchQuery}
@@ -197,14 +200,16 @@ const PullRequestSelector: React.FC<PullRequestSelectorProps> = ({
 
       <Box flexDirection="column" marginTop={1}>
         {filteredPRs.length === 0 ? (
-          <Text color="yellow">No pull requests match your search.</Text>
+          <Text color={theme.warning}>No pull requests match your search.</Text>
         ) : (
           <>
             {hasLocal && (
               <Box marginBottom={1}>
                 <Text
                   color={
-                    selectedIndex === LOCAL_CHANGES_INDEX ? "cyan" : "gray"
+                    selectedIndex === LOCAL_CHANGES_INDEX
+                      ? theme.main
+                      : undefined
                   }
                   bold={selectedIndex === LOCAL_CHANGES_INDEX}
                 >

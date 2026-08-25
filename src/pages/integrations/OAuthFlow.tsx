@@ -4,6 +4,9 @@ import Spinner from "ink-spinner";
 import type { IntegrationType } from "../../lib/providers/index.js";
 import { fetchIntegrations } from "../../lib/clients/baz.js";
 import open from "open";
+import { getTheme } from "../../theme/theme.js";
+
+const theme = getTheme();
 
 interface OAuthFlowProps {
   providerName: string;
@@ -84,7 +87,7 @@ const OAuthFlow: React.FC<OAuthFlowProps> = ({
       return (
         <Box flexDirection="column">
           <Box>
-            <Text color="cyan">
+            <Text color={theme.main}>
               <Spinner type="dots" />
             </Text>
             <Text> Opening browser for {providerName} authentication...</Text>
@@ -96,10 +99,10 @@ const OAuthFlow: React.FC<OAuthFlowProps> = ({
       return (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text color="green">✓ Browser opened</Text>
+            <Text color={theme.success}>✓ Browser opened</Text>
           </Box>
           <Box>
-            <Text color="cyan">
+            <Text color={theme.main}>
               <Spinner type="dots" />
             </Text>
             <Text> Waiting for {providerName} integration to complete...</Text>
@@ -115,7 +118,7 @@ const OAuthFlow: React.FC<OAuthFlowProps> = ({
     case "success":
       return (
         <Box flexDirection="column">
-          <Text color="green" bold>
+          <Text color={theme.success} bold>
             ✓ {providerName} integration successful!
           </Text>
         </Box>
@@ -124,10 +127,10 @@ const OAuthFlow: React.FC<OAuthFlowProps> = ({
     case "error":
       return (
         <Box flexDirection="column">
-          <Text color="red" bold>
+          <Text color={theme.error} bold>
             ✗ Integration failed
           </Text>
-          <Text color="red">{status.message}</Text>
+          <Text color={theme.error}>{status.message}</Text>
           <Box marginTop={1}>
             <Text dimColor italic>
               Press Ctrl+C to exit

@@ -34,6 +34,7 @@ While AI helps you write code at unprecedented speed, human reviewers still need
 - [Requirements](#requirements)
 - [Review Flow](#review-flow)
 - [Environment Variables](#environment-variables)
+- [Appearance](#appearance)
 - [Development](#-development)
 - [Contributing](#-contributing)
 - [Links](#-links)
@@ -137,6 +138,64 @@ The CLI respects the following environment variables:
 - If only one token is set → Error (both tokens required for standalone mode)
 
 Environment variables are read at runtime, so you can adjust them without rebuilding the CLI.
+
+---
+
+### Appearance
+
+#### Scrolling
+
+Review screens (comments, requirements, chat) fit themselves to the terminal
+window. When the comment, its diff and the conversation do not fit, the content
+area scrolls while the input box and its hints stay on screen:
+
+| Key | Action |
+| --- | --- |
+| `↑` / `↓` | Scroll one line |
+| `PgUp` / `PgDn` | Scroll one screen |
+| `Ctrl+U` / `Ctrl+D` | Scroll half a screen |
+
+A status line below the content shows the visible range, e.g.
+`↑↓ lines 12-30 of 84`. The view follows new chat output, unless you have
+scrolled up.
+
+#### Colors
+
+Colors adapt to the terminal background. Detection uses `COLORFGBG` where the
+terminal provides it and assumes a dark background otherwise.
+
+- `BAZ_THEME` – `auto` (default), `dark`, `light`, or `none` to disable colors
+- `BAZ_TERMINAL_BACKGROUND` – `dark` / `light`, overrides auto-detection only
+- `NO_COLOR` – any non-empty value disables colors ([no-color.org](https://no-color.org))
+
+Individual colors can be overridden with `BAZ_COLOR_*` variables, using a hex
+value or `none` to leave that element unstyled:
+
+```bash
+BAZ_COLOR_DIFF_ADDED_BG="#003300" BAZ_COLOR_MAIN=none baz review
+```
+
+The same keys can live in a theme file, checked in this order:
+`$BAZ_THEME_FILE`, `./.baz/theme.json`, `~/.baz/theme.json`,
+`~/.config/baz/theme.json`.
+
+```json
+{
+  "theme": "dark",
+  "main": "#9d9df0",
+  "diffAddedBg": "#1e3b26",
+  "diffAddedFg": "#b9f0c4",
+  "diffSelectedBg": "#4a4324"
+}
+```
+
+Available keys: `main`, `accent`, `text`, `success`, `warning`, `error`, `info`,
+`fileHeaderBg`, `fileHeaderFg`, `diffAddedBg`, `diffAddedFg`, `diffDeletedBg`,
+`diffDeletedFg`, `diffSelectedBg`, `diffSelectedFg`, `diffContextFg`,
+`lineNumberFg`. Environment variables win over the file, non-string values in
+the file are ignored, and a background is never used without a readable
+foreground - setting a `*Fg` key to `none` drops its background too. With
+colors off, the lines a comment points at are shown in bold instead.
 
 
 ## 🛠️ Development

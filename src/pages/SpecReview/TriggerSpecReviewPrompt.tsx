@@ -5,7 +5,13 @@ import Spinner from "ink-spinner";
 import { triggerSpecReview } from "../../lib/clients/baz.js";
 import { MAIN_COLOR } from "../../theme/colors.js";
 import ErrorPrompt from "./SpecReviewErrorPrompt.js";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { getTheme } from "../../theme/theme.js";
+import {
+  SelectIndicator,
+  SelectItem,
+} from "../../components/SelectRenderers.js";
+
+const theme = getTheme();
 
 interface TriggerSpecReviewPromptProps {
   prId: string;
@@ -88,7 +94,7 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
   if (state.step === "triggered") {
     return (
       <Box marginBottom={1}>
-        <Text color="green">✓ Spec review triggered successfully</Text>
+        <Text color={theme.success}>✓ Spec review triggered successfully</Text>
       </Box>
     );
   }
@@ -107,11 +113,11 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color="yellow">No spec reviews found for this PR</Text>
+        <Text color={theme.warning}>No spec reviews found for this PR</Text>
       </Box>
 
       <Box marginBottom={1}>
-        <Text bold color="cyan">
+        <Text bold color={theme.main}>
           Would you like to trigger a spec review?
         </Text>
       </Box>
@@ -119,14 +125,8 @@ const TriggerSpecReviewPrompt: React.FC<TriggerSpecReviewPromptProps> = ({
       <SelectInput
         items={items}
         onSelect={handleSelect}
-        indicatorComponent={({ isSelected }) => (
-          <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
-          </Text>
-        )}
-        itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
-        )}
+        indicatorComponent={SelectIndicator}
+        itemComponent={SelectItem}
       />
 
       <Box marginTop={1}>

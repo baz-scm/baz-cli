@@ -3,6 +3,10 @@ import { Box, Text, useInput } from "ink";
 import type { ChangeReviewer } from "../lib/providers/index.js";
 import { MentionableUser } from "../models/chat.js";
 import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../theme/symbols.js";
+import { getTheme } from "../theme/theme.js";
+import { useTerminalSize } from "../hooks/useTerminalSize.js";
+
+const theme = getTheme();
 
 interface MentionAutocompleteProps {
   reviewers: ChangeReviewer[];
@@ -18,6 +22,7 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
   onCancel,
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const { rows } = useTerminalSize();
 
   const filteredReviewers: MentionableUser[] = reviewers
     .filter((reviewer): reviewer is ChangeReviewer & { login: string } => {
@@ -63,11 +68,11 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
       <Box
         flexDirection="column"
         borderStyle="round"
-        borderColor="yellow"
+        borderColor={theme.warning}
         paddingX={1}
         marginTop={1}
       >
-        <Text color="yellow">No reviewers match your search.</Text>
+        <Text color={theme.warning}>No reviewers match your search.</Text>
         <Text dimColor italic>
           ESC to cancel
         </Text>
@@ -75,7 +80,9 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
     );
   }
 
-  const maxVisible = 10;
+  // The list shares the window with the input box and its hints, so it only
+  // grows to what the terminal can spare.
+  const maxVisible = Math.max(1, Math.min(10, rows - 8));
   const startIndex = Math.max(
     0,
     Math.min(selectedIndex - 5, filteredReviewers.length - maxVisible),
@@ -95,14 +102,14 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
           const actualIndex = startIndex + index;
           return (
             <Box key={reviewer.id}>
-              <Text color={actualIndex === selectedIndex ? "cyan" : "white"}>
+              <Text
+                color={actualIndex === selectedIndex ? theme.main : undefined}
+              >
                 {actualIndex === selectedIndex
                   ? ITEM_SELECTOR
                   : ITEM_SELECTION_GAP}
                 {reviewer.name}
-                {reviewer.login && (
-                  <Text color="gray"> (@{reviewer.login})</Text>
-                )}
+                {reviewer.login && <Text dimColor> (@{reviewer.login})</Text>}
               </Text>
             </Box>
           );

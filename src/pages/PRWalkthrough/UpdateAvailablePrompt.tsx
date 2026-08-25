@@ -1,7 +1,13 @@
 import React from "react";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { ITEM_SELECTION_GAP, ITEM_SELECTOR } from "../../theme/symbols.js";
+import { getTheme } from "../../theme/theme.js";
+import {
+  SelectIndicator,
+  SelectItem,
+} from "../../components/SelectRenderers.js";
+
+const theme = getTheme();
 
 type UserChoice = "continue" | "startNew";
 
@@ -29,7 +35,7 @@ const UpdateAvailablePrompt: React.FC<UpdateAvailablePromptProps> = ({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text bold color="cyan">
+        <Text bold color={theme.main}>
           The pull request has been updated since your last review. How would
           you like to proceed?
         </Text>
@@ -37,14 +43,8 @@ const UpdateAvailablePrompt: React.FC<UpdateAvailablePromptProps> = ({
       <SelectInput
         items={items}
         onSelect={handleSelect}
-        indicatorComponent={({ isSelected }) => (
-          <Text color={isSelected ? "green" : "gray"}>
-            {isSelected ? ITEM_SELECTOR : ITEM_SELECTION_GAP}
-          </Text>
-        )}
-        itemComponent={({ isSelected, label }) => (
-          <Text color={isSelected ? "cyan" : "white"}>{label}</Text>
-        )}
+        indicatorComponent={SelectIndicator}
+        itemComponent={SelectItem}
       />
       <Box marginTop={1}>
         <Text dimColor italic>

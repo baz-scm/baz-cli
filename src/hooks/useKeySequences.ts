@@ -8,7 +8,7 @@ import { tokenizeKeySequences } from "../lib/input/line-editor.js";
  * this was the Escape key itself — the same trick, and roughly the same delay,
  * that terminal emulators use to tell Escape from Alt.
  */
-const INCOMPLETE_SEQUENCE_MS = 30;
+export const INCOMPLETE_SEQUENCE_MS = 30;
 
 /**
  * Calls `onSequence` with every raw key sequence read from stdin.

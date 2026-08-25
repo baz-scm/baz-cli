@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
-import { MAIN_COLOR } from "../../theme/colors.js";
 import LineInput from "../../components/LineInput.js";
 import { getTheme } from "../../theme/theme.js";
 import { SelectIndicator } from "../../components/SelectRenderers.js";
@@ -9,6 +8,61 @@ import { SelectIndicator } from "../../components/SelectRenderers.js";
 const theme = getTheme();
 
 const CHAT_ITEM_LABEL = "Chat with PR";
+
+/**
+ * Everything the menu items need that changes as the menu is used. It travels
+ * by context rather than by prop, because `SelectInput` renders the item and
+ * indicator as component *types*: an inline function would be a new type on
+ * every render, so React would unmount and remount the item — and with it the
+ * chat input, whose cursor would snap back to the end of the text after every
+ * keystroke.
+ */
+interface MenuItemData {
+  chatMode: boolean;
+  chatInput: string;
+  onChatInputChange: (value: string) => void;
+  onChatSubmit: (value: string) => void;
+  completionByLabel: Map<string, boolean>;
+}
+
+const MenuItemContext = createContext<MenuItemData | null>(null);
+
+const MenuItem: React.FC<{
+  readonly isSelected?: boolean;
+  readonly label: string;
+}> = ({ isSelected: isHighlighted, label }) => {
+  const data = useContext(MenuItemContext);
+  const completed = data?.completionByLabel.get(label) ?? false;
+
+  // inline chat box
+  if (label === CHAT_ITEM_LABEL && data?.chatMode) {
+    return (
+      <Box>
+        <LineInput
+          value={data.chatInput}
+          onChange={data.onChatInputChange}
+          onSubmit={data.onChatSubmit}
+          placeholder={CHAT_ITEM_LABEL}
+          isActive={data.chatMode}
+        />
+      </Box>
+    );
+  }
+
+  if (completed) {
+    return (
+      <Text
+        strikethrough
+        dimColor={!isHighlighted}
+        color={isHighlighted ? theme.main : undefined}
+      >
+        {label}
+      </Text>
+    );
+  }
+
+  return <Text color={isHighlighted ? theme.main : theme.text}>{label}</Text>;
+};
 
 export type ReviewMenuAction =
   | "viewUnmetRequirements"
@@ -189,10 +243,18 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
     items.map((item) => [item.label, item.completed]),
   );
 
+  const menuItemData: MenuItemData = {
+    chatMode,
+    chatInput,
+    onChatInputChange: setChatInput,
+    onChatSubmit: handleChatSubmit,
+    completionByLabel,
+  };
+
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text color={MAIN_COLOR} bold>
+        <Text color={theme.main} bold>
           Review status
         </Text>
       </Box>
@@ -219,46 +281,16 @@ const ReviewMenu: React.FC<ReviewMenuProps> = ({
         <Text bold>Let&apos;s review</Text>
       </Box>
 
-      <SelectInput
-        items={items}
-        isFocused={menuOwnsKeys}
-        onSelect={handleSelect}
-        onHighlight={handleHighlight}
-        indicatorComponent={SelectIndicator}
-        itemComponent={({ isSelected: isHighlighted, label }) => {
-          const completed = completionByLabel.get(label) ?? false;
-
-          // inline chat box
-          if (label === CHAT_ITEM_LABEL && chatMode) {
-            return (
-              <Box>
-                <LineInput
-                  value={chatInput}
-                  onChange={setChatInput}
-                  onSubmit={handleChatSubmit}
-                  placeholder={CHAT_ITEM_LABEL}
-                  isActive={chatMode}
-                />
-              </Box>
-            );
-          }
-
-          if (completed) {
-            return (
-              <Text
-                strikethrough
-                dimColor={!isHighlighted}
-                color={isHighlighted ? theme.main : undefined}
-              >
-                {label}
-              </Text>
-            );
-          }
-          return (
-            <Text color={isHighlighted ? theme.main : theme.text}>{label}</Text>
-          );
-        }}
-      />
+      <MenuItemContext.Provider value={menuItemData}>
+        <SelectInput
+          items={items}
+          isFocused={menuOwnsKeys}
+          onSelect={handleSelect}
+          onHighlight={handleHighlight}
+          indicatorComponent={SelectIndicator}
+          itemComponent={MenuItem}
+        />
+      </MenuItemContext.Provider>
 
       <Box marginTop={1}>
         <Text dimColor>

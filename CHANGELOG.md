@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/baz-scm/baz-cli/compare/v0.4.1...v0.4.2) (2026-08-25)
+
+
+### 🐛 Bug Fixes
+
+* keep the cursor put when editing pasted text in the review menu ([#120](https://github.com/baz-scm/baz-cli/issues/120)) ([c5205f6](https://github.com/baz-scm/baz-cli/commit/c5205f6b424fdaccbaa6784a19caed09e7555a8d))
+* make comment review UI scrollable and dark-mode aware ([#119](https://github.com/baz-scm/baz-cli/issues/119)) ([f20d308](https://github.com/baz-scm/baz-cli/commit/f20d308c6fbea74972de68deba5b25bb23ff5645))
+
 ## [0.4.1](https://github.com/baz-scm/baz-cli/compare/v0.4.0...v0.4.1) (2026-08-04)
 
 

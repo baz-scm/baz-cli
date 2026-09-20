@@ -5,7 +5,7 @@
 ![Baz Logo](https://avatars.githubusercontent.com/u/140384842?s=200&v=4)
 
 **Review what matters, skim through the rest**  
-*Let AI guide you through the review*
+_Let AI guide you through the review_
 
 ![NPM Downloads](https://img.shields.io/npm/dm/@baz-scm/cli) ![License](https://img.shields.io/github/license/baz-scm/baz-cli) ![Version](https://img.shields.io/npm/v/@baz-scm/cli) [![CI Status](https://img.shields.io/github/actions/workflow/status/baz-scm/baz-cli/release.yml?style=flat-square&logo=github)](https://github.com/baz-scm/baz-cli/actions)
 [![Node.js version](https://img.shields.io/node/v/@baz-scm/cli?style=flat-square&logo=node.js&color=339933)](https://nodejs.org/)
@@ -41,17 +41,14 @@ While AI helps you write code at unprecedented speed, human reviewers still need
 
 ### Baz CLI in Action
 
-*Interactive CLI experience with real-time AI chat*
+_Interactive CLI experience with real-time AI chat_
 ![PR Overview](.github/assets/PROverview.png)
 
-
-*Step-by-step review workflow*
+_Step-by-step review workflow_
 ![PR Walkthrough](.github/assets/PRWalkthrough.png)
 
-
-*Understand the gist - does the PR fulfil its objectives?*
+_Understand the gist - does the PR fulfil its objectives?_
 ![Spec Reviewer](.github/assets/SpecReviewer.png)
-
 
 ## Two Ways to Use Baz CLI
 
@@ -62,10 +59,12 @@ Baz CLI offers two modes to fit your workflow:
 Use your own GitHub Personal Access Token (PAT) and Anthropic token to review any pull request directly.
 
 **Perfect for:**
+
 - Reviewing PRs without Baz service integration
 - Your data remains yours
 
 **Setup:**
+
 ```bash
 npm i -g @baz-scm/cli
 GH_TOKEN=your_github_pat ANTHROPIC_TOKEN=your_anthropic_api_key baz
@@ -78,11 +77,13 @@ Connect with [Baz](https://baz.co/login) to get the full experience: AI assistan
 > 💡 **New to Baz?** [Sign up for a free 14-day trial](https://baz.co/login) - no credit card required!
 
 **Perfect for:**
+
 - Teams using Baz for code review workflows
 - Integrated issue tracking and spec reviews to lead the review
 - Collaborative review processes
 
 **Setup:**
+
 ```bash
 npm i -g @baz-scm/cli
 baz
@@ -105,7 +106,6 @@ baz
 
 ---
 
-
 ### Requirements
 
 - **Node.js** 22 or later (see `engines` in `package.json`)
@@ -114,7 +114,6 @@ baz
   - Pull Requests - `Read and write` - to allow creating comments and approving the PR. If you only want to read PR content, `Read` is enough.
 - **Integrated Mode**: Account in [Baz](https://baz.co/login)
 - **Optional**: Jira, Linear, YouTrack, etc. integrated in baz for ticket context
-
 
 #### Review Flow
 
@@ -133,6 +132,7 @@ The CLI respects the following environment variables:
 - All configuration variables above
 
 **Mode Detection:**
+
 - If both `GH_TOKEN` and `ANTHROPIC_TOKEN` are set → **Standalone mode**
 - If neither token is set → **Integrated mode** (requires a baz user)
 - If only one token is set → Error (both tokens required for standalone mode)
@@ -149,15 +149,20 @@ Review screens (comments, requirements, chat) fit themselves to the terminal
 window. When the comment, its diff and the conversation do not fit, the content
 area scrolls while the input box and its hints stay on screen:
 
-| Key | Action |
-| --- | --- |
-| `↑` / `↓` | Scroll one line |
-| `PgUp` / `PgDn` | Scroll one screen |
+| Key                 | Action               |
+| ------------------- | -------------------- |
+| `↑` / `↓`           | Scroll one line      |
+| `PgUp` / `PgDn`     | Scroll one screen    |
 | `Ctrl+U` / `Ctrl+D` | Scroll half a screen |
+| Mouse wheel         | Scroll three lines   |
 
 A status line below the content shows the visible range, e.g.
 `↑↓ lines 12-30 of 84`. The view follows new chat output, unless you have
 scrolled up.
+
+While there is something to scroll, the CLI asks the terminal for the mouse so
+it can see the wheel. Your terminal's own click-to-select is suspended for that
+time; most terminals give it back while you hold `Option` (macOS) or `Shift`.
 
 #### Colors
 
@@ -197,7 +202,6 @@ the file are ignored, and a background is never used without a readable
 foreground - setting a `*Fg` key to `none` drops its background too. With
 colors off, the lines a comment points at are shown in bold instead.
 
-
 ## 🛠️ Development
 
 ### Prerequisites
@@ -218,14 +222,14 @@ npm install
 
 ### Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start the CLI in watch mode with `tsx` for rapid iteration |
-| `npm run build` | Generate compiled output in `dist/` using TypeScript |
-| `npm run lint` | Run ESLint checks with caching |
-| `npm run lint:fix` | Auto-fix ESLint issues |
-| `npm run format:check` | Verify source files with Prettier |
-| `npm run format:fix` | Format source files with Prettier |
+| Script                 | Description                                                |
+| ---------------------- | ---------------------------------------------------------- |
+| `npm run dev`          | Start the CLI in watch mode with `tsx` for rapid iteration |
+| `npm run build`        | Generate compiled output in `dist/` using TypeScript       |
+| `npm run lint`         | Run ESLint checks with caching                             |
+| `npm run lint:fix`     | Auto-fix ESLint issues                                     |
+| `npm run format:check` | Verify source files with Prettier                          |
+| `npm run format:fix`   | Format source files with Prettier                          |
 
 ### Development Workflow
 
@@ -234,7 +238,6 @@ npm install
 3. Make your changes – TypeScript will compile automatically
 4. Test your changes with `npm run dev`
 5. Run `npm run lint:fix` and `npm run format:fix` before committing
-
 
 ## 🤝 Contributing
 
@@ -255,7 +258,6 @@ We welcome contributions! Here's how you can help:
 ### Reporting Issues
 
 Found a bug or have a feature request? [Open an issue](https://github.com/baz-scm/baz-cli/issues) and we'll take a look!
-
 
 ## 🔗 Links
 

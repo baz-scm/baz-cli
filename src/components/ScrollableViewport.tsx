@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, DOMElement, measureElement, Text, useInput } from "ink";
+import { useMouseWheel } from "../hooks/useMouseWheel.js";
 import { useTerminalSize } from "../hooks/useTerminalSize.js";
 import { useReservedRows } from "./layout/ScreenLayout.js";
 
@@ -23,10 +24,12 @@ const STATUS_ROWS = 1;
 const SLACK_ROWS = 1;
 // Below this the status line gives its row back to the content.
 const MIN_ROWS_FOR_STATUS = 3;
+// Lines per notch of the wheel, matching what terminals scroll themselves.
+const WHEEL_ROWS = 3;
 
 /**
  * Clips its children to the rows the terminal has left and lets the user
- * scroll through them with the arrow keys.
+ * scroll through them with the arrow keys or the mouse wheel.
  *
  * The available height is the terminal height minus the chrome registered
  * through `ReservedRows` (banner, headers, chat input), so the input box and
@@ -99,6 +102,11 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
     [maxOffset],
   );
 
+  // A viewport with no rows shows nothing, so there is nothing to scroll even
+  // though the content is taller than it.
+  const canScroll = maxOffset > 0 && viewportHeight > 0;
+  const ownsInput = isActive && canScroll;
+
   useInput(
     (input, key) => {
       const page = Math.max(1, viewportHeight - 1);
@@ -110,10 +118,21 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
       else if (key.ctrl && input === "u") scrollBy(-Math.ceil(page / 2));
       else if (key.ctrl && input === "d") scrollBy(Math.ceil(page / 2));
     },
-    { isActive: isActive && maxOffset > 0 },
+    { isActive: ownsInput },
   );
 
-  const canScroll = maxOffset > 0;
+  const handleWheel = useCallback(
+    (direction: "up" | "down") =>
+      scrollBy(direction === "up" ? -WHEEL_ROWS : WHEEL_ROWS),
+    [scrollBy],
+  );
+
+  // The content is clipped to the window, so nothing reaches the terminal's
+  // scrollback for its own wheel handling to scroll - this viewport has to do
+  // it. Asked for only while there is somewhere to scroll to, so the terminal
+  // keeps the mouse for selecting text the rest of the time.
+  useMouseWheel(handleWheel, { isActive: ownsInput });
+
   const firstVisibleLine = contentHeight === 0 ? 0 : offset + 1;
   const lastVisibleLine = Math.min(contentHeight, offset + viewportHeight);
 

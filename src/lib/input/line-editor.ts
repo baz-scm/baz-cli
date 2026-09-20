@@ -160,6 +160,15 @@ const readEscapeSequence = (chunk: string, start: number): string | null => {
 
   if (chunk[index] === "[") {
     index++;
+
+    // A legacy mouse report is `ESC [ M` and three raw bytes, which are not
+    // parameter characters: read them as part of the sequence so they never
+    // reach a text buffer as stray characters.
+    if (chunk[index] === "M") {
+      const end = index + 4;
+      return end <= chunk.length ? chunk.slice(start, end) : null;
+    }
+
     while (index < chunk.length && /[0-9;:<=>?]/.test(chunk[index])) index++;
     if (index >= chunk.length) return null; // no final byte yet
     index++;

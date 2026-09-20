@@ -131,6 +131,25 @@ describe("tokenizeKeySequences", () => {
     expect(tokens(`${ESC}b`)).toEqual([`${ESC}b`]);
   });
 
+  it("keeps a mouse report whole and out of the text", () => {
+    // SGR reports end in a letter like any other sequence; the legacy encoding
+    // packs three raw bytes after `ESC [ M`, which are not text.
+    const sgr = `${ESC}[<65;10;5M`;
+    const legacy = `${ESC}[M${String.fromCharCode(97, 42, 38)}`;
+
+    expect(tokens(sgr)).toEqual([sgr]);
+    expect(tokens(legacy)).toEqual([legacy]);
+    expect(tokens(`a${legacy}b`)).toEqual(["a", legacy, "b"]);
+    expect(parseKeySequence(legacy)).toBeNull();
+
+    expect(
+      tokenizeKeySequences(`${ESC}[M${String.fromCharCode(97, 42)}`),
+    ).toEqual({
+      tokens: [],
+      remainder: `${ESC}[M${String.fromCharCode(97, 42)}`,
+    });
+  });
+
   it("splits keypresses that arrive in one chunk", () => {
     expect(tokens(`a${ESC}[D`)).toEqual(["a", `${ESC}[D`]);
     expect(tokens(`${ESC}[D${ESC}[C`)).toEqual([`${ESC}[D`, `${ESC}[C`]);

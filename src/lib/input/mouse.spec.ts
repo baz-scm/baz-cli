@@ -43,6 +43,10 @@ describe("parseWheelSequence", () => {
 
   it("ignores a release, which reports the button that was let go", () => {
     expect(parseWheelSequence(`${ESC}[<0;10;5m`)).toBeNull();
+    // A wheel notch is only ever a press, so a release carrying a wheel button
+    // is not a second notch to scroll on.
+    expect(parseWheelSequence(`${ESC}[<64;10;5m`)).toBeNull();
+    expect(parseWheelSequence(`${ESC}[<65;10;5m`)).toBeNull();
   });
 
   it("ignores ordinary keys", () => {

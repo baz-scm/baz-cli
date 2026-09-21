@@ -8,7 +8,10 @@ interface ScrollableViewportProps {
   children: React.ReactNode;
   /** Follow the bottom of the content as it grows (e.g. streaming chat). */
   followContent?: boolean;
-  /** Ignore scroll keys while another component owns them. */
+  /**
+   * Ignore scroll *keys* while another component owns them. The wheel is not
+   * shared, so it keeps scrolling either way.
+   */
   isActive?: boolean;
   /**
    * Scrolling starts from the top again whenever this changes - use the
@@ -105,7 +108,10 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
   // A viewport with no rows shows nothing, so there is nothing to scroll even
   // though the content is taller than it.
   const canScroll = maxOffset > 0 && viewportHeight > 0;
-  const ownsInput = isActive && canScroll;
+  // The composer's mention list takes the arrow keys over while it is open;
+  // nothing else wants the wheel, so it goes on scrolling the content behind
+  // the list rather than going dead for as long as the list is up.
+  const ownsKeys = isActive && canScroll;
 
   useInput(
     (input, key) => {
@@ -118,7 +124,7 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
       else if (key.ctrl && input === "u") scrollBy(-Math.ceil(page / 2));
       else if (key.ctrl && input === "d") scrollBy(Math.ceil(page / 2));
     },
-    { isActive: ownsInput },
+    { isActive: ownsKeys },
   );
 
   const handleWheel = useCallback(
@@ -131,7 +137,7 @@ const ScrollableViewport: React.FC<ScrollableViewportProps> = ({
   // scrollback for its own wheel handling to scroll - this viewport has to do
   // it. Asked for only while there is somewhere to scroll to, so the terminal
   // keeps the mouse for selecting text the rest of the time.
-  useMouseWheel(handleWheel, { isActive: ownsInput });
+  useMouseWheel(handleWheel, { isActive: canScroll });
 
   const firstVisibleLine = contentHeight === 0 ? 0 : offset + 1;
   const lastVisibleLine = Math.min(contentHeight, offset + viewportHeight);

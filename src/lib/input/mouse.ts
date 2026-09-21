@@ -29,7 +29,7 @@ const WHEEL_UP = 64;
 const WHEEL_DOWN = 65;
 
 /** `ESC [ < button ; column ; row M` (press) or `m` (release). */
-const SGR_MOUSE = new RegExp(`^${ESC}\\[<(\\d+);\\d+;\\d+[Mm]$`);
+const SGR_MOUSE = new RegExp(`^${ESC}\\[<(\\d+);\\d+;\\d+([Mm])$`);
 
 /** `ESC [ M` followed by button, column and row, each offset by 32. */
 const LEGACY_MOUSE_PREFIX = `${ESC}[M`;
@@ -53,7 +53,9 @@ const toWheelDirection = (button: number): WheelDirection | null => {
  */
 export const parseWheelSequence = (sequence: string): WheelDirection | null => {
   const sgr = SGR_MOUSE.exec(sequence);
-  if (sgr) return toWheelDirection(Number(sgr[1]));
+  // A wheel notch is only ever a press. `m` ends a release, and a release
+  // carrying a wheel button is not a second notch to scroll on.
+  if (sgr) return sgr[2] === "M" ? toWheelDirection(Number(sgr[1])) : null;
 
   if (
     sequence.startsWith(LEGACY_MOUSE_PREFIX) &&

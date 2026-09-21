@@ -62,9 +62,15 @@ interface HarnessProps {
   /** Extra rows of chrome, standing in for an open mention list. */
   footerRows?: number;
   resetKey?: string | number;
+  /** False while the composer's mention list owns the arrow keys. */
+  isActive?: boolean;
 }
 
-const Harness: React.FC<HarnessProps> = ({ footerRows = 1, resetKey }) => (
+const Harness: React.FC<HarnessProps> = ({
+  footerRows = 1,
+  resetKey,
+  isActive,
+}) => (
   <ScreenLayoutProvider>
     <ReservedRows id="banner">
       <Box>
@@ -72,7 +78,7 @@ const Harness: React.FC<HarnessProps> = ({ footerRows = 1, resetKey }) => (
       </Box>
     </ReservedRows>
 
-    <ScrollableViewport resetKey={resetKey}>
+    <ScrollableViewport resetKey={resetKey} isActive={isActive}>
       {Array.from({ length: CONTENT_LINES }, (_, index) => (
         <Text key={index}>line {index}</Text>
       ))}
@@ -175,6 +181,21 @@ describe("ScrollableViewport", () => {
     for (let i = 0; i < 40; i++) await harness.press(WHEEL_DOWN);
     expect(harness.frame()).toContain(`line ${CONTENT_LINES - 1}`);
     expect(harness.lines().length).toBeLessThanOrEqual(12);
+
+    harness.cleanup();
+  });
+
+  it("keeps scrolling with the wheel while the mention list owns the arrows", async () => {
+    const harness = await renderHarness(12, { isActive: false });
+
+    // The mention list has the arrow keys, so they must not scroll behind it.
+    await harness.press(ARROW_DOWN);
+    expect(harness.lines()).toContain("line 0");
+
+    // Nothing else wants the wheel, so it still scrolls.
+    await harness.press(WHEEL_DOWN);
+    expect(harness.frame()).toContain("line 3");
+    expect(harness.lines()).not.toContain("line 0");
 
     harness.cleanup();
   });

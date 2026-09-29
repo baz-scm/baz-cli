@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/baz-scm/baz-cli/compare/v0.4.3...v0.4.4) (2026-09-29)
+
+
+### 🐛 Bug Fixes
+
+* restore mouse wheel scrolling in the review screens ([#128](https://github.com/baz-scm/baz-cli/issues/128)) ([75cf1e2](https://github.com/baz-scm/baz-cli/commit/75cf1e22c5c7e27b6bc39341e2873b1d24afa697))
+
 ## [0.4.3](https://github.com/baz-scm/baz-cli/compare/v0.4.2...v0.4.3) (2026-08-25)
 
 

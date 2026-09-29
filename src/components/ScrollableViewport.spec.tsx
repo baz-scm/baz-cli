@@ -12,6 +12,10 @@ const ANSI_PATTERN = new RegExp(`${ESC}\\[[0-9;?]*[A-Za-z]`, "g");
 const ARROW_UP = `${ESC}[A`;
 const ARROW_DOWN = `${ESC}[B`;
 const PAGE_DOWN = `${ESC}[6~`;
+const WHEEL_UP = `${ESC}[<64;10;5M`;
+const WHEEL_DOWN = `${ESC}[<65;10;5M`;
+const MOUSE_ON = `${ESC}[?1000h${ESC}[?1006h`;
+const MOUSE_OFF = `${ESC}[?1006l${ESC}[?1000l`;
 
 function createStdout(rows: number, columns = 100) {
   let output = "";
@@ -27,6 +31,9 @@ function createStdout(rows: number, columns = 100) {
 
   return {
     stream,
+    // Everything written, escape codes and all - the mouse modes never show up
+    // in a frame.
+    raw: () => output,
     // Ink rewrites the whole frame on every render; the last one is what the
     // user is looking at.
     lastFrame: () => {
@@ -55,9 +62,15 @@ interface HarnessProps {
   /** Extra rows of chrome, standing in for an open mention list. */
   footerRows?: number;
   resetKey?: string | number;
+  /** False while the composer's mention list owns the arrow keys. */
+  isActive?: boolean;
 }
 
-const Harness: React.FC<HarnessProps> = ({ footerRows = 1, resetKey }) => (
+const Harness: React.FC<HarnessProps> = ({
+  footerRows = 1,
+  resetKey,
+  isActive,
+}) => (
   <ScreenLayoutProvider>
     <ReservedRows id="banner">
       <Box>
@@ -65,7 +78,7 @@ const Harness: React.FC<HarnessProps> = ({ footerRows = 1, resetKey }) => (
       </Box>
     </ReservedRows>
 
-    <ScrollableViewport resetKey={resetKey}>
+    <ScrollableViewport resetKey={resetKey} isActive={isActive}>
       {Array.from({ length: CONTENT_LINES }, (_, index) => (
         <Text key={index}>line {index}</Text>
       ))}
@@ -99,6 +112,7 @@ async function renderHarness(rows: number, props: HarnessProps = {}) {
   await settle();
 
   return {
+    raw: stdout.raw,
     lines: () => stdout.lastFrame(),
     frame: () => stdout.lastFrame().join("\n"),
     press: async (sequence: string) => {
@@ -140,6 +154,70 @@ describe("ScrollableViewport", () => {
 
     await harness.press(PAGE_DOWN);
     expect(harness.lines()).not.toContain("line 0");
+
+    harness.cleanup();
+  });
+
+  it("scrolls with the mouse wheel", async () => {
+    const harness = await renderHarness(12);
+
+    await harness.press(WHEEL_DOWN);
+    // A notch of the wheel moves three lines, as the terminal itself would.
+    expect(harness.frame()).toContain("line 3");
+    expect(harness.lines()).not.toContain("line 2");
+
+    await harness.press(WHEEL_UP);
+    expect(harness.lines()).toContain("line 0");
+
+    harness.cleanup();
+  });
+
+  it("stops at the ends of the content when the wheel keeps turning", async () => {
+    const harness = await renderHarness(12);
+
+    for (let i = 0; i < 3; i++) await harness.press(WHEEL_UP);
+    expect(harness.lines()).toContain("line 0");
+
+    for (let i = 0; i < 40; i++) await harness.press(WHEEL_DOWN);
+    expect(harness.frame()).toContain(`line ${CONTENT_LINES - 1}`);
+    expect(harness.lines().length).toBeLessThanOrEqual(12);
+
+    harness.cleanup();
+  });
+
+  it("keeps scrolling with the wheel while the mention list owns the arrows", async () => {
+    const harness = await renderHarness(12, { isActive: false });
+
+    // The mention list has the arrow keys, so they must not scroll behind it.
+    await harness.press(ARROW_DOWN);
+    expect(harness.lines()).toContain("line 0");
+
+    // Nothing else wants the wheel, so it still scrolls.
+    await harness.press(WHEEL_DOWN);
+    expect(harness.frame()).toContain("line 3");
+    expect(harness.lines()).not.toContain("line 0");
+
+    harness.cleanup();
+  });
+
+  it("asks the terminal for the mouse, and hands it back on unmount", async () => {
+    const harness = await renderHarness(12);
+
+    expect(harness.raw()).toContain(MOUSE_ON);
+    expect(harness.raw()).not.toContain(MOUSE_OFF);
+
+    harness.cleanup();
+    await settle();
+
+    expect(harness.raw()).toContain(MOUSE_OFF);
+  });
+
+  it("leaves the mouse to the terminal when there is nothing to scroll", async () => {
+    // Chrome fills the window, so the viewport collapses and the wheel has
+    // nowhere to go: the terminal keeps the mouse for selecting text.
+    const harness = await renderHarness(12, { footerRows: 10 });
+
+    expect(harness.raw()).not.toContain(MOUSE_ON);
 
     harness.cleanup();
   });

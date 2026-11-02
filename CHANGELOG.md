@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/baz-scm/baz-cli/compare/v0.4.4...v0.4.5) (2026-11-02)
+
+
+### ✨ New Features
+
+* add --base to review local changes against another branch ([#130](https://github.com/baz-scm/baz-cli/issues/130)) ([0015e68](https://github.com/baz-scm/baz-cli/commit/0015e68483708a8d956727c63c31475cf947c934))
+
 ## [0.4.4](https://github.com/baz-scm/baz-cli/compare/v0.4.3...v0.4.4) (2026-09-29)
 
 

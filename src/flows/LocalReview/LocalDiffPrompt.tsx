@@ -1,5 +1,12 @@
 import React, { useEffect } from "react";
-import { getDiff, getBranchDiff, isOnNonDefaultBranch } from "../../lib/git.js";
+import {
+  getCurrentBranch,
+  getDiff,
+  getBranchDiff,
+  getDiffAgainstRef,
+  isOnNonDefaultBranch,
+  resolveBaseRef,
+} from "../../lib/git.js";
 
 export interface DiffResult {
   diffText: string;
@@ -9,16 +16,36 @@ export interface DiffResult {
 }
 
 interface LocalDiffPromptProps {
+  baseBranch?: string;
   onReady: (result: DiffResult) => void;
   onError: (message: string) => void;
 }
 
 const LocalDiffPrompt: React.FC<LocalDiffPromptProps> = ({
+  baseBranch,
   onReady,
   onError,
 }) => {
   useEffect(() => {
     try {
+      if (baseBranch !== undefined) {
+        const currentBranch = getCurrentBranch();
+        const diff = getDiffAgainstRef(resolveBaseRef(baseBranch));
+        if (!diff) {
+          onError(
+            `No changes found between ${currentBranch} and ${baseBranch}.`,
+          );
+          return;
+        }
+        onReady({
+          diffText: diff,
+          currentBranch,
+          defaultBranch: baseBranch,
+          hasUncommittedChanges: !!getDiff(),
+        });
+        return;
+      }
+
       const info = isOnNonDefaultBranch();
       const hasUncommitted = !!getDiff();
 

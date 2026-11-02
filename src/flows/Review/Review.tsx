@@ -73,9 +73,13 @@ type FlowState =
 
 interface InternalReviewFlowProps {
   isLocal?: boolean;
+  baseBranch?: string;
 }
 
-const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({ isLocal }) => {
+const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({
+  isLocal,
+  baseBranch,
+}) => {
   const [flowState, setFlowState] = useState<FlowState>(
     isLocal ? { step: "localDiffPrompt" } : { step: "handlePRSelect" },
   );
@@ -271,6 +275,7 @@ const InternalReviewFlow: React.FC<InternalReviewFlowProps> = ({ isLocal }) => {
       return (
         <Box flexDirection="column">
           <LocalDiffPrompt
+            baseBranch={baseBranch}
             onReady={handleLocalDiffReady}
             onError={handleLocalDiffError}
           />
@@ -345,15 +350,16 @@ const CompleteMessage: React.FC<{
 
 interface ReviewFlowProps {
   isLocal?: boolean;
+  baseBranch?: string;
 }
 
-const ReviewFlow: React.FC<ReviewFlowProps> = ({ isLocal }) => (
+const ReviewFlow: React.FC<ReviewFlowProps> = ({ isLocal, baseBranch }) => (
   <ScreenLayoutProvider>
     <ReservedRows id="banner">
       <HeaderDisplay />
     </ReservedRows>
 
-    <InternalReviewFlow isLocal={isLocal} />
+    <InternalReviewFlow isLocal={isLocal} baseBranch={baseBranch} />
   </ScreenLayoutProvider>
 );
 export default ReviewFlow;

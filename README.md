@@ -141,6 +141,22 @@ Environment variables are read at runtime, so you can adjust them without rebuil
 
 ---
 
+### Reviewing local changes
+
+`baz review --local` reviews your branch against the default branch, or your
+uncommitted changes if you are on the default branch. If your branch was cut
+from another branch, set the base so only your changes are reviewed:
+
+```bash
+baz review --local --base another_branch
+```
+
+`--base` takes a branch name, using the newer of the local and `origin` copies
+(`origin` if they have diverged), or any other revision such as a tag, a SHA or
+`HEAD~3`.
+
+---
+
 ### Appearance
 
 #### Scrolling

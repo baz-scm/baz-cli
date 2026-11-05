@@ -18,7 +18,7 @@ import {
   resolveBaseRef,
 } from "./lib/git.js";
 
-const VERSION = "0.4.4"; // x-release-please-version
+const VERSION = "0.4.5"; // x-release-please-version
 
 const program = new Command();
 
